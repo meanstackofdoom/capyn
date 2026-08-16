@@ -33,7 +33,7 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 
 The repository and launch assets are public. Remaining launch actions are deliberately small and evidence-led:
 
-1. keep the full CI verification green on the tagged release;
+1. keep the full CI verification green on the tagged release (the public-alpha candidate is green);
 2. upgrade the Railway plan or free one project slot with an explicit owner decision;
 3. deploy separate web and API services plus managed PostgreSQL;
 4. set the final domain, CORS origin and build-time public URLs;
