@@ -5,6 +5,8 @@
 [![CI](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml/badge.svg)](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ac39c.svg)](LICENSE)
 
+[CAPYN v0.1.0 public alpha](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0) is available with the generated video and dashboard evidence attached.
+
 CAPYN allows organisations to delegate constrained financial authority to AI agents using capabilities, spending limits, vendor policies, approvals and complete audit trails.
 
 Give agents authority.
@@ -225,4 +227,4 @@ Read [docs/security.md](docs/security.md) before considering a non-demo deployme
 
 ## Status
 
-CAPYN v0.1 is a public, open-source developer MVP and public-alpha code package. It demonstrates bounded financial authorization end-to-end; it does not move real money. Hosted-demo progress and founder launch actions are tracked in [docs/project-status.md](docs/project-status.md). Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).
+CAPYN v0.1 is a public, open-source developer MVP and public-alpha code package, tagged as [`v0.1.0`](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0). It demonstrates bounded financial authorization end-to-end; it does not move real money. Hosted-demo progress and founder launch actions are tracked in [docs/project-status.md](docs/project-status.md). Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).

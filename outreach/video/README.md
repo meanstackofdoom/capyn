@@ -16,6 +16,8 @@ Outputs:
 
 The video intentionally says public alpha and uses only simulated transactions. Update the final URL in `apps/video/src/video.tsx` if the repository moves.
 
+The immutable `v0.1.0` assets are attached to the [GitHub public-alpha release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0).
+
 The companion dashboard evidence is generated from a running local web/API pair after the four demo requests have been submitted:
 
 ```bash

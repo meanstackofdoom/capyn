@@ -9,6 +9,7 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 | Developer MVP | Complete | Policy engine, API, approvals, mock execution, audit, SDK, dashboard, seed and tests work locally. |
 | Public-alpha code package | Complete | The public repository, website, documentation site, launch copy, reproducible video and platform-neutral hosting commands are present. |
 | Public repository | Complete | Source and evidence are public at `github.com/meanstackofdoom/capyn`. |
+| Tagged public alpha | Complete | `v0.1.0` was cut from a green clean-clone CI run with the video, cover and selected policy trace attached. |
 | Hosted public alpha | Waiting on Railway capacity | Authentication succeeded, but Railway refused another project because the current free-plan resource limit is exhausted. Existing projects were not altered. |
 | Real-money production | Not complete | Requires the security, identity, accounting, executor, operational and compliance work below. |
 
@@ -31,16 +32,15 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 
 ## Urgent public-alpha launch plan
 
-The repository and launch assets are public. Remaining launch actions are deliberately small and evidence-led:
+The repository, tagged release, CI evidence and launch assets are public. Remaining launch actions are deliberately small and evidence-led:
 
-1. keep the full CI verification green on the tagged release (the public-alpha candidate is green);
-2. upgrade the Railway plan or free one project slot with an explicit owner decision;
-3. deploy separate web and API services plus managed PostgreSQL;
-4. set the final domain, CORS origin and build-time public URLs;
-5. verify the hosted four-scenario demo, approval path and audit trail;
-6. add the hosted URL and Matthew's preferred public contact email to the outreach pack;
-7. send the TechRadar briefing and publish “The Agent Authority Problem” as the first technical note;
-8. invite a small, named cohort of agent builders and collect failure cases.
+1. upgrade the Railway plan or free one project slot with an explicit owner decision;
+2. deploy separate web and API services plus managed PostgreSQL;
+3. set the final domain, CORS origin and build-time public URLs;
+4. verify the hosted four-scenario demo, approval path and audit trail;
+5. add the hosted URL and Matthew's preferred public contact email to the outreach pack;
+6. send the TechRadar briefing and publish “The Agent Authority Problem” as the first technical note;
+7. invite a small, named cohort of agent builders and collect failure cases.
 
 Do not enable real settlement during this launch phase.
 

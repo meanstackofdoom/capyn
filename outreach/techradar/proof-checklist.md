@@ -8,7 +8,7 @@ Do not send the pitch until each factual item is true at the public release URL.
 - [x] README starts with the authority thesis and the one-command demo.
 - [x] `pnpm demo` produces all four documented decisions.
 - [x] `pnpm check` passes on a clean GitHub Actions clone.
-- [x] CI badge points to a successful run on the launch candidate.
+- [x] CI badge points to a successful run on the tagged launch commit.
 - [x] No `.env`, real API key, real database credential or personal secret is committed.
 - [x] The demo key is clearly labelled local-only.
 - [x] License choice is confirmed (MIT).
