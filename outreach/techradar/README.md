@@ -1,11 +1,11 @@
 # TechRadar outreach pack
 
-Use this folder after CAPYN has a public repository URL and a short recorded demo. It is tailored to TechRadar Pro's 31 July 2026 article, [“The real fight in agentic commerce isn't autonomy. It's authorization”](https://www.techradar.com/pro/the-real-fight-in-agentic-commerce-isnt-autonomy-its-authorization).
+This folder contains the evidence-led briefing for TechRadar Pro's 31 July 2026 article, [“The real fight in agentic commerce isn't autonomy. It's authorization”](https://www.techradar.com/pro/the-real-fight-in-agentic-commerce-isnt-autonomy-its-authorization). The repository and generated 24-second demo links are already filled in; add a public contact email and hosted URL before sending.
 
 ## Recommended sequence
 
 1. Complete every item in [proof-checklist.md](proof-checklist.md).
-2. Replace every `[PLACEHOLDER]` in [launch-pitch-email.md](launch-pitch-email.md).
+2. Add Matthew's preferred public contact email to [launch-pitch-email.md](launch-pitch-email.md).
 3. Read the email aloud and rewrite it in Matthew's normal voice.
 4. Send a plain-text email to the relevant TechRadar Pro editorial contact or reply channel. Do not attach large files; link to the demo and repository.
 5. If there is no response, send [follow-up-email.md](follow-up-email.md) once after 5–7 business days.

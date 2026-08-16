@@ -7,8 +7,9 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 | Milestone | Status | Meaning |
 |---|---|---|
 | Developer MVP | Complete | Policy engine, API, approvals, mock execution, audit, SDK, dashboard, seed and tests work locally. |
-| Public-alpha code package | Complete | Public website, documentation site, metadata, launch copy, demo and platform-neutral hosting commands are present. |
-| Hosted public alpha | Awaiting founder action | Requires an approved hosting account, final public origin, repository visibility and launch assets. |
+| Public-alpha code package | Complete | The public repository, website, documentation site, launch copy, reproducible video and platform-neutral hosting commands are present. |
+| Public repository | Complete | Source and evidence are public at `github.com/meanstackofdoom/capyn`. |
+| Hosted public alpha | Waiting on Railway capacity | Authentication succeeded, but Railway refused another project because the current free-plan resource limit is exhausted. Existing projects were not altered. |
 | Real-money production | Not complete | Requires the security, identity, accounting, executor, operational and compliance work below. |
 
 “Complete” in the repository means the developer/public-alpha artifact is coherent, testable and honest about its boundary. It does not mean CAPYN should control production funds today.
@@ -25,19 +26,20 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 - isolate organisations in agent and human access paths;
 - record append-oriented audit events;
 - use the TypeScript SDK, REST API, dashboard and four-scenario demo;
-- build and serve the public website and canonical documentation.
+- build and serve the public website and canonical documentation;
+- reproduce the 24-second launch video and cover from checked-in Remotion source.
 
 ## Urgent public-alpha launch plan
 
-Repository work is complete when the verification suite stays green. The remaining launch actions require the project owner or approved external accounts:
+The repository and launch assets are public. Remaining launch actions are deliberately small and evidence-led:
 
-1. choose repository visibility and publish the reviewed commit;
-2. deploy separate web and API services plus managed PostgreSQL;
-3. set the final domain, CORS origin and build-time public URLs;
-4. verify the hosted four-scenario demo and audit trail;
-5. record one 20–30 second terminal/control-plane demonstration;
-6. publish “The Agent Authority Problem” as the first technical note;
-7. replace placeholders in the TechRadar outreach pack with public evidence URLs;
+1. keep the full CI verification green on the tagged release;
+2. upgrade the Railway plan or free one project slot with an explicit owner decision;
+3. deploy separate web and API services plus managed PostgreSQL;
+4. set the final domain, CORS origin and build-time public URLs;
+5. verify the hosted four-scenario demo, approval path and audit trail;
+6. add the hosted URL and Matthew's preferred public contact email to the outreach pack;
+7. send the TechRadar briefing and publish “The Agent Authority Problem” as the first technical note;
 8. invite a small, named cohort of agent builders and collect failure cases.
 
 Do not enable real settlement during this launch phase.

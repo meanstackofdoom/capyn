@@ -11,9 +11,9 @@ One quick follow-up in case the CAPYN demo is relevant to your agentic-commerce 
 
 Since my first note, the public demo and verification results are here:
 
-- repository: [GITHUB_URL]
-- 20-second decision demo: [DEMO_VIDEO_URL]
-- tests/build status: [CI_URL]
+- repository: https://github.com/meanstackofdoom/capyn
+- 24-second decision demo: https://github.com/meanstackofdoom/capyn/blob/main/outreach/video/capyn-public-alpha.mp4
+- tests/build status: https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml
 
 The most useful technical angle is not the dashboard. It is how exact-request approval and database locking stop simultaneous agent actions from bypassing a shared spending cap.
 

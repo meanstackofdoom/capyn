@@ -60,6 +60,9 @@ export default tseslint.config(
   },
   {
     files: ["**/*.{js,mjs,cjs}"],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser }
+    },
     rules: {
       ...tseslint.configs.disableTypeChecked.rules,
       "@typescript-eslint/no-unsafe-assignment": "off",

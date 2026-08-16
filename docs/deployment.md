@@ -28,7 +28,7 @@ Start:
 corepack pnpm --filter @capyn/web start
 ```
 
-The command binds to `0.0.0.0` and respects the platform-provided `PORT`. Set `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_URL` before the build. Use `/healthz` as the health endpoint.
+The command binds to `0.0.0.0` and respects the platform-provided `PORT`. Set `CAPYN_SERVICE=web`, `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_URL` before the build. Use `/healthz` as the health endpoint.
 
 ## API service
 
@@ -45,20 +45,22 @@ Apply checked-in migrations before starting a PostgreSQL-backed release:
 corepack pnpm db:migrate
 ```
 
-Start:
+Start directly:
 
 ```bash
 corepack pnpm --filter @capyn/api start
 ```
 
+For a shared monorepo deployment, set `CAPYN_SERVICE=api` and run `corepack pnpm start`. The root launcher applies checked-in migrations when `CAPYN_STORAGE=postgres`, then starts the API. The web service uses the same root command with `CAPYN_SERVICE=web`.
+
 Use `/health` as the process health endpoint. A production-ready health strategy should add a separate readiness check that verifies the database and required executor dependencies without disclosing internal details.
 
-## Railway handoff
+## Railway deployment
 
-For a later Railway deployment, create independent web and API services from the same repository. Configure each service with the commands above, let Railway assign each service's `PORT`, and set:
+Create independent web and API services from the same repository. Configure each service with the commands above, let Railway assign each service's `PORT`, and set:
 
-- web: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`;
-- API: `CAPYN_STORAGE=postgres`, `DATABASE_URL`, `API_KEY_PEPPER`, `WEB_ORIGIN`, `DEMO_HUMAN_AUTH=false`;
+- web: `CAPYN_SERVICE=web`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`;
+- API: `CAPYN_SERVICE=api`, `CAPYN_STORAGE=postgres`, `DATABASE_URL`, `API_KEY_PEPPER`, `WEB_ORIGIN`, `DEMO_HUMAN_AUTH=false` for any non-demo environment;
 - API bootstrap: omit `BOOTSTRAP_TOKEN` unless a controlled onboarding operation requires it.
 
 Provision PostgreSQL as a managed service and restrict connectivity to the API service. No container-specific configuration is required by CAPYN.
@@ -79,7 +81,7 @@ Before real money, every item in the [Security production gate](security.md#prod
 
 ## Rollout and rollback
 
-- run database migrations as an explicit release step, never on every API process start;
+- the public-alpha root launcher applies checked-in, idempotent migrations before a PostgreSQL API process starts; move this to an explicit release job before operating multiple API replicas;
 - keep schema changes backward compatible while old and new processes overlap;
 - deploy API before web when the web needs a new API contract;
 - retain the previous build for immediate rollback;

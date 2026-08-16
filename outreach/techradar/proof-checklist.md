@@ -4,33 +4,33 @@ Do not send the pitch until each factual item is true at the public release URL.
 
 ## Product evidence
 
-- [ ] Public repository URL opens without authentication.
-- [ ] README starts with the authority thesis and the one-command demo.
-- [ ] `pnpm demo` produces all four documented decisions.
+- [x] Public repository URL opens without authentication.
+- [x] README starts with the authority thesis and the one-command demo.
+- [x] `pnpm demo` produces all four documented decisions.
 - [ ] `pnpm check` passes on a clean clone.
 - [ ] CI badge points to a successful run on the launch commit.
-- [ ] No `.env`, real API key, database URL or personal secret is committed.
-- [ ] The demo key is clearly labelled local-only.
-- [ ] License choice is confirmed.
-- [ ] Security limitations are easy to find.
+- [x] No `.env`, real API key, real database credential or personal secret is committed.
+- [x] The demo key is clearly labelled local-only.
+- [x] License choice is confirmed (MIT).
+- [x] Security limitations are easy to find.
 
 ## Media assets
 
-- [ ] 20–30 second terminal capture, 1080p, readable at mobile size.
-- [ ] One dashboard screenshot showing a selected evaluation trace.
-- [ ] One architecture diagram with CAPYN above payment rails.
+- [x] 24-second generated demonstration, 1080p, readable at mobile size.
+- [x] One dashboard screenshot showing a selected evaluation trace.
+- [x] One architecture diagram with CAPYN above payment rails.
 - [ ] Project URL and GitHub URL are stable.
 - [ ] Founder name, location and contact details are correct.
-- [ ] Optional headshot is current and licensed for publication.
+- [x] No optional headshot is included in this outreach pack.
 
 ## Claim verification
 
-- [ ] “Open source” matches the repository license and visibility.
-- [ ] “Serialized concurrency” is backed by the API security test.
-- [ ] “Hashed at rest” is backed by the schema and credential utility.
-- [ ] “Replay prevention” is backed by approval and execution tests.
-- [ ] “Chain-agnostic” is accurate: no rail-specific logic exists in the policy engine.
-- [ ] No wording implies real-money production readiness.
+- [x] “Open source” matches the repository license and visibility.
+- [x] “Serialized concurrency” is backed by the API security test.
+- [x] “Hashed at rest” is backed by the schema and credential utility.
+- [x] “Replay prevention” is backed by approval and execution tests.
+- [x] “Chain-agnostic” is accurate: no rail-specific logic exists in the policy engine.
+- [x] No wording implies real-money production readiness.
 
 ## Before send
 

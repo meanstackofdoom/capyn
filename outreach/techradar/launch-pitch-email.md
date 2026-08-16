@@ -38,19 +38,18 @@ The less visible work is the part I think matters: request-bound approvals, idem
 
 CAPYN is not another wallet or payment rail. The policy layer is chain-agnostic and designed to sit above x402, Solana/USDC, AP2, Stripe or another executor.
 
-Repository: [GITHUB_URL]
-20-second demo: [DEMO_VIDEO_URL]
-Technical note: [AGENT_AUTHORITY_PROBLEM_URL]
+Repository: https://github.com/meanstackofdoom/capyn
+24-second demo: https://github.com/meanstackofdoom/capyn/blob/main/outreach/video/capyn-public-alpha.mp4
+Technical note: https://github.com/meanstackofdoom/capyn/blob/main/docs/agent-authority-problem.md
 
 I'm Matthew Wicks, an independent builder in Australia. If this would be useful for a follow-up on what authorization infrastructure looks like in working code, I'd be glad to give you a short demo or answer technical questions. I can also share the concurrency threat model and the limits I have intentionally left unresolved in v0.1.
 
 Best,
 Matthew Wicks
-[EMAIL]
-[PHONE_OR_SIGNAL — OPTIONAL]
-[PROJECT_URL]
+[YOUR_CONTACT_EMAIL]
+https://github.com/meanstackofdoom/capyn
 ```
 
 ## Final edit
 
-Keep the email below roughly 250 words after replacing links. Remove any sentence Matthew would not naturally say. Verify every technical claim against the tagged release before sending.
+Add Matthew's preferred public contact email, keep the draft below roughly 250 words, and remove any sentence he would not naturally say. Verify every technical claim against the tagged release and add the hosted demo URL once Railway capacity is available.

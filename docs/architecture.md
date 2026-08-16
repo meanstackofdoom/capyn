@@ -20,7 +20,8 @@ Human / organisation
         ▼
  PaymentExecutor interface
         │
-        └── MockPaymentExecutor (v0.1)
+        ├── MockPaymentExecutor (v0.1)
+        └── future adapters: Solana / x402 / Stripe / AP2
 ```
 
 ## Workspace boundaries

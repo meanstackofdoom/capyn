@@ -9,8 +9,9 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "start": "node scripts/start-service.mjs",
     "dev": "turbo run dev --parallel",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "pnpm db:generate && eslint . --max-warnings=0",
     "docs:check": "node scripts/check-docs.mjs",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
@@ -19,7 +20,11 @@
     "db:generate": "pnpm --filter @capyn/database db:generate",
     "db:migrate": "pnpm --filter @capyn/database db:migrate",
     "db:seed": "pnpm --filter @capyn/database db:seed",
-    "demo": "tsx --tsconfig examples/tsconfig.json examples/demo.ts"
+    "demo": "tsx --tsconfig examples/tsconfig.json examples/demo.ts",
+    "video:render": "pnpm --filter @capyn/video render",
+    "video:still": "pnpm --filter @capyn/video still",
+    "video:studio": "pnpm --filter @capyn/video exec remotion studio src/index.ts",
+    "media:screenshot": "node scripts/capture-dashboard.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",

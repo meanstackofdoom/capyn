@@ -2,6 +2,9 @@
 
 **Authority infrastructure for autonomous agents.**
 
+[![CI](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml/badge.svg)](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-4ac39c.svg)](LICENSE)
+
 CAPYN allows organisations to delegate constrained financial authority to AI agents using capabilities, spending limits, vendor policies, approvals and complete audit trails.
 
 Give agents authority.
@@ -24,7 +27,11 @@ CAPYN POLICY ENGINE
 
 CAPYN is not a wallet, token, DAO or payment rail. It is the decision point before consequential execution. The v0.1 executor simulates payment; future adapters can settle through Solana/USDC, x402, Stripe, AP2 or another rail without moving policy enforcement into the adapter.
 
-## See it in 20 seconds
+## See it in 24 seconds
+
+[![Watch the CAPYN public-alpha authorization demo](outreach/video/capyn-public-alpha-cover.png)](outreach/video/capyn-public-alpha.mp4)
+
+The [public-alpha video](outreach/video/capyn-public-alpha.mp4) is generated from the checked-in [Remotion source](apps/video/src/video.tsx), so the launch asset can evolve with the product instead of becoming an unrepeatable screen recording.
 
 Requirements: Node.js 22+ and Corepack.
 
@@ -66,6 +73,8 @@ The public surface is a complete, responsive Next.js site:
 - `/about` — the agent authority thesis and roadmap
 - `/dashboard` — the working CAPYN control plane
 
+![CAPYN authorization evidence with a selected policy trace](outreach/screenshots/capyn-authorization-trace.png)
+
 Run just the public website:
 
 ```bash
@@ -96,14 +105,14 @@ The default development key is documented in [docs/api.md](docs/api.md); never u
 
 ## Hosting handoff
 
-The web application is platform-neutral and ready to move to Railway later:
+The monorepo includes a platform-neutral root launcher for separate Railway-style web and API services. Set `CAPYN_SERVICE=web` or `CAPYN_SERVICE=api`, then run:
 
 ```bash
-corepack pnpm --filter @capyn/web build
-corepack pnpm --filter @capyn/web start
+corepack pnpm build
+corepack pnpm start
 ```
 
-The start command binds to `0.0.0.0` and respects the platform `PORT`. Set `NEXT_PUBLIC_SITE_URL` to the final public origin and use `/healthz` for the web health check. No hosting or publishing action is performed by this repository.
+The selected service binds to `0.0.0.0` and respects the platform `PORT`. Set `NEXT_PUBLIC_SITE_URL` to the final public origin and use `/healthz` for the web health check. The API uses `/health`. No Docker configuration is required.
 
 ## Central API
 
@@ -146,6 +155,7 @@ if (result.decision === "ALLOW") {
 ```text
 apps/
   api/                 Fastify REST API and domain services
+  video/               Reproducible Remotion launch video
   web/                 Next.js public website and App Router control plane
 packages/
   policy-engine/       Pure deterministic evaluator
@@ -155,6 +165,7 @@ packages/
 docs/                  Architecture, security, API and roadmap
 examples/              One-command demo and SDK example
 outreach/techradar/    Launch outreach templates and proof checklist
+outreach/video/        Rendered public-alpha video and cover
 ```
 
 The important dependency direction is:
@@ -176,6 +187,9 @@ pnpm typecheck     # all workspaces and examples
 pnpm lint          # strict workspace lint
 pnpm build         # production builds
 pnpm check         # complete verification sequence
+pnpm video:render  # render the 24-second public-alpha video
+pnpm video:still   # render its social/README cover
+pnpm media:screenshot # capture a live selected authorization trace
 pnpm db:migrate    # deploy PostgreSQL migrations
 pnpm db:seed       # seed Acme AI and procurement-agent
 ```
@@ -211,4 +225,4 @@ Read [docs/security.md](docs/security.md) before considering a non-demo deployme
 
 ## Status
 
-CAPYN v0.1 is a complete developer MVP and public-alpha code package. It demonstrates bounded financial authorization end-to-end; it does not move real money. Hosting and founder launch actions are tracked in [docs/project-status.md](docs/project-status.md). Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).
+CAPYN v0.1 is a public, open-source developer MVP and public-alpha code package. It demonstrates bounded financial authorization end-to-end; it does not move real money. Hosted-demo progress and founder launch actions are tracked in [docs/project-status.md](docs/project-status.md). Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).
