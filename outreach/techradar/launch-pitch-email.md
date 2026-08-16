@@ -39,6 +39,7 @@ The less visible work is the part I think matters: request-bound approvals, idem
 CAPYN is not another wallet or payment rail. The policy layer is chain-agnostic and designed to sit above x402, Solana/USDC, AP2, Stripe or another executor.
 
 Repository: https://github.com/meanstackofdoom/capyn
+Live synthetic demo: https://judgecat-production.up.railway.app
 24-second demo: https://github.com/meanstackofdoom/capyn/releases/download/v0.1.0/capyn-public-alpha.mp4
 Technical note: https://github.com/meanstackofdoom/capyn/blob/v0.1.0/docs/agent-authority-problem.md
 
@@ -51,4 +52,4 @@ https://github.com/meanstackofdoom/capyn
 
 ## Final edit
 
-Send from Matthew's preferred public contact address, keep the draft below roughly 250 words, and remove any sentence he would not naturally say. Verify every technical claim against the current release and add the hosted demo URL once it is stable.
+Send from Matthew's preferred public contact address, keep the draft below roughly 250 words, and remove any sentence he would not naturally say. Verify every technical claim against the current release before sending.

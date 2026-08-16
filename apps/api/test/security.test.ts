@@ -16,6 +16,33 @@ async function setup() {
 }
 
 describe("CAPYN security boundaries", () => {
+  it("pins the demo human adapter to the configured least-privilege user", async () => {
+    const context = await createTestContext({ demoHumanUserId: "usr_demo_approver" });
+    openApps.push(context.app);
+
+    const owner = await context.app.inject({
+      method: "GET",
+      url: "/v1/dashboard",
+      headers: { "x-capyn-user-id": "usr_demo_owner" }
+    });
+    expect(owner.statusCode).toBe(401);
+
+    const approver = await context.app.inject({
+      method: "GET",
+      url: "/v1/dashboard",
+      headers: { "x-capyn-user-id": "usr_demo_approver" }
+    });
+    expect(approver.statusCode).toBe(200);
+
+    const administration = await context.app.inject({
+      method: "PATCH",
+      url: "/v1/agents/agt_demo_procurement/status",
+      headers: { "x-capyn-user-id": "usr_demo_approver", "content-type": "application/json" },
+      payload: { status: "SUSPENDED" }
+    });
+    expect(administration.statusCode).toBe(403);
+  });
+
   it("does not accept a client-supplied agent identity", async () => {
     const { app } = await setup();
     const response = await app.inject({

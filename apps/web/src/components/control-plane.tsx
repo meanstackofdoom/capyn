@@ -44,6 +44,10 @@ import type { DashboardSection } from "@/lib/dashboard";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const DEMO_USER = process.env.NEXT_PUBLIC_DEMO_USER_ID ?? "usr_demo_owner";
+const DEMO_MANAGEMENT_ENABLED = process.env.NEXT_PUBLIC_DEMO_MANAGEMENT_ENABLED !== "false";
+const DEMO_USER_NAME = process.env.NEXT_PUBLIC_DEMO_USER_NAME ?? "Acme Owner";
+const DEMO_USER_ROLE = process.env.NEXT_PUBLIC_DEMO_USER_ROLE ?? "Owner";
+const DEMO_USER_INITIALS = DEMO_USER_NAME.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
 
 const sectionMeta: Record<DashboardSection, { label: string; description: string }> = {
   overview: { label: "Overview", description: "Authority posture and recent decisions across your organisation." },
@@ -349,10 +353,10 @@ export function ControlPlane({ section }: { section: DashboardSection }) {
         </nav>
         <div className="border-t border-line p-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-8 w-8 place-items-center bg-ink text-[10px] font-bold text-paper">AO</div>
+            <div className="grid h-8 w-8 place-items-center bg-ink text-[10px] font-bold text-paper">{DEMO_USER_INITIALS}</div>
             <div className="min-w-0">
-              <p className="truncate text-xs font-bold">Acme Owner</p>
-              <p className="font-mono text-[8px] uppercase tracking-[.12em] text-muted">Owner · demo auth</p>
+              <p className="truncate text-xs font-bold">{DEMO_USER_NAME}</p>
+              <p className="font-mono text-[8px] uppercase tracking-[.12em] text-muted">{DEMO_USER_ROLE} · demo auth</p>
             </div>
           </div>
         </div>
@@ -376,11 +380,16 @@ export function ControlPlane({ section }: { section: DashboardSection }) {
         </header>
 
         <div className="mx-auto max-w-[1500px] p-5 sm:p-8">
+          {!DEMO_MANAGEMENT_ENABLED && (
+            <div className="mb-5 border border-review/30 bg-review/10 px-4 py-3 text-[11px] leading-5 text-muted">
+              <strong className="text-ink">Public demonstration:</strong> organisation administration is disabled. The scoped approver can inspect evidence and decide exact pending requests; state is synthetic and disposable.
+            </div>
+          )}
           {loading && !snapshot ? <LoadingState /> : error ? <ErrorState error={error} retry={() => void load()} /> : snapshot ? (
             <div className="enter-control">
               {section === "overview" && <Overview snapshot={snapshot} selectAuthorization={setSelectedAuthorization} />}
-              {section === "agents" && <Agents snapshot={snapshot} reload={load} notify={notify} />}
-              {section === "mandates" && <Mandates snapshot={snapshot} reload={load} notify={notify} />}
+              {section === "agents" && <Agents snapshot={snapshot} reload={load} notify={notify} canAdmin={DEMO_MANAGEMENT_ENABLED} />}
+              {section === "mandates" && <Mandates snapshot={snapshot} reload={load} notify={notify} canAdmin={DEMO_MANAGEMENT_ENABLED} />}
               {section === "authorizations" && <Authorizations snapshot={snapshot} selectAuthorization={setSelectedAuthorization} />}
               {section === "approvals" && <Approvals snapshot={snapshot} reload={load} notify={notify} />}
               {section === "audit" && <AuditLog snapshot={snapshot} />}
@@ -451,7 +460,7 @@ function Overview({ snapshot, selectAuthorization }: { snapshot: DashboardSnapsh
   );
 }
 
-function Agents({ snapshot, reload, notify }: { snapshot: DashboardSnapshot; reload: () => Promise<void>; notify: (message: string) => void }) {
+function Agents({ snapshot, reload, notify, canAdmin }: { snapshot: DashboardSnapshot; reload: () => Promise<void>; notify: (message: string) => void; canAdmin: boolean }) {
   const [showCreate, setShowCreate] = useState(false);
   const [issuedKey, setIssuedKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -493,8 +502,8 @@ function Agents({ snapshot, reload, notify }: { snapshot: DashboardSnapshot; rel
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between"><p className="text-sm text-muted">{snapshot.agents.length} registered identities</p><Button tone="primary" onClick={() => { setShowCreate((value) => !value); setIssuedKey(null); }}><Plus size={14} /> Create agent</Button></div>
-      {showCreate && (
+      <div className="flex items-center justify-between"><p className="text-sm text-muted">{snapshot.agents.length} registered identities</p>{canAdmin ? <Button tone="primary" onClick={() => { setShowCreate((value) => !value); setIssuedKey(null); }}><Plus size={14} /> Create agent</Button> : <span className="font-mono text-[9px] uppercase tracking-[.12em] text-muted">Administration disabled</span>}</div>
+      {showCreate && canAdmin && (
         <form className="panel grid gap-4 p-5 md:grid-cols-[1fr_1fr_1.4fr_auto] md:items-end" onSubmit={(event) => void createAgent(event)}>
           <label className="text-xs font-semibold">Name<input required name="name" placeholder="research-agent" className="mt-2 h-10 w-full border border-line bg-paper px-3 text-sm outline-none" /></label>
           <label className="text-xs font-semibold">Slug<input required name="slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="research-agent" className="mt-2 h-10 w-full border border-line bg-paper px-3 font-mono text-xs outline-none" /></label>
@@ -514,7 +523,7 @@ function Agents({ snapshot, reload, notify }: { snapshot: DashboardSnapshot; rel
             </div>
             <div className="mt-4 flex flex-wrap gap-1.5">{agent.mandate?.capabilities.map((capability) => <span className="bg-paper px-2 py-1 font-mono text-[9px]" key={capability}>{capability}</span>)}</div>
             <div className="mt-5 grid grid-cols-2 gap-px bg-line"><div className="bg-paper p-3"><p className="font-mono text-[8px] text-muted">TODAY</p><p className="mono-number mt-1 text-sm font-medium">${agent.spendToday}</p></div><div className="bg-paper p-3"><p className="font-mono text-[8px] text-muted">MONTH</p><p className="mono-number mt-1 text-sm font-medium">${agent.spendMonth}</p></div></div>
-            <div className="mt-5 flex flex-wrap gap-2"><Button disabled={busy} onClick={() => void newCredential(agent.id)}><KeyRound size={12} /> New key</Button>{agent.status === "ACTIVE" ? <Button disabled={busy} onClick={() => void setStatus(agent.id, "SUSPENDED")}><Clock3 size={12} /> Suspend</Button> : agent.status === "SUSPENDED" ? <Button disabled={busy} onClick={() => void setStatus(agent.id, "ACTIVE")}><Check size={12} /> Reactivate</Button> : null}<Button tone="danger" disabled={busy || agent.status === "REVOKED"} onClick={() => void setStatus(agent.id, "REVOKED")}><XCircle size={12} /> Revoke</Button></div>
+            {canAdmin ? <div className="mt-5 flex flex-wrap gap-2"><Button disabled={busy} onClick={() => void newCredential(agent.id)}><KeyRound size={12} /> New key</Button>{agent.status === "ACTIVE" ? <Button disabled={busy} onClick={() => void setStatus(agent.id, "SUSPENDED")}><Clock3 size={12} /> Suspend</Button> : agent.status === "SUSPENDED" ? <Button disabled={busy} onClick={() => void setStatus(agent.id, "ACTIVE")}><Check size={12} /> Reactivate</Button> : null}<Button tone="danger" disabled={busy || agent.status === "REVOKED"} onClick={() => void setStatus(agent.id, "REVOKED")}><XCircle size={12} /> Revoke</Button></div> : <p className="mt-5 border-t border-line pt-4 text-[10px] text-muted">Identity controls are hidden in the public demonstration.</p>}
           </article>
         ))}
       </div>
@@ -532,12 +541,14 @@ function SecretNotice({ secret, onClose }: { secret: string; onClose: () => void
   );
 }
 
-function Mandates({ snapshot, reload, notify }: { snapshot: DashboardSnapshot; reload: () => Promise<void>; notify: (message: string) => void }) {
+function Mandates({ snapshot, reload, notify, canAdmin }: { snapshot: DashboardSnapshot; reload: () => Promise<void>; notify: (message: string) => void; canAdmin: boolean }) {
   const [agentId, setAgentId] = useState(snapshot.agents[0]?.id ?? "");
   const [capabilities, setCapabilities] = useState<string[]>(["spend.compute", "spend.api"]);
   const [busy, setBusy] = useState(false);
   const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); const data = new FormData(event.currentTarget); setBusy(true);
+    event.preventDefault();
+    if (!canAdmin) { notify("Mandate activation is disabled in the public demonstration."); return; }
+    const data = new FormData(event.currentTarget); setBusy(true);
     try {
       const field = (name: string): string => {
         const value = data.get(name);
@@ -561,7 +572,8 @@ function Mandates({ snapshot, reload, notify }: { snapshot: DashboardSnapshot; r
         <label className="mt-7 block text-xs font-semibold">Approved vendors<input required name="vendors" defaultValue="OpenAI, Anthropic, AWS" className="mt-2 h-11 w-full border border-line bg-paper px-3 text-sm" /><span className="mt-2 block text-[10px] font-normal text-muted">Comma-separated. Unknown vendor IDs fail closed.</span></label>
         <div className="mt-7 grid gap-4 sm:grid-cols-2"><MoneyField name="transaction" label="Hard per transaction" value="150.00" /><MoneyField name="daily" label="Per UTC day" value="200.00" /><MoneyField name="monthly" label="Per calendar month" value="2000.00" /><MoneyField name="approval" label="Require approval above" value="100.00" /></div>
         <label className="mt-6 block text-xs font-semibold">Valid until<input name="validUntil" type="date" required defaultValue="2026-09-30" className="mt-2 h-11 w-full border border-line bg-paper px-3 text-sm sm:w-64" /></label>
-        <div className="mt-8 flex items-center justify-between border-t border-line pt-6"><p className="max-w-sm text-[10px] leading-5 text-muted">Activation is versioned and auditable. Only one mandate may be active for an agent.</p><Button tone="primary" disabled={busy || !agentId || capabilities.length === 0}>{busy ? "Activating…" : "Activate mandate"}</Button></div>
+        {!canAdmin && <p className="mt-6 border border-review/30 bg-review/10 p-3 text-[10px] leading-5 text-muted">Preview the policy shape here. Activation is intentionally disabled for the public approver identity.</p>}
+        <div className="mt-8 flex items-center justify-between border-t border-line pt-6"><p className="max-w-sm text-[10px] leading-5 text-muted">Activation is versioned and auditable. Only one mandate may be active for an agent.</p><Button tone="primary" disabled={!canAdmin || busy || !agentId || capabilities.length === 0}>{!canAdmin ? "Preview only" : busy ? "Activating…" : "Activate mandate"}</Button></div>
       </form>
       <div>
         <p className="mb-4 font-mono text-[9px] uppercase tracking-[.14em] text-muted">Current delegated authority</p>

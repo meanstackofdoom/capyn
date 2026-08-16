@@ -27,6 +27,7 @@ const app = await buildApp({
   repository,
   apiKeyPepper: config.API_KEY_PEPPER,
   allowDemoHumanHeader: config.DEMO_HUMAN_AUTH,
+  ...(config.DEMO_HUMAN_USER_ID ? { demoHumanUserId: config.DEMO_HUMAN_USER_ID } : {}),
   ...(config.BOOTSTRAP_TOKEN ? { bootstrapToken: config.BOOTSTRAP_TOKEN } : {}),
   ...(billingProvider ? { billingProvider } : {}),
   webOrigin: config.WEB_ORIGIN,

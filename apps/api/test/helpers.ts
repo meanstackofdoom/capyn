@@ -12,12 +12,16 @@ export interface TestContext {
   repository: InMemoryCapynRepository;
 }
 
-export async function createTestContext(options: { billingProvider?: BillingProvider } = {}): Promise<TestContext> {
+export async function createTestContext(options: {
+  billingProvider?: BillingProvider;
+  demoHumanUserId?: string;
+} = {}): Promise<TestContext> {
   const { repository } = createDemoMemoryRepository(hashApiKey(DEMO_KEY, TEST_PEPPER));
   const app = await buildApp({
     repository,
     apiKeyPepper: TEST_PEPPER,
     allowDemoHumanHeader: true,
+    ...(options.demoHumanUserId ? { demoHumanUserId: options.demoHumanUserId } : {}),
     bootstrapToken: "capyn-test-bootstrap-token-123456789",
     clock: () => new Date(TEST_NOW),
     logger: process.env.CAPYN_TEST_LOGS === "true",

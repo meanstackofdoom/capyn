@@ -21,4 +21,19 @@ describe("CAPYN deployment configuration", () => {
       "All Stripe billing variables must be configured together"
     );
   });
+
+  it("pins production demo authentication to one explicit human identity", () => {
+    expect(() => loadConfig({
+      ...base,
+      NODE_ENV: "production",
+      DEMO_HUMAN_AUTH: "true"
+    })).toThrow("A production demo must pin the human adapter to one explicit user");
+
+    expect(loadConfig({
+      ...base,
+      NODE_ENV: "production",
+      DEMO_HUMAN_AUTH: "true",
+      DEMO_HUMAN_USER_ID: "usr_demo_approver"
+    }).DEMO_HUMAN_USER_ID).toBe("usr_demo_approver");
+  });
 });

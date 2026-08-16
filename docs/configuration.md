@@ -15,13 +15,14 @@ CAPYN uses environment variables at the API and web process boundaries. `.env.ex
 | `API_KEY_PEPPER` | No safe deployment default | Yes | High-entropy secret used to HMAC agent credentials. |
 | `WEB_ORIGIN` | `http://localhost:3010` | No | Exact browser origin allowed by API CORS. |
 | `DEMO_HUMAN_AUTH` | `true` locally | No | Enables the development-only `x-capyn-user-id` adapter. Must be `false` outside a demo. |
+| `DEMO_HUMAN_USER_ID` | `usr_demo_owner` locally | Production demo | Pins the demo header adapter to exactly one seeded user. Required when demo auth is enabled with `NODE_ENV=production`. |
 | `BOOTSTRAP_TOKEN` | Local placeholder | No | Enables organisation bootstrap when present. Omit after controlled onboarding. |
 | `STRIPE_SECRET_KEY` | unset | Hosted billing | Server-side Stripe key. Never expose it to the web bundle. |
 | `STRIPE_WEBHOOK_SECRET` | unset | Hosted billing | Verifies the exact raw body delivered by Stripe. |
 | `STRIPE_PRICE_TEAM_MONTHLY` | unset | Hosted billing | Stripe recurring base-price ID for Team. |
 | `STRIPE_PRICE_BUSINESS_MONTHLY` | unset | Hosted billing | Stripe recurring base-price ID for Business. |
 
-The API refuses to start in PostgreSQL mode without `DATABASE_URL`, with an `API_KEY_PEPPER` shorter than 32 characters, or when only part of the Stripe configuration is present. Leave all four Stripe variables absent to keep checkout disabled while the free/internal plan remains usable.
+The API refuses to start in PostgreSQL mode without `DATABASE_URL`, with an `API_KEY_PEPPER` shorter than 32 characters, when production demo auth is not pinned to one user, or when only part of the Stripe configuration is present. Leave all four Stripe variables absent to keep checkout disabled while the free/internal plan remains usable.
 
 ## Web variables
 
@@ -29,6 +30,9 @@ The API refuses to start in PostgreSQL mode without `DATABASE_URL`, with an `API
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | `http://localhost:4000` | Browser-visible API origin used by the control plane. |
 | `NEXT_PUBLIC_DEMO_USER_ID` | `usr_demo_owner` | Development user sent only when demo human auth is intentionally enabled. |
+| `NEXT_PUBLIC_DEMO_USER_NAME` | `Acme Owner` | Synthetic identity label displayed in the control plane. |
+| `NEXT_PUBLIC_DEMO_USER_ROLE` | `Owner` | Synthetic identity role label displayed in the control plane. |
+| `NEXT_PUBLIC_DEMO_MANAGEMENT_ENABLED` | `true` | Hides administrative controls when `false`; server-side role checks remain the security boundary. |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3010` | Canonical origin for metadata, sitemap and social cards. |
 | `PORT` | platform supplied in production | Next.js listen port for `pnpm --filter @capyn/web start`. Development stays on `3010`. |
 | `CAPYN_SERVICE` | unset locally | Set to `web` or `api` for the preferred split deployment, or `combined` only for the constrained synthetic demo. |
@@ -63,6 +67,6 @@ The seed is for local demonstrations only. Do not run it against a production or
 - redact authorization and bootstrap headers from every log sink;
 - redact Stripe signatures and never log Checkout payloads or billing secrets;
 - keep `TRUST_PROXY=false` unless the API is behind a controlled ingress proxy; Railway API services should set it to `true`;
-- disable demo human authentication for every real or customer-data environment. A deliberately public demo may enable it only with synthetic, disposable state and mock execution.
+- disable demo human authentication for every real or customer-data environment. A deliberately public demo may enable it only with synthetic, disposable state, mock execution and `DEMO_HUMAN_USER_ID` pinned to a least-privilege approver.
 
 See [Billing](billing.md) for plan and webhook behavior, [Security](security.md) for the deployment gate and [Deployment](deployment.md) for service-level configuration.

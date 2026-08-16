@@ -12,7 +12,8 @@ export class RepositoryAuthAdapter implements AuthAdapter {
   constructor(
     private readonly repository: CapynRepository,
     private readonly apiKeyPepper: string,
-    private readonly allowDemoHumanHeader: boolean
+    private readonly allowDemoHumanHeader: boolean,
+    private readonly demoHumanUserId?: string
   ) {}
 
   async authenticateAgent(request: FastifyRequest): Promise<AgentPrincipal> {
@@ -41,6 +42,9 @@ export class RepositoryAuthAdapter implements AuthAdapter {
     const userId = request.headers["x-capyn-user-id"];
     if (typeof userId !== "string" || !userId) {
       throw new AuthenticationError("The x-capyn-user-id demo header is required");
+    }
+    if (this.demoHumanUserId && userId !== this.demoHumanUserId) {
+      throw new AuthenticationError("A valid human user is required");
     }
     const user = await this.repository.findUser(userId);
     if (!user) throw new AuthenticationError("A valid human user is required");

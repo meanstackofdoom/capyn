@@ -16,6 +16,7 @@ const configSchema = z
     API_KEY_PEPPER: z.string().min(32),
     WEB_ORIGIN: z.string().url().default("http://localhost:3010"),
     DEMO_HUMAN_AUTH: booleanString,
+    DEMO_HUMAN_USER_ID: z.string().trim().min(1).optional(),
     BOOTSTRAP_TOKEN: z.string().min(24).optional(),
     STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
     STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
@@ -25,6 +26,20 @@ const configSchema = z
   .superRefine((value, context) => {
     if (value.CAPYN_STORAGE === "postgres" && !value.DATABASE_URL) {
       context.addIssue({ code: "custom", path: ["DATABASE_URL"], message: "DATABASE_URL is required" });
+    }
+    if (value.DEMO_HUMAN_USER_ID && !value.DEMO_HUMAN_AUTH) {
+      context.addIssue({
+        code: "custom",
+        path: ["DEMO_HUMAN_USER_ID"],
+        message: "DEMO_HUMAN_AUTH must be enabled when a demo human user is configured"
+      });
+    }
+    if (value.NODE_ENV === "production" && value.DEMO_HUMAN_AUTH && !value.DEMO_HUMAN_USER_ID) {
+      context.addIssue({
+        code: "custom",
+        path: ["DEMO_HUMAN_USER_ID"],
+        message: "A production demo must pin the human adapter to one explicit user"
+      });
     }
     const stripeValues = [
       value.STRIPE_SECRET_KEY,

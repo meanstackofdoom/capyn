@@ -10,7 +10,7 @@ Do not send the pitch until each factual item is true at the public release URL.
 - [x] `pnpm check` passes on a clean GitHub Actions clone.
 - [x] CI badge points to a successful run on the tagged launch commit.
 - [x] No `.env`, real API key, real database credential or personal secret is committed.
-- [x] The demo key is clearly labelled local-only.
+- [x] The fixed key is clearly labelled disposable-demo-only.
 - [x] License choice is confirmed (MIT).
 - [x] Security limitations are easy to find.
 
@@ -19,7 +19,7 @@ Do not send the pitch until each factual item is true at the public release URL.
 - [x] 24-second generated demonstration, 1080p, readable at mobile size.
 - [x] One dashboard screenshot showing a selected evaluation trace.
 - [x] One architecture diagram with CAPYN above payment rails.
-- [ ] Project URL and GitHub URL are stable.
+- [x] Project URL and GitHub URL are stable.
 - [ ] Founder name, location and contact details are correct.
 - [x] No optional headshot is included in this outreach pack.
 

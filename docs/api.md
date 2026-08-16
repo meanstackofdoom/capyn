@@ -1,10 +1,12 @@
 # REST API
 
-Base URL: `http://localhost:4000`
+Local base URL: `http://localhost:4000`
+
+Synthetic public-demo base URL: `https://judgecat-production.up.railway.app`
 
 Start with [Getting started](getting-started.md) for the database-free local flow and [Configuration](configuration.md) for environment variables.
 
-Agent endpoints use `Authorization: Bearer <CAPYN_API_KEY>`. Human management endpoints use the development-only `x-capyn-user-id` adapter in the seeded demo.
+Agent endpoints use `Authorization: Bearer <CAPYN_API_KEY>`. Human endpoints use the development-only `x-capyn-user-id` adapter in a seeded demo. The hosted demo pins that adapter to the approver identity, so knowing another seeded user ID does not grant its role.
 
 The demo values are:
 
@@ -14,7 +16,7 @@ owner user: usr_demo_owner
 approver user: usr_demo_approver
 ```
 
-Never use these credentials outside local development.
+These are intentionally public, fixed demonstration credentials. Use them only against disposable local state or the explicit synthetic public demo. Never reuse them for durable data, customer environments or real authority.
 
 ## Agent endpoints
 

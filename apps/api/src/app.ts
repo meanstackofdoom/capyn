@@ -21,6 +21,7 @@ export interface AppDependencies {
   repository: CapynRepository;
   apiKeyPepper: string;
   allowDemoHumanHeader?: boolean;
+  demoHumanUserId?: string;
   bootstrapToken?: string;
   webOrigin?: string;
   clock?: () => Date;
@@ -83,7 +84,8 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
   const auth = new RepositoryAuthAdapter(
     dependencies.repository,
     dependencies.apiKeyPepper,
-    dependencies.allowDemoHumanHeader ?? false
+    dependencies.allowDemoHumanHeader ?? false,
+    dependencies.demoHumanUserId
   );
   const authorizations = new AuthorizationService(dependencies.repository, clock);
   const approvals = new ApprovalService(dependencies.repository, clock);

@@ -5,7 +5,9 @@
 [![CI](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml/badge.svg)](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ac39c.svg)](LICENSE)
 
-[CAPYN v0.1.0 public alpha](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0) is available with the generated video and dashboard evidence attached.
+[Try the live CAPYN public alpha](https://judgecat-production.up.railway.app) or inspect the [v0.1.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0) with its generated video and dashboard evidence.
+
+The hosted alpha is a synthetic, memory-backed demonstration with mock execution. Its state can reset during deployment, it contains no customer data, and it does not move real money.
 
 CAPYN allows organisations to delegate constrained financial authority to AI agents using capabilities, spending limits, vendor policies, approvals and complete audit trails.
 
@@ -105,7 +107,7 @@ Open:
 - API health: `http://localhost:4000/health`
 - Website health: `http://localhost:3010/healthz`
 
-The default development key is documented in [docs/api.md](docs/api.md); never use it outside local development. PostgreSQL remains available as an optional repository adapter when a database is provisioned.
+The fixed demo key is documented in [docs/api.md](docs/api.md). It is valid only for disposable local or explicitly published CAPYN demo environments and must never protect durable data or real authority. PostgreSQL remains available as an optional repository adapter when a database is provisioned.
 
 ## Hosting handoff
 
@@ -117,6 +119,8 @@ corepack pnpm start
 ```
 
 For a resource-constrained synthetic public demo, `CAPYN_SERVICE=combined` runs those same built processes behind one first-party proxy. It is deliberately not the durable/customer-data topology. Run `corepack pnpm smoke:combined` to verify that adapter; no Docker configuration is used.
+
+The current synthetic public alpha is live at [judgecat-production.up.railway.app](https://judgecat-production.up.railway.app). The temporary hostname reflects the recoverable reuse of an existing Railway service; CAPYN's canonical product domain remains a launch follow-up.
 
 The selected service binds to `0.0.0.0` and respects the platform `PORT`. Set `NEXT_PUBLIC_SITE_URL` to the final public origin and use `/healthz` for the web health check. The API uses `/health`. No Docker configuration is required.
 

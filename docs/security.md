@@ -12,6 +12,7 @@ CAPYN is security-sensitive infrastructure. v0.1 establishes boundaries and demo
 - The server rejects revoked keys with the same response as unknown keys.
 - Agent revocation is terminal, revokes active credentials and prevents replacement credentials.
 - Human role checks execute in API handlers, never in the browser alone.
+- Production demo configuration refuses to start unless its header adapter is pinned to one explicit user; the public alpha pins it to an approver, so owner/admin routes remain unavailable even though seeded IDs are public.
 
 `API_KEY_PEPPER` must be a high-entropy deployment secret kept outside the database. Key hashing is appropriate here because generated keys already have high entropy; password hashing is not required for brute-force resistance.
 
@@ -74,7 +75,8 @@ For regulated deployments, add immutable external export, retention policy, cloc
 
 ## Known v0.1 limitations
 
-- Human authentication is a demo header adapter. It may be exposed only with synthetic, disposable state and mock execution; disable it and install a real identity adapter before any customer-data or real-money deployment.
+- Human authentication is a demo header adapter. It may be exposed only when pinned to a least-privilege user with synthetic, disposable state and mock execution; disable it and install a real identity adapter before any customer-data or real-money deployment.
+- The fixed public agent key lets visitors consume the synthetic demo's in-memory allowance. Rate limits bound request volume, but this instance makes no availability promise and may be reset; design-partner environments require unique revocable credentials and durable isolation.
 - `MockPaymentExecutor` moves no funds.
 - A process crash after an external provider succeeds but before CAPYN finalizes can leave `EXECUTING`. Real adapters need provider idempotency, reconciliation and an outbox/state-machine worker.
 - Rate-limit state is process-local.

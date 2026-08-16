@@ -45,6 +45,7 @@ const child = spawn(process.execPath, [resolve(root, "scripts/start-service.mjs"
     NEXT_PUBLIC_SITE_URL: origin,
     NEXT_PUBLIC_API_URL: origin,
     DEMO_HUMAN_AUTH: "true",
+    DEMO_HUMAN_USER_ID: "usr_demo_owner",
     TRUST_PROXY: "false"
   }
 });

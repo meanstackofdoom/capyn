@@ -54,7 +54,7 @@ Local endpoints:
 | REST API | `http://localhost:4000` |
 | API health | `http://localhost:4000/health` |
 
-The seeded local user is `usr_demo_owner`. The seeded agent key is intentionally documented in [REST API](api.md) and must never be reused outside local development.
+The seeded local user is `usr_demo_owner`. The seeded agent key is intentionally documented in [REST API](api.md); it is valid only for disposable local or explicitly published CAPYN demo environments and must never protect durable data or real authority.
 
 ## Make one authorization request
 

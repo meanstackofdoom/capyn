@@ -11,7 +11,7 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 | Public repository | Complete | Source and evidence are public at `github.com/meanstackofdoom/capyn`. |
 | Tagged public alpha | Complete | `v0.1.0` was cut from a green clean-clone CI run with the video, cover and selected policy trace attached. |
 | Commercial control plane | Payment-ready base plans | Plan catalogue, quotas, usage ledger, pricing, Checkout/portal adapters and signed webhooks are implemented. Automated provider overage reporting remains explicit follow-up work. |
-| Hosted public alpha | Waiting on Railway capacity | Authentication succeeded, but Railway refused another project because the current free-plan resource limit is exhausted. Existing projects were not altered. |
+| Hosted public alpha | Live synthetic demo | The one-service, memory-backed Railway demo is live and verified at `judgecat-production.up.railway.app`; it uses mock execution and disposable state only. |
 | Real-money production | Not complete | Requires the security, identity, accounting, executor, operational and compliance work below. |
 
 “Complete” in the repository means the developer/public-alpha artifact is coherent, testable and honest about its boundary. It does not mean CAPYN should control production funds today.
@@ -38,22 +38,23 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 - publish page-specific canonical/social metadata, software JSON-LD, search directives, security headers and an accessible GSAP authority console;
 - run a reusable production smoke harness across the API, all public routes, all dashboard routes, SEO boundaries and security headers;
 - reproduce the 24-second launch video and cover from checked-in Remotion source.
+- run the hosted public alpha through all four decisions, idempotency conflict handling, approval/execution replay checks, billing metering, audit evidence and 31 public/dashboard route checks.
 
 ## Urgent public-alpha launch plan
 
-The repository, tagged release, CI evidence and launch assets are public. Remaining launch actions are deliberately small and evidence-led:
+The repository, tagged release, CI evidence, launch assets and synthetic hosted demo are public. The next actions move from construction to distribution and design-partner learning:
 
-1. upgrade the Railway plan or free sufficient Railway resource capacity with an explicit owner decision;
-2. deploy separate web and API services plus managed PostgreSQL;
-3. set the final domain, CORS origin and build-time public URLs;
-4. verify the hosted four-scenario demo, approval path and audit trail;
-5. add the hosted URL and Matthew's preferred public contact email to the outreach pack;
-6. send the TechRadar briefing and publish “The Agent Authority Problem” as the first technical note;
-7. invite a small, named cohort of agent builders and collect failure cases.
+1. choose CAPYN's final public domain and Matthew's preferred public contact address;
+2. send the prepared TechRadar briefing and publish “The Agent Authority Problem” as the first technical note;
+3. invite a small, named cohort of agent builders and capture concrete authority-policy failure cases;
+4. recruit two or three paid design partners at `$250–$1,000/month` for close integration support;
+5. provision the intended split web/API/PostgreSQL staging topology when Railway capacity permits;
+6. connect Stripe test mode only after the final domain and production human-auth adapter are selected;
+7. turn design-partner evidence into the durable integrations, operational controls and compliance work customers will pay for.
 
 The exact release evidence and deployment handoff are maintained in the [Public alpha launch checklist](launch-checklist.md).
 
-Do not enable real settlement during this launch phase.
+The live demo is [judgecat-production.up.railway.app](https://judgecat-production.up.railway.app). Its temporary hostname comes from a recoverable Railway service reuse forced by the free-plan resource ceiling. The previous service's volume and custom-domain records remain intact; CAPYN does not read that volume. Do not enter customer data or enable real settlement in this topology.
 
 ## Required before real money
 

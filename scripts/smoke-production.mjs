@@ -243,7 +243,8 @@ try {
     CAPYN_STORAGE: "memory",
     API_KEY_PEPPER: "capyn-production-smoke-pepper-2026-do-not-use-live",
     WEB_ORIGIN: webOrigin,
-    DEMO_HUMAN_AUTH: "true"
+    DEMO_HUMAN_AUTH: "true",
+    DEMO_HUMAN_USER_ID: demoUserId
   };
   launch("api", [resolve(root, "apps/api/dist/index.js")], apiEnvironment);
   launch(

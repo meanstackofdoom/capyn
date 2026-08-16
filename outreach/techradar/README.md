@@ -1,6 +1,6 @@
 # TechRadar outreach pack
 
-This folder contains the evidence-led briefing for TechRadar Pro's 31 July 2026 article, [“The real fight in agentic commerce isn't autonomy. It's authorization”](https://www.techradar.com/pro/the-real-fight-in-agentic-commerce-isnt-autonomy-its-authorization). The repository and generated 24-second demo links are already filled in; add a public contact email and hosted URL before sending.
+This folder contains the evidence-led briefing for TechRadar Pro's 31 July 2026 article, [“The real fight in agentic commerce isn't autonomy. It's authorization”](https://www.techradar.com/pro/the-real-fight-in-agentic-commerce-isnt-autonomy-its-authorization). The repository, live synthetic demo and generated 24-second demo links are filled in; add Matthew's preferred public contact email before sending.
 
 ## Recommended sequence
 
