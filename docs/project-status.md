@@ -34,7 +34,7 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 
 The repository, tagged release, CI evidence and launch assets are public. Remaining launch actions are deliberately small and evidence-led:
 
-1. upgrade the Railway plan or free one project slot with an explicit owner decision;
+1. upgrade the Railway plan or free sufficient Railway resource capacity with an explicit owner decision;
 2. deploy separate web and API services plus managed PostgreSQL;
 3. set the final domain, CORS origin and build-time public URLs;
 4. verify the hosted four-scenario demo, approval path and audit trail;
