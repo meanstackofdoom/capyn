@@ -1,0 +1,15 @@
+node_modules/
+.pnpm-store/
+.turbo/
+.runtime/
+dist/
+.next/
+coverage/
+.env*
+!.env.example
+*.log
+*.tsbuildinfo
+packages/database/src/generated/
+packages/database/prisma/dev.db*
+.DS_Store
+Thumbs.db

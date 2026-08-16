@@ -1,0 +1,122 @@
+[
+  {
+    "slug": "getting-started",
+    "file": "getting-started.md",
+    "title": "Getting started",
+    "description": "Run the policy demo, public website, API and control plane locally without external infrastructure.",
+    "category": "Start",
+    "status": "Current",
+    "reviewedAt": "2026-08-17",
+    "order": 10
+  },
+  {
+    "slug": "configuration",
+    "file": "configuration.md",
+    "title": "Configuration",
+    "description": "Environment variables, local defaults, secrets and persistence modes.",
+    "category": "Start",
+    "status": "Current",
+    "reviewedAt": "2026-08-17",
+    "order": 20
+  },
+  {
+    "slug": "api",
+    "file": "api.md",
+    "title": "REST API",
+    "description": "Agent authorization, management, approval, execution and safe error contracts.",
+    "category": "Build",
+    "status": "Implemented",
+    "reviewedAt": "2026-08-17",
+    "order": 30
+  },
+  {
+    "slug": "policy-engine",
+    "file": "policy-engine.md",
+    "title": "Policy engine",
+    "description": "Deterministic evaluation order, decisions, traces, money handling and fail-closed behavior.",
+    "category": "Build",
+    "status": "Implemented",
+    "reviewedAt": "2026-08-17",
+    "order": 40
+  },
+  {
+    "slug": "domain-model",
+    "file": "domain-model.md",
+    "title": "Domain model",
+    "description": "Organisations, users, agents, mandates, authorizations, approvals, executions and audit events.",
+    "category": "Build",
+    "status": "Implemented",
+    "reviewedAt": "2026-08-17",
+    "order": 50
+  },
+  {
+    "slug": "architecture",
+    "file": "architecture.md",
+    "title": "Architecture",
+    "description": "System boundaries, authorization sequence, lifecycle, persistence and deployment shape.",
+    "category": "Build",
+    "status": "Implemented",
+    "reviewedAt": "2026-08-17",
+    "order": 60
+  },
+  {
+    "slug": "security",
+    "file": "security.md",
+    "title": "Security",
+    "description": "Implemented controls, concurrency guarantees, known limitations and the production gate.",
+    "category": "Trust",
+    "status": "Current",
+    "reviewedAt": "2026-08-17",
+    "order": 70
+  },
+  {
+    "slug": "deployment",
+    "file": "deployment.md",
+    "title": "Deployment",
+    "description": "Platform-neutral web/API deployment, health checks, PostgreSQL migrations and rollout safeguards.",
+    "category": "Trust",
+    "status": "Reference",
+    "reviewedAt": "2026-08-17",
+    "order": 80
+  },
+  {
+    "slug": "documentation",
+    "file": "documentation.md",
+    "title": "Documentation policy",
+    "description": "How CAPYN keeps repository documentation and the public docs website synchronized.",
+    "category": "Trust",
+    "status": "Current",
+    "reviewedAt": "2026-08-17",
+    "order": 90
+  },
+  {
+    "slug": "project-status",
+    "file": "project-status.md",
+    "title": "Project status",
+    "description": "What is complete, what remains, the urgent launch plan and the real-money production gate.",
+    "category": "Direction",
+    "status": "Live",
+    "reviewedAt": "2026-08-17",
+    "order": 100
+  },
+  {
+    "slug": "agent-authority-problem",
+    "file": "agent-authority-problem.md",
+    "title": "The Agent Authority Problem",
+    "description": "The technical thesis separating authentication, authorization, intent, policy, execution and audit.",
+    "category": "Direction",
+    "status": "Thesis",
+    "reviewedAt": "2026-08-17",
+    "order": 110
+  },
+  {
+    "slug": "solana-roadmap",
+    "file": "solana-roadmap.md",
+    "title": "Solana / USDC roadmap",
+    "description": "A future chain-agnostic execution adapter path without moving policy into settlement.",
+    "category": "Direction",
+    "status": "Roadmap",
+    "reviewedAt": "2026-08-17",
+    "order": 120
+  }
+]

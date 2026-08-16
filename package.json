@@ -1,0 +1,36 @@
+{
+  "name": "capyn",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "eslint . --max-warnings=0",
+    "docs:check": "node scripts/check-docs.mjs",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "typecheck": "turbo run typecheck && tsc --noEmit -p examples/tsconfig.json",
+    "check": "pnpm docs:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "db:generate": "pnpm --filter @capyn/database db:generate",
+    "db:migrate": "pnpm --filter @capyn/database db:migrate",
+    "db:seed": "pnpm --filter @capyn/database db:seed",
+    "demo": "tsx --tsconfig examples/tsconfig.json examples/demo.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@next/eslint-plugin-next": "15.5.2",
+    "@types/node": "^24.3.0",
+    "eslint": "^9.35.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.3.0",
+    "tsx": "^4.20.5",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0"
+  }
+}

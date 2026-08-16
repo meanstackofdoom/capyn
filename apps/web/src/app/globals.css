@@ -1,0 +1,401 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0a1824;
+  --paper: #f3f7f9;
+  --panel: #ffffff;
+  --line: #d7e0e5;
+  --muted: #627381;
+  --permission: #0d8767;
+  --review: #b96f12;
+  --denial: #c84b43;
+  --authority: #2f62dd;
+  --code: #07141e;
+  --wash: #eaf0f3;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #edf4f1;
+    --paper: #08131c;
+    --panel: #0e1b25;
+    --line: #263743;
+    --muted: #94a2aa;
+    --permission: #4ac39c;
+    --review: #e6a13a;
+    --denial: #ed766b;
+    --authority: #7899ff;
+    --code: #050d13;
+    --wash: #14232d;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01" 1, "ss03" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+.display-title {
+  font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  font-variation-settings: "wght" 580, "CRSV" 0, "SHRP" 18;
+}
+
+.site-container {
+  width: min(100% - 2.5rem, 1280px);
+  margin-inline: auto;
+}
+
+.site-section {
+  padding-block: clamp(4.5rem, 8vw, 7.5rem);
+}
+
+.page-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.public-primary-button,
+.public-secondary-button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--ink);
+  padding-inline: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.public-primary-button {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.public-secondary-button {
+  border-color: var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.public-primary-button:hover,
+.public-secondary-button:hover {
+  transform: translateY(-2px);
+}
+
+.public-secondary-button:hover {
+  border-color: var(--muted);
+}
+
+.authority-field {
+  background-image:
+    linear-gradient(to right, transparent 0, transparent calc(50% - .5px), color-mix(in srgb, var(--authority) 13%, transparent) calc(50% - .5px), color-mix(in srgb, var(--authority) 13%, transparent) calc(50% + .5px), transparent calc(50% + .5px)),
+    repeating-linear-gradient(to right, transparent 0, transparent 95px, color-mix(in srgb, var(--line) 65%, transparent) 95px, color-mix(in srgb, var(--line) 65%, transparent) 96px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--authority) 5%, transparent), transparent 70%);
+  mask-image: linear-gradient(to bottom, black, transparent 92%);
+}
+
+.authority-field-dark {
+  background-image:
+    repeating-linear-gradient(to right, transparent 0, transparent 95px, rgba(255,255,255,.07) 95px, rgba(255,255,255,.07) 96px),
+    linear-gradient(to bottom, rgba(47,98,221,.22), transparent 72%);
+  mask-image: linear-gradient(to bottom, black, transparent 96%);
+}
+
+.authority-corridor {
+  position: relative;
+}
+
+.authority-corridor::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: var(--authority);
+  content: "";
+  opacity: 0.55;
+}
+
+.policy-chip {
+  display: inline-flex;
+  border: 1px solid color-mix(in srgb, var(--authority) 28%, var(--line));
+  background: color-mix(in srgb, var(--authority) 8%, var(--panel));
+  padding: 0.4rem 0.6rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.5625rem;
+  color: var(--authority);
+}
+
+.policy-chip-denied {
+  border-color: color-mix(in srgb, var(--denial) 28%, var(--line));
+  background: color-mix(in srgb, var(--denial) 7%, var(--panel));
+  color: var(--denial);
+}
+
+.docs-prose {
+  color: var(--ink);
+  font-size: 0.9375rem;
+  line-height: 1.85;
+}
+
+.docs-prose > :first-child {
+  margin-top: 0;
+}
+
+.docs-prose h2,
+.docs-prose h3 {
+  scroll-margin-top: 7rem;
+  font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.035em;
+}
+
+.docs-prose h2 {
+  margin-top: 4rem;
+  margin-bottom: 1.25rem;
+  border-top: 1px solid var(--line);
+  padding-top: 2rem;
+  font-size: clamp(1.65rem, 3vw, 2.15rem);
+  font-weight: 620;
+  line-height: 1.2;
+}
+
+.docs-prose h3 {
+  margin-top: 2.5rem;
+  margin-bottom: 0.8rem;
+  font-size: 1.15rem;
+  font-weight: 660;
+  line-height: 1.35;
+}
+
+.docs-prose p,
+.docs-prose ul,
+.docs-prose ol,
+.docs-prose blockquote,
+.docs-prose pre,
+.docs-prose table {
+  margin-block: 1.25rem;
+}
+
+.docs-prose ul,
+.docs-prose ol {
+  padding-left: 1.4rem;
+}
+
+.docs-prose ul {
+  list-style: square;
+}
+
+.docs-prose ol {
+  list-style: decimal;
+}
+
+.docs-prose li {
+  margin-block: 0.45rem;
+  padding-left: 0.25rem;
+}
+
+.docs-prose li::marker {
+  color: var(--authority);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.72em;
+}
+
+.docs-prose a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  color: var(--authority);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--authority) 35%, transparent);
+  text-underline-offset: 0.2em;
+}
+
+.docs-prose a:hover {
+  text-decoration-color: currentColor;
+}
+
+.docs-prose strong {
+  font-weight: 800;
+}
+
+.docs-prose :not(pre) > code {
+  border: 1px solid var(--line);
+  background: var(--wash);
+  padding: 0.12rem 0.33rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.78em;
+}
+
+.docs-prose pre {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  background: var(--code);
+  padding: 1.25rem;
+  color: #dce9e5;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.76rem;
+  line-height: 1.75;
+}
+
+.docs-prose pre code {
+  font: inherit;
+}
+
+.docs-prose blockquote {
+  border-left: 2px solid var(--authority);
+  background: color-mix(in srgb, var(--authority) 5%, var(--panel));
+  padding: 1rem 1.25rem;
+  color: var(--muted);
+}
+
+.docs-prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.docs-prose th,
+.docs-prose td {
+  min-width: 8rem;
+  border: 1px solid var(--line);
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.docs-prose th {
+  background: var(--wash);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.docs-prose hr {
+  margin-block: 3rem;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--permission) 22%, transparent);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--permission);
+  outline-offset: 3px;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.hairline-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--line) 48%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--line) 48%, transparent) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.authority-bracket {
+  position: relative;
+}
+
+.authority-bracket::before {
+  position: absolute;
+  inset: -1px auto -1px -1px;
+  width: 12px;
+  border: 1px solid var(--line);
+  border-right: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.mono-number {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgba(11, 16, 20, 0.03), 0 12px 30px rgba(11, 16, 20, 0.025);
+}
+
+@media (min-width: 640px) {
+  .site-container {
+    width: min(100% - 4rem, 1280px);
+  }
+}
+
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent);
+}
+
+@keyframes enter-control {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enter-control {
+  animation: enter-control 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .enter-control {
+    animation: none;
+  }
+
+  .public-primary-button,
+  .public-secondary-button {
+    transition: none;
+  }
+}
