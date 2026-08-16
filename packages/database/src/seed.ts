@@ -12,12 +12,28 @@ async function seed(): Promise<void> {
   const agentId = "agt_demo_procurement";
   const mandateId = "man_demo_procurement_v1";
   const keyHash = hashApiKey(demoApiKey, pepper);
+  const now = new Date();
+  const currentPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const currentPeriodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 
   await db.$transaction(async (tx) => {
     await tx.organisation.upsert({
       where: { id: organisationId },
       update: { name: "Acme AI", slug: "acme-ai" },
       create: { id: organisationId, name: "Acme AI", slug: "acme-ai" }
+    });
+    await tx.organisationSubscription.upsert({
+      where: { organisationId },
+      update: {},
+      create: {
+        id: "sub_demo_acme",
+        organisationId,
+        plan: "DEVELOPER",
+        status: "ACTIVE",
+        provider: "INTERNAL",
+        currentPeriodStart,
+        currentPeriodEnd
+      }
     });
     await tx.user.upsert({
       where: { id: ownerId },

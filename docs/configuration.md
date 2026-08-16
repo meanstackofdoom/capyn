@@ -9,14 +9,19 @@ CAPYN uses environment variables at the API and web process boundaries. `.env.ex
 | `NODE_ENV` | `development` | No | Selects development, test or production behavior. |
 | `HOST` | `0.0.0.0` | No | API listen address. |
 | `PORT` | `4000` | No | API listen port. Hosting platforms may supply it. |
+| `TRUST_PROXY` | `false` | Reverse-proxy deployments | Trusts the controlled ingress proxy's forwarded client address for per-client rate limiting. |
 | `CAPYN_STORAGE` | `memory` in `.env.example` | No | Selects `memory` or `postgres`. |
 | `DATABASE_URL` | Local example only | PostgreSQL mode | Prisma connection URL. |
 | `API_KEY_PEPPER` | No safe deployment default | Yes | High-entropy secret used to HMAC agent credentials. |
 | `WEB_ORIGIN` | `http://localhost:3010` | No | Exact browser origin allowed by API CORS. |
 | `DEMO_HUMAN_AUTH` | `true` locally | No | Enables the development-only `x-capyn-user-id` adapter. Must be `false` outside a demo. |
 | `BOOTSTRAP_TOKEN` | Local placeholder | No | Enables organisation bootstrap when present. Omit after controlled onboarding. |
+| `STRIPE_SECRET_KEY` | unset | Hosted billing | Server-side Stripe key. Never expose it to the web bundle. |
+| `STRIPE_WEBHOOK_SECRET` | unset | Hosted billing | Verifies the exact raw body delivered by Stripe. |
+| `STRIPE_PRICE_TEAM_MONTHLY` | unset | Hosted billing | Stripe recurring base-price ID for Team. |
+| `STRIPE_PRICE_BUSINESS_MONTHLY` | unset | Hosted billing | Stripe recurring base-price ID for Business. |
 
-The API refuses to start in PostgreSQL mode without `DATABASE_URL`, or with an `API_KEY_PEPPER` shorter than 32 characters.
+The API refuses to start in PostgreSQL mode without `DATABASE_URL`, with an `API_KEY_PEPPER` shorter than 32 characters, or when only part of the Stripe configuration is present. Leave all four Stripe variables absent to keep checkout disabled while the free/internal plan remains usable.
 
 ## Web variables
 
@@ -54,6 +59,8 @@ The seed is for local demonstrations only. Do not run it against a production or
 - never expose the pepper, database URL or bootstrap token through `NEXT_PUBLIC_*` variables;
 - rotate agent credentials through CAPYN rather than editing hashes;
 - redact authorization and bootstrap headers from every log sink;
-- disable demo human authentication before any shared or internet-facing environment.
+- redact Stripe signatures and never log Checkout payloads or billing secrets;
+- keep `TRUST_PROXY=false` unless the API is behind a controlled ingress proxy; Railway API services should set it to `true`;
+- disable demo human authentication for every real or customer-data environment. A deliberately public demo may enable it only with synthetic, disposable state and mock execution.
 
-See [Security](security.md) for the deployment gate and [Deployment](deployment.md) for service-level configuration.
+See [Billing](billing.md) for plan and webhook behavior, [Security](security.md) for the deployment gate and [Deployment](deployment.md) for service-level configuration.

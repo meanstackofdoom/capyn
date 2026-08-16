@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { createDemoMemoryRepository, hashApiKey, type InMemoryCapynRepository } from "@capyn/database";
 import { buildApp } from "../src/app";
+import type { BillingProvider } from "../src/domain/billing-provider";
 
 export const TEST_PEPPER = "capyn-test-pepper-with-at-least-thirty-two-characters";
 export const TEST_NOW = new Date("2026-08-16T10:00:00.000Z");
@@ -11,7 +12,7 @@ export interface TestContext {
   repository: InMemoryCapynRepository;
 }
 
-export async function createTestContext(): Promise<TestContext> {
+export async function createTestContext(options: { billingProvider?: BillingProvider } = {}): Promise<TestContext> {
   const { repository } = createDemoMemoryRepository(hashApiKey(DEMO_KEY, TEST_PEPPER));
   const app = await buildApp({
     repository,
@@ -20,7 +21,8 @@ export async function createTestContext(): Promise<TestContext> {
     bootstrapToken: "capyn-test-bootstrap-token-123456789",
     clock: () => new Date(TEST_NOW),
     logger: process.env.CAPYN_TEST_LOGS === "true",
-    disableRateLimit: true
+    disableRateLimit: true,
+    ...(options.billingProvider ? { billingProvider: options.billingProvider } : {})
   });
   return { app, repository };
 }

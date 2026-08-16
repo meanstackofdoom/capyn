@@ -1,15 +1,19 @@
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import Fastify, { type FastifyInstance } from "fastify";
 import type { CapynRepository } from "@capyn/database";
 import { ApprovalService } from "./domain/approval-service";
 import { AuthorizationService } from "./domain/authorization-service";
+import { DisabledBillingProvider, type BillingProvider } from "./domain/billing-provider";
+import { BillingService } from "./domain/billing-service";
 import { BootstrapService } from "./domain/bootstrap-service";
 import { ExecutionService, MockPaymentExecutor, type PaymentExecutor } from "./domain/execution-service";
 import { ManagementService } from "./domain/management-service";
 import { RepositoryAuthAdapter } from "./http/auth";
 import { AppError } from "./http/errors";
 import { registerAgentRoutes } from "./routes/agent";
+import { registerBillingRoutes } from "./routes/billing";
 import { registerBootstrapRoutes } from "./routes/bootstrap";
 import { registerManagementRoutes } from "./routes/management";
 
@@ -21,8 +25,10 @@ export interface AppDependencies {
   webOrigin?: string;
   clock?: () => Date;
   executor?: PaymentExecutor;
+  billingProvider?: BillingProvider;
   logger?: boolean;
   disableRateLimit?: boolean;
+  trustProxy?: boolean;
 }
 
 export async function buildApp(dependencies: AppDependencies): Promise<FastifyInstance> {
@@ -35,6 +41,7 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
           paths: [
             "req.headers.authorization",
             "req.headers.x-capyn-bootstrap-token",
+            "req.headers.stripe-signature",
             "res.headers.set-cookie"
           ],
           censor: "[REDACTED]"
@@ -42,9 +49,13 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
       },
     bodyLimit: 32 * 1024,
     requestIdHeader: "x-request-id",
-    trustProxy: false
+    trustProxy: dependencies.trustProxy ?? false
   });
 
+  await app.register(helmet, {
+    global: true,
+    contentSecurityPolicy: false
+  });
   await app.register(cors, {
     origin: dependencies.webOrigin ?? "http://localhost:3010",
     methods: ["GET", "POST", "PATCH", "DELETE"],
@@ -83,10 +94,17 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
   );
   const management = new ManagementService(dependencies.repository, dependencies.apiKeyPepper, clock);
   const bootstrap = new BootstrapService(dependencies.repository, dependencies.bootstrapToken, clock);
+  const billing = new BillingService(
+    dependencies.repository,
+    dependencies.billingProvider ?? new DisabledBillingProvider(),
+    dependencies.webOrigin ?? "http://localhost:3010",
+    clock
+  );
 
   app.get("/health", async () => ({ status: "ok", service: "capyn-api", version: "0.1.0" }));
   await registerAgentRoutes(app, { auth, authorizations, executions });
   await registerManagementRoutes(app, { auth, approvals, management });
+  await registerBillingRoutes(app, { auth, billing });
   await registerBootstrapRoutes(app, bootstrap);
 
   app.setNotFoundHandler((_request, reply) =>

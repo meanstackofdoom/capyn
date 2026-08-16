@@ -10,16 +10,34 @@ const configSchema = z
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
     HOST: z.string().default("0.0.0.0"),
+    TRUST_PROXY: booleanString,
     CAPYN_STORAGE: z.enum(["postgres", "memory"]).default("postgres"),
     DATABASE_URL: z.string().optional(),
     API_KEY_PEPPER: z.string().min(32),
     WEB_ORIGIN: z.string().url().default("http://localhost:3010"),
     DEMO_HUMAN_AUTH: booleanString,
-    BOOTSTRAP_TOKEN: z.string().min(24).optional()
+    BOOTSTRAP_TOKEN: z.string().min(24).optional(),
+    STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
+    STRIPE_PRICE_TEAM_MONTHLY: z.string().startsWith("price_").optional(),
+    STRIPE_PRICE_BUSINESS_MONTHLY: z.string().startsWith("price_").optional()
   })
   .superRefine((value, context) => {
     if (value.CAPYN_STORAGE === "postgres" && !value.DATABASE_URL) {
       context.addIssue({ code: "custom", path: ["DATABASE_URL"], message: "DATABASE_URL is required" });
+    }
+    const stripeValues = [
+      value.STRIPE_SECRET_KEY,
+      value.STRIPE_WEBHOOK_SECRET,
+      value.STRIPE_PRICE_TEAM_MONTHLY,
+      value.STRIPE_PRICE_BUSINESS_MONTHLY
+    ];
+    if (stripeValues.some(Boolean) && !stripeValues.every(Boolean)) {
+      context.addIssue({
+        code: "custom",
+        path: ["STRIPE_SECRET_KEY"],
+        message: "All Stripe billing variables must be configured together"
+      });
     }
   });
 

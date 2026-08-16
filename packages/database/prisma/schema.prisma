@@ -65,6 +65,38 @@ enum ActorType {
   SYSTEM
 }
 
+enum BillingPlan {
+  DEVELOPER
+  TEAM
+  BUSINESS
+  ENTERPRISE
+  DESIGN_PARTNER
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  UNPAID
+  PAUSED
+}
+
+enum BillingProviderName {
+  INTERNAL
+  MANUAL
+  STRIPE
+}
+
+enum BillableMetric {
+  AUTHORIZATION_DECISION
+  APPROVAL_REQUEST
+  ACTIVE_AGENT
+  AUDIT_EVENT
+  INTEGRATION_CONNECTION
+}
+
 model Organisation {
   id             String          @id @db.VarChar(40)
   name           String          @db.VarChar(160)
@@ -76,8 +108,60 @@ model Organisation {
   mandates       Mandate[]
   authorizations Authorization[]
   auditEvents    AuditEvent[]
+  subscription   OrganisationSubscription?
+  billingUsageEvents BillingUsageEvent[]
 
   @@map("organisations")
+}
+
+model OrganisationSubscription {
+  id                     String              @id @db.VarChar(40)
+  organisationId         String              @unique @map("organisation_id") @db.VarChar(40)
+  plan                   BillingPlan         @default(DEVELOPER)
+  status                 SubscriptionStatus  @default(ACTIVE)
+  provider               BillingProviderName @default(INTERNAL)
+  providerCustomerId     String?             @unique @map("provider_customer_id") @db.VarChar(255)
+  providerSubscriptionId String?             @unique @map("provider_subscription_id") @db.VarChar(255)
+  currentPeriodStart     DateTime            @map("current_period_start")
+  currentPeriodEnd       DateTime            @map("current_period_end")
+  cancelAtPeriodEnd      Boolean             @default(false) @map("cancel_at_period_end")
+  createdAt              DateTime            @default(now()) @map("created_at")
+  updatedAt              DateTime            @updatedAt @map("updated_at")
+  organisation           Organisation        @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+
+  @@index([plan, status])
+  @@map("organisation_subscriptions")
+}
+
+model BillingUsageEvent {
+  id                 String         @id @db.VarChar(40)
+  organisationId     String         @map("organisation_id") @db.VarChar(40)
+  metric             BillableMetric
+  quantity           BigInt
+  sourceType         String         @map("source_type") @db.VarChar(80)
+  sourceId           String         @map("source_id") @db.VarChar(80)
+  occurredAt         DateTime       @default(now()) @map("occurred_at")
+  providerReportedAt DateTime?      @map("provider_reported_at")
+  metadata           Json
+  organisation       Organisation   @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+
+  @@unique([organisationId, metric, sourceType, sourceId])
+  @@index([organisationId, metric, occurredAt])
+  @@map("billing_usage_events")
+}
+
+model BillingWebhookEvent {
+  id              String              @id @db.VarChar(40)
+  provider        BillingProviderName
+  providerEventId String              @map("provider_event_id") @db.VarChar(255)
+  eventType       String              @map("event_type") @db.VarChar(160)
+  payloadHash     String              @map("payload_hash") @db.Char(64)
+  receivedAt      DateTime            @default(now()) @map("received_at")
+  processedAt     DateTime?           @map("processed_at")
+
+  @@unique([provider, providerEventId])
+  @@index([provider, receivedAt])
+  @@map("billing_webhook_events")
 }
 
 model User {

@@ -22,6 +22,19 @@ export class ApprovalService {
   ): Promise<ApprovalView> {
     const now = this.clock();
     const outcome = await this.repository.transaction<ApprovalOutcome>(async (tx) => {
+      const candidateApproval = await tx.findApproval(approvalId);
+      if (!candidateApproval || candidateApproval.organisationId !== principal.organisationId) {
+        throw new NotFoundError("Approval request not found");
+      }
+      const candidateAuthorization = await tx.findAuthorization(candidateApproval.authorizationId);
+      if (!candidateAuthorization || candidateAuthorization.organisationId !== principal.organisationId) {
+        throw new NotFoundError("Authorization not found");
+      }
+      await tx.lockAgent(candidateAuthorization.agentId);
+
+      // Re-read after acquiring the agent lock. A concurrent approver may have
+      // committed while this transaction waited, and stale pre-lock state must
+      // never authorize the same request twice.
       const approval = await tx.findApproval(approvalId);
       if (!approval || approval.organisationId !== principal.organisationId) {
         throw new NotFoundError("Approval request not found");
@@ -33,7 +46,6 @@ export class ApprovalService {
       if (!authorization || authorization.organisationId !== principal.organisationId) {
         throw new NotFoundError("Authorization not found");
       }
-      await tx.lockAgent(authorization.agentId);
       if (authorization.state !== "AWAITING_APPROVAL") {
         throw new ConflictError("AUTHORIZATION_NOT_AWAITING_APPROVAL", "Authorization is not awaiting approval");
       }
@@ -95,7 +107,12 @@ export class ApprovalService {
         request: normalized,
         approvalAlreadyGranted: true
       });
-      if (currentEvaluation.decision !== "ALLOW") {
+      const mandateStillBound =
+        authorization.mandateId !== null && context.mandate?.id === authorization.mandateId;
+      if (!mandateStillBound || currentEvaluation.decision !== "ALLOW") {
+        const reasons = mandateStillBound
+          ? currentEvaluation.reasonCodes
+          : ["AUTHORIZATION_MANDATE_CHANGED"];
         await tx.updateApproval(approval.id, {
           status: "EXPIRED",
           decidedAt: now,
@@ -112,9 +129,9 @@ export class ApprovalService {
           entityType: "Approval",
           entityId: approval.id,
           timestamp: now,
-          metadata: { authorizationId: authorization.id, reasonCodes: currentEvaluation.reasonCodes }
+          metadata: { authorizationId: authorization.id, reasonCodes: reasons }
         });
-        return { kind: "invalidated", reasons: currentEvaluation.reasonCodes };
+        return { kind: "invalidated", reasons };
       }
 
       await tx.updateApproval(approval.id, {

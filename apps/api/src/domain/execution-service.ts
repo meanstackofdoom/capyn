@@ -1,5 +1,6 @@
 import type { CapynRepository, StoredAuthorization, StoredExecution } from "@capyn/database";
-import type { AgentPrincipal, ExecutionResultView } from "@capyn/types";
+import { evaluatePolicy } from "@capyn/policy-engine";
+import type { AgentPrincipal, ExecutionResultView, NormalizedAuthorizationRequest } from "@capyn/types";
 import { ConflictError, GoneError, NotFoundError } from "../http/errors";
 import { createId } from "./ids";
 
@@ -51,7 +52,14 @@ function toView(execution: StoredExecution): ExecutionResultView {
 type ClaimOutcome =
   | { kind: "claimed"; execution: StoredExecution; authorization: StoredAuthorization }
   | { kind: "existing"; execution: StoredExecution }
-  | { kind: "expired" };
+  | { kind: "expired" }
+  | { kind: "invalidated"; reasons: string[] };
+
+function subtractReservation(total: string, authorization: StoredAuthorization, periodStart: Date): string {
+  if (authorization.createdAt < periodStart) return total;
+  const remaining = BigInt(total) - BigInt(authorization.amountMinor);
+  return (remaining > 0n ? remaining : 0n).toString();
+}
 
 export class ExecutionService {
   constructor(
@@ -63,6 +71,15 @@ export class ExecutionService {
   async execute(principal: AgentPrincipal, authorizationId: string): Promise<ExecutionResultView> {
     const now = this.clock();
     const claim = await this.repository.transaction<ClaimOutcome>(async (tx) => {
+      const candidateAuthorization = await tx.findAuthorization(authorizationId);
+      if (
+        !candidateAuthorization ||
+        candidateAuthorization.organisationId !== principal.organisationId ||
+        candidateAuthorization.agentId !== principal.agentId
+      ) {
+        throw new NotFoundError("Authorization not found");
+      }
+      await tx.lockAgent(candidateAuthorization.agentId);
       const authorization = await tx.findAuthorization(authorizationId);
       if (
         !authorization ||
@@ -71,7 +88,6 @@ export class ExecutionService {
       ) {
         throw new NotFoundError("Authorization not found");
       }
-      await tx.lockAgent(authorization.agentId);
       const existing = await tx.findExecutionByAuthorization(authorization.id);
       if (existing) return { kind: "existing", execution: existing };
       if (authorization.expiresAt && authorization.expiresAt <= now) {
@@ -95,6 +111,46 @@ export class ExecutionService {
           `Authorization in state ${authorization.state} cannot be executed`
         );
       }
+
+      const request: NormalizedAuthorizationRequest = {
+        capability: authorization.capability,
+        amountMinor: authorization.amountMinor,
+        currency: authorization.currency,
+        vendor: { id: authorization.vendorId, name: authorization.vendorName },
+        metadata: authorization.metadata
+      };
+      const context = await tx.loadPolicyContext(authorization.agentId, authorization.currency, now);
+      const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      const evaluation = evaluatePolicy({
+        ...context,
+        spend: {
+          dailyMinor: subtractReservation(context.spend.dailyMinor, authorization, dayStart),
+          monthlyMinor: subtractReservation(context.spend.monthlyMinor, authorization, monthStart)
+        },
+        request,
+        approvalAlreadyGranted: authorization.state === "APPROVED"
+      });
+      const mandateStillBound =
+        authorization.mandateId !== null && context.mandate?.id === authorization.mandateId;
+      if (!mandateStillBound || evaluation.decision !== "ALLOW") {
+        const reasons = mandateStillBound
+          ? evaluation.reasonCodes
+          : ["AUTHORIZATION_MANDATE_CHANGED"];
+        await tx.updateAuthorization(authorization.id, { state: "EXPIRED", expiresAt: null });
+        await tx.appendAudit({
+          id: createId("evt"),
+          organisationId: principal.organisationId,
+          actorType: "SYSTEM",
+          actorId: null,
+          eventType: "AUTHORIZATION_INVALIDATED",
+          entityType: "Authorization",
+          entityId: authorization.id,
+          timestamp: now,
+          metadata: { reasons }
+        });
+        return { kind: "invalidated", reasons };
+      }
       const execution = await tx.createExecution({
         id: createId("exe"),
         organisationId: principal.organisationId,
@@ -106,6 +162,12 @@ export class ExecutionService {
     });
 
     if (claim.kind === "expired") throw new GoneError("AUTHORIZATION_EXPIRED", "Authorization has expired");
+    if (claim.kind === "invalidated") {
+      throw new ConflictError(
+        "AUTHORIZATION_NO_LONGER_VALID",
+        `Authorization no longer satisfies its execution-time authority checks: ${claim.reasons.join(", ")}`
+      );
+    }
     if (claim.kind === "existing") {
       if (claim.execution.status === "PENDING") {
         throw new ConflictError("EXECUTION_IN_PROGRESS", "Execution is already in progress");

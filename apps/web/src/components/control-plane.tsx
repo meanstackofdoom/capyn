@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PLAN_CATALOG } from "@capyn/billing";
 import {
   Activity,
   Bot,
@@ -10,6 +11,7 @@ import {
   Clipboard,
   Clock3,
   Code2,
+  CreditCard,
   FileKey2,
   Fingerprint,
   KeyRound,
@@ -32,6 +34,7 @@ import {
   CORE_CAPABILITIES,
   type ApprovalView,
   type AuthorizationView,
+  type BillingOverview,
   type DashboardSnapshot,
   type Decision,
   type RuleTrace
@@ -49,6 +52,7 @@ const sectionMeta: Record<DashboardSection, { label: string; description: string
   authorizations: { label: "Authorizations", description: "Every request, decision, reason and evaluated policy gate." },
   approvals: { label: "Approvals", description: "Human review for exact requests that cross delegated thresholds." },
   audit: { label: "Audit Log", description: "An append-oriented record of consequential authority changes and actions." },
+  billing: { label: "Billing", description: "Hosted plan, metered usage, retention and commercial service boundaries." },
   developers: { label: "Developers", description: "Connect an agent and request authority with a small, typed API." },
   settings: { label: "Settings", description: "Organisation-wide security posture and integration boundaries." }
 };
@@ -60,6 +64,7 @@ const navigation = [
   ["authorizations", ShieldCheck],
   ["approvals", UserCheck],
   ["audit", ScrollText],
+  ["billing", CreditCard],
   ["developers", Code2],
   ["settings", Settings]
 ] as const;
@@ -278,6 +283,7 @@ function AuthorizationDetail({ authorization, onClose }: { authorization: Author
 
 export function ControlPlane({ section }: { section: DashboardSection }) {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
+  const [billing, setBilling] = useState<BillingOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -287,7 +293,12 @@ export function ControlPlane({ section }: { section: DashboardSection }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setSnapshot(await humanRequest<DashboardSnapshot>("/v1/dashboard"));
+      const [nextSnapshot, nextBilling] = await Promise.all([
+        humanRequest<DashboardSnapshot>("/v1/dashboard"),
+        humanRequest<BillingOverview>("/v1/billing")
+      ]);
+      setSnapshot(nextSnapshot);
+      setBilling(nextBilling);
       setError(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not reach CAPYN API");
@@ -373,6 +384,7 @@ export function ControlPlane({ section }: { section: DashboardSection }) {
               {section === "authorizations" && <Authorizations snapshot={snapshot} selectAuthorization={setSelectedAuthorization} />}
               {section === "approvals" && <Approvals snapshot={snapshot} reload={load} notify={notify} />}
               {section === "audit" && <AuditLog snapshot={snapshot} />}
+              {section === "billing" && billing && <BillingPanel billing={billing} reload={load} notify={notify} />}
               {section === "developers" && <Developers snapshot={snapshot} notify={notify} />}
               {section === "settings" && <SettingsPage snapshot={snapshot} />}
             </div>
@@ -587,6 +599,168 @@ function AuditLog({ snapshot }: { snapshot: DashboardSnapshot }) {
   const [actor, setActor] = useState("ALL"); const [event, setEvent] = useState("");
   const filtered = snapshot.auditEvents.filter((item) => (actor === "ALL" || item.actorType === actor) && item.eventType.toLowerCase().includes(event.toLowerCase()));
   return <div className="space-y-5"><div className="flex flex-col gap-3 sm:flex-row"><div className="flex h-10 flex-1 items-center gap-2 border border-line bg-panel px-3"><ListFilter size={14} className="text-muted" /><input value={event} onChange={(e) => setEvent(e.target.value)} placeholder="Filter event type" className="flex-1 bg-transparent text-xs outline-none" /></div><select className="h-10 border border-line bg-panel px-3 text-xs" value={actor} onChange={(e) => setActor(e.target.value)}><option value="ALL">All actors</option><option value="USER">User</option><option value="AGENT">Agent</option><option value="SYSTEM">System</option></select></div><div className="panel"><div className="border-b border-line px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold"><Fingerprint size={15} /> Append-oriented event stream</div><p className="mt-1 text-[10px] text-muted">Historical events cannot be modified through the application repository.</p></div><div className="divide-y divide-line">{filtered.map((item) => <div key={item.id} className="grid gap-3 px-5 py-4 text-xs md:grid-cols-[130px_95px_1fr_1fr] md:items-start"><span className="text-muted">{formatTime(item.timestamp)}</span><span className="font-mono text-[9px]">{item.actorType}</span><div><p className="font-bold">{item.eventType}</p><p className="mt-1 font-mono text-[9px] text-muted">{item.entityType} / {item.entityId}</p></div><div className="flex flex-wrap gap-1.5">{Object.entries(item.metadata).slice(0, 4).map(([key, value]) => <span key={key} className="bg-paper px-2 py-1 font-mono text-[8px] text-muted">{key}: {typeof value === "string" || typeof value === "number" ? String(value) : "…"}</span>)}</div></div>)}</div></div></div>;
+}
+
+const billingMetricLabels = {
+  AUTHORIZATION_DECISION: "Authorization decisions",
+  ACTIVE_AGENT: "Active agents",
+  APPROVAL_REQUEST: "Approval requests",
+  AUDIT_EVENT: "Audit events",
+  INTEGRATION_CONNECTION: "Integration connections"
+} as const;
+
+function formatCurrency(cents: number | null): string {
+  if (cents === null) return "Custom";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
+}
+
+function BillingPanel({
+  billing,
+  reload,
+  notify
+}: {
+  billing: BillingOverview;
+  reload: () => Promise<void>;
+  notify: (message: string) => void;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const healthySubscription = billing.subscriptionStatus === "ACTIVE" || billing.subscriptionStatus === "TRIALING";
+  const subscriptionTone = healthySubscription
+    ? "border-permission/30 bg-permission/10 text-permission"
+    : billing.subscriptionStatus === "PAST_DUE"
+      ? "border-review/30 bg-review/10 text-review"
+      : "border-denial/30 bg-denial/10 text-denial";
+  const startCheckout = async (planId: "TEAM" | "BUSINESS") => {
+    setBusy(planId);
+    try {
+      const session = await humanRequest<{ url: string }>("/v1/billing/checkout", {
+        method: "POST",
+        headers: { "Idempotency-Key": crypto.randomUUID() },
+        body: JSON.stringify({ planId })
+      });
+      window.location.assign(session.url);
+    } catch (caught) {
+      notify(caught instanceof Error ? caught.message : "Could not start checkout");
+      setBusy(null);
+    }
+  };
+  const openPortal = async () => {
+    setBusy("PORTAL");
+    try {
+      const session = await humanRequest<{ url: string }>("/v1/billing/portal", { method: "POST" });
+      window.location.assign(session.url);
+    } catch (caught) {
+      notify(caught instanceof Error ? caught.message : "Could not open the billing portal");
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="space-y-7">
+      <section className="grid gap-px border border-line bg-line lg:grid-cols-[1.05fr_.95fr]">
+        <div className="bg-panel p-6 sm:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-5">
+            <div>
+              <p className="font-mono text-[9px] uppercase tracking-[.15em] text-authority">Hosted authority plan</p>
+              <h2 className="display-title mt-3 text-4xl font-semibold tracking-[-.055em]">{billing.planName}</h2>
+              <p className="mt-3 max-w-lg text-sm leading-7 text-muted">
+                {billing.basePriceCents === 0 ? "Free hosted evaluation with firm usage boundaries." : "Managed authority infrastructure with included capacity and metered overage."}
+              </p>
+            </div>
+            <span className={cn("inline-flex items-center gap-2 border px-3 py-2 font-mono text-[9px]", subscriptionTone)}>
+              <span className="status-dot" /> {billing.subscriptionStatus}
+            </span>
+          </div>
+          <div className="mt-8 grid grid-cols-2 gap-px bg-line sm:grid-cols-4">
+            <div className="bg-paper p-4"><p className="font-mono text-[8px] text-muted">BASE / MONTH</p><p className="mono-number mt-2 text-lg font-semibold">{formatCurrency(billing.basePriceCents)}</p></div>
+            <div className="bg-paper p-4"><p className="font-mono text-[8px] text-muted">PROJECTED</p><p className="mono-number mt-2 text-lg font-semibold">{formatCurrency(billing.estimatedMonthlyCents)}</p></div>
+            <div className="bg-paper p-4"><p className="font-mono text-[8px] text-muted">AUDIT ACCESS</p><p className="mono-number mt-2 text-lg font-semibold">{billing.auditRetentionDays ? `${billing.auditRetentionDays}d` : "Contract"}</p></div>
+            <div className="bg-paper p-4"><p className="font-mono text-[8px] text-muted">PROVIDER</p><p className="mt-2 text-sm font-semibold">{billing.provider}</p></div>
+          </div>
+          <p className="mt-5 font-mono text-[9px] leading-5 text-muted">
+            Period {new Date(billing.currentPeriodStart).toLocaleDateString("en-AU")} → {new Date(billing.currentPeriodEnd).toLocaleDateString("en-AU")}
+          </p>
+        </div>
+        <div className="bg-paper p-6 sm:p-8">
+          <p className="font-mono text-[9px] uppercase tracking-[.15em] text-muted">What the base plan funds</p>
+          <div className="mt-6 space-y-5">
+            {[
+              ["Approval workflows", billing.approvalWorkflows],
+              ["Reliability", billing.reliability],
+              ["Compliance boundary", billing.compliance]
+            ].map(([label, value]) => (
+              <div key={label} className="border-l border-authority pl-4">
+                <p className="text-xs font-bold">{label}</p>
+                <p className="mt-1 text-[11px] leading-5 text-muted">{value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-7 flex flex-wrap gap-2">
+            {billing.customerPortalAvailable && <Button onClick={() => void openPortal()} disabled={busy !== null}><CreditCard size={13} /> Manage payment</Button>}
+            <Button onClick={() => void reload()} disabled={busy !== null}><RefreshCw size={13} /> Refresh usage</Button>
+            <Link href="/pricing" className="inline-flex min-h-9 items-center border border-line bg-panel px-3.5 text-xs font-bold">Compare plans</Link>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-4">
+          <p className="font-mono text-[9px] uppercase tracking-[.15em] text-muted">Usage rail</p>
+          <h2 className="mt-2 text-lg font-bold">Exact metered boundaries</h2>
+        </div>
+        <div className="panel divide-y divide-line">
+          {billing.usage.map((line) => {
+            const percentage = line.included === null || line.included === 0 ? 0 : Math.min(100, (line.used / line.included) * 100);
+            return (
+              <div key={line.metric} className="grid gap-4 p-5 lg:grid-cols-[220px_1fr_190px] lg:items-center">
+                <div>
+                  <p className="text-xs font-bold">{billingMetricLabels[line.metric]}</p>
+                  <p className="mt-1 font-mono text-[8px] text-muted">{line.enforcement}</p>
+                </div>
+                <div>
+                  <div className="flex justify-between gap-4 font-mono text-[9px] text-muted">
+                    <span>{line.used.toLocaleString()} used</span>
+                    <span>{line.included === null ? "Included / contract" : `${line.included.toLocaleString()} included`}</span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden bg-wash" aria-label={`${billingMetricLabels[line.metric]} usage`}>
+                    <div className={cn("h-full", line.overage > 0 ? "bg-review" : "bg-authority")} style={{ width: `${percentage}%` }} />
+                  </div>
+                </div>
+                <div className="text-left lg:text-right">
+                  <p className="mono-number text-xs font-semibold">{line.projectedChargeCents ? `${formatCurrency(line.projectedChargeCents)} projected` : "No usage charge"}</p>
+                  {line.overage > 0 && <p className="mt-1 font-mono text-[8px] text-review">{line.overage.toLocaleString()} over included</p>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-[10px] leading-5 text-muted">Approval requests and audit events remain visible usage signals; CAPYN does not add a per-approval penalty or delete historical evidence after a downgrade.</p>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        {(["TEAM", "BUSINESS"] as const).map((planId) => {
+          const plan = PLAN_CATALOG[planId];
+          const current = billing.planId === planId;
+          const canCheckout = billing.planId === "DEVELOPER" &&
+            (!billing.customerPortalAvailable || billing.subscriptionStatus === "CANCELED");
+          return (
+            <article key={planId} className={cn("panel p-6 sm:p-7", current && "border-authority")}>
+              <div className="flex items-start justify-between gap-5">
+                <div><p className="font-mono text-[9px] uppercase tracking-[.14em] text-muted">{plan.audience}</p><h2 className="mt-3 text-xl font-extrabold">{plan.name}</h2></div>
+                <p className="mono-number text-xl font-semibold">{formatCurrency(plan.basePriceCents)}<span className="text-[10px] font-normal text-muted"> / mo</span></p>
+              </div>
+              <div className="mt-6 grid gap-2 text-xs text-muted">
+                {plan.features.slice(0, 4).map((feature) => <p className="flex items-center gap-2" key={feature}><Check size={12} className="text-permission" />{feature}</p>)}
+              </div>
+              <div className="mt-7">
+                {current ? <Button disabled className="w-full">Current plan</Button> : canCheckout ? <Button tone="primary" className="w-full" disabled={!billing.checkoutAvailable || busy !== null} onClick={() => void startCheckout(planId)}>{busy === planId ? "Opening checkout…" : billing.checkoutAvailable ? `Choose ${plan.name}` : "Stripe checkout not configured"}</Button> : billing.customerPortalAvailable ? <Button className="w-full" disabled={busy !== null} onClick={() => void openPortal()}>Change plan in billing portal</Button> : <Button disabled className="w-full">Manage changes in billing portal</Button>}
+              </div>
+            </article>
+          );
+        })}
+      </section>
+    </div>
+  );
 }
 
 function Developers({ snapshot, notify }: { snapshot: DashboardSnapshot; notify: (message: string) => void }) {

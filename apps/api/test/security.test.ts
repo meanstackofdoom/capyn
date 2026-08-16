@@ -46,6 +46,99 @@ describe("CAPYN security boundaries", () => {
     expect(execution.json<{ error: { code: string } }>().error.code).toBe("AUTHORIZATION_NOT_EXECUTABLE");
   });
 
+  it("revalidates agent status immediately before execution", async () => {
+    const { app } = await setup();
+    const allowed = await app.inject({
+      method: "POST",
+      url: "/v1/authorize",
+      headers: agentHeaders("suspend-before-execute-0001"),
+      payload: allowedRequest
+    });
+    const result = allowed.json<AuthorizationResult>();
+    expect(result.decision).toBe("ALLOW");
+    expect((await app.inject({
+      method: "PATCH",
+      url: "/v1/agents/agt_demo_procurement/status",
+      headers: ownerHeaders,
+      payload: { status: "SUSPENDED" }
+    })).statusCode).toBe(200);
+    const execution = await app.inject({
+      method: "POST",
+      url: `/v1/authorizations/${result.authorizationId}/execute`,
+      headers: { authorization: agentHeaders("unused-key-suspended").authorization }
+    });
+    expect(execution.statusCode).toBe(409);
+    expect(execution.json<{ error: { code: string } }>().error.code).toBe("AUTHORIZATION_NO_LONGER_VALID");
+  });
+
+  it("invalidates an allowed authorization when its exact mandate is revoked", async () => {
+    const { app } = await setup();
+    const allowed = await app.inject({
+      method: "POST",
+      url: "/v1/authorize",
+      headers: agentHeaders("revoke-before-execute-0001"),
+      payload: allowedRequest
+    });
+    const result = allowed.json<AuthorizationResult>();
+    expect(result.decision).toBe("ALLOW");
+    expect((await app.inject({
+      method: "DELETE",
+      url: "/v1/agents/agt_demo_procurement/mandate",
+      headers: { "x-capyn-user-id": ownerHeaders["x-capyn-user-id"] }
+    })).statusCode).toBe(204);
+    const execution = await app.inject({
+      method: "POST",
+      url: `/v1/authorizations/${result.authorizationId}/execute`,
+      headers: { authorization: agentHeaders("unused-key-revoked-mandate").authorization }
+    });
+    expect(execution.statusCode).toBe(409);
+    expect(execution.json<{ error: { code: string } }>().error.code).toBe("AUTHORIZATION_NO_LONGER_VALID");
+  });
+
+  it("does not approve an authorization after its exact mandate is replaced", async () => {
+    const { app } = await setup();
+    const pending = await app.inject({
+      method: "POST",
+      url: "/v1/authorize",
+      headers: agentHeaders("replace-before-approval-0001"),
+      payload: { ...allowedRequest, amount: { value: "120.00", currency: "USD" }, vendor: { id: "aws" } }
+    });
+    const result = pending.json<Extract<AuthorizationResult, { decision: "REQUIRE_APPROVAL" }>>();
+    expect(result.decision).toBe("REQUIRE_APPROVAL");
+
+    const replacement = await app.inject({
+      method: "POST",
+      url: "/v1/mandates",
+      headers: ownerHeaders,
+      payload: {
+        agentId: "agt_demo_procurement",
+        name: "Replacement authority",
+        capabilities: ["spend.compute", "spend.api"],
+        allowedVendors: [{ id: "openai" }, { id: "aws" }],
+        limits: {
+          perTransaction: { value: "150.00", currency: "USD" },
+          daily: { value: "200.00", currency: "USD" },
+          monthly: { value: "2000.00", currency: "USD" },
+          approvalAbove: { value: "100.00", currency: "USD" }
+        },
+        validUntil: "2026-09-30T00:00:00.000Z"
+      }
+    });
+    expect(replacement.statusCode, replacement.body).toBe(201);
+
+    const approval = await app.inject({
+      method: "POST",
+      url: `/v1/approvals/${result.approvalId}/decision`,
+      headers: ownerHeaders,
+      payload: { decision: "APPROVE" }
+    });
+    expect(approval.statusCode).toBe(409);
+    expect(approval.json<{ error: { code: string; message: string } }>().error).toMatchObject({
+      code: "AUTHORIZATION_NO_LONGER_VALID"
+    });
+    expect(approval.json<{ error: { message: string } }>().error.message).toContain("AUTHORIZATION_MANDATE_CHANGED");
+  });
+
   it("prevents replay of an approval decision", async () => {
     const { app } = await setup();
     const response = await app.inject({
@@ -69,6 +162,27 @@ describe("CAPYN security boundaries", () => {
     expect(replay.json<{ error: { code: string } }>().error.code).toBe("APPROVAL_ALREADY_DECIDED");
   });
 
+  it("serializes two simultaneous decisions for the same approval", async () => {
+    const { app } = await setup();
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/authorize",
+      headers: agentHeaders("same-approval-race-0001"),
+      payload: { ...allowedRequest, amount: { value: "120.00", currency: "USD" } }
+    });
+    const result = response.json<Extract<AuthorizationResult, { decision: "REQUIRE_APPROVAL" }>>();
+    const decide = () => app.inject({
+      method: "POST",
+      url: `/v1/approvals/${result.approvalId}/decision`,
+      headers: ownerHeaders,
+      payload: { decision: "APPROVE" }
+    });
+    const decisions = await Promise.all([decide(), decide()]);
+    expect(decisions.map((item) => item.statusCode).sort()).toEqual([200, 409]);
+    expect(decisions.find((item) => item.statusCode === 409)?.json<{ error: { code: string } }>().error.code)
+      .toBe("APPROVAL_ALREADY_DECIDED");
+  });
+
   it("denies requests after mandate revocation", async () => {
     const { app } = await setup();
     const revoke = await app.inject({
@@ -87,6 +201,51 @@ describe("CAPYN security boundaries", () => {
       decision: "DENY",
       reasonCodes: expect.arrayContaining(["NO_ACTIVE_MANDATE"])
     });
+  });
+
+  it("treats agent revocation as terminal and refuses replacement credentials", async () => {
+    const { app } = await setup();
+    expect((await app.inject({
+      method: "PATCH",
+      url: "/v1/agents/agt_demo_procurement/status",
+      headers: ownerHeaders,
+      payload: { status: "REVOKED" }
+    })).statusCode).toBe(200);
+    const credential = await app.inject({
+      method: "POST",
+      url: "/v1/agents/agt_demo_procurement/credentials",
+      headers: { "x-capyn-user-id": ownerHeaders["x-capyn-user-id"] }
+    });
+    expect(credential.statusCode).toBe(409);
+    expect(credential.json<{ error: { code: string } }>().error.code).toBe("AGENT_REVOKED");
+    const reactivate = await app.inject({
+      method: "PATCH",
+      url: "/v1/agents/agt_demo_procurement/status",
+      headers: ownerHeaders,
+      payload: { status: "ACTIVE" }
+    });
+    expect(reactivate.statusCode).toBe(409);
+    expect(reactivate.json<{ error: { code: string } }>().error.code).toBe("AGENT_REVOKED");
+    const mandate = await app.inject({
+      method: "POST",
+      url: "/v1/mandates",
+      headers: ownerHeaders,
+      payload: {
+        agentId: "agt_demo_procurement",
+        name: "Forbidden replacement mandate",
+        capabilities: ["spend.compute"],
+        allowedVendors: [{ id: "openai" }],
+        limits: {
+          perTransaction: { value: "50.00", currency: "USD" },
+          daily: { value: "100.00", currency: "USD" },
+          monthly: { value: "1000.00", currency: "USD" },
+          approvalAbove: { value: "50.00", currency: "USD" }
+        },
+        validUntil: "2026-09-30T00:00:00.000Z"
+      }
+    });
+    expect(mandate.statusCode).toBe(409);
+    expect(mandate.json<{ error: { code: string } }>().error.code).toBe("AGENT_REVOKED");
   });
 
   it("serializes concurrent approvals so the daily cap cannot be bypassed", async () => {

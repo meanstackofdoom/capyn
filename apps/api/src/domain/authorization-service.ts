@@ -1,4 +1,5 @@
 import type { CapynRepository, StoredAuthorization } from "@capyn/database";
+import { canRecordAuthorization, getEntitlementPlanId } from "@capyn/billing";
 import { evaluatePolicy } from "@capyn/policy-engine";
 import {
   describeReasons,
@@ -10,7 +11,7 @@ import {
   type AuthorizeRequest,
   type NormalizedAuthorizationRequest
 } from "@capyn/types";
-import { ConflictError, InvalidRequestError, NotFoundError } from "../http/errors";
+import { ConflictError, InvalidRequestError, NotFoundError, PlanLimitError } from "../http/errors";
 import { requestFingerprint } from "./canonical-json";
 import { createId } from "./ids";
 
@@ -84,6 +85,7 @@ export class AuthorizationService {
     const now = this.clock();
 
     return this.repository.transaction(async (tx) => {
+      await tx.lockOrganisation(principal.organisationId);
       await tx.lockAgent(principal.agentId);
       const agent = await tx.findAgent(principal.agentId);
       if (!agent || agent.organisationId !== principal.organisationId) throw new NotFoundError("Agent not found");
@@ -97,6 +99,17 @@ export class AuthorizationService {
           );
         }
         return toResult(existing);
+      }
+
+      const billing = await tx.getBillingAllowance(principal.organisationId, now);
+      const entitlementPlanId = getEntitlementPlanId(
+        billing.subscription.planId,
+        billing.subscription.status
+      );
+      if (!canRecordAuthorization(entitlementPlanId, billing.authorizationDecisions)) {
+        throw new PlanLimitError(
+          "The hosted authorization allowance is exhausted for this billing period; upgrade the organisation plan to continue"
+        );
       }
 
       const context = await tx.loadPolicyContext(principal.agentId, normalized.currency, now);
@@ -137,6 +150,16 @@ export class AuthorizationService {
         trace: evaluation.trace,
         expiresAt
       });
+      await tx.recordBillingUsage({
+        id: createId("use"),
+        organisationId: principal.organisationId,
+        metric: "AUTHORIZATION_DECISION",
+        quantity: "1",
+        sourceType: "Authorization",
+        sourceId: authorizationId,
+        occurredAt: now,
+        metadata: { decision: evaluation.decision, capability: normalized.capability }
+      });
       await tx.appendAudit({
         id: createId("evt"),
         organisationId: principal.organisationId,
@@ -161,6 +184,16 @@ export class AuthorizationService {
           organisationId: principal.organisationId,
           authorizationId,
           triggeredBy: "APPROVAL_THRESHOLD_EXCEEDED"
+        });
+        await tx.recordBillingUsage({
+          id: createId("use"),
+          organisationId: principal.organisationId,
+          metric: "APPROVAL_REQUEST",
+          quantity: "1",
+          sourceType: "Approval",
+          sourceId: approvalId,
+          occurredAt: now,
+          metadata: { authorizationId }
         });
         await tx.appendAudit({
           id: createId("evt"),

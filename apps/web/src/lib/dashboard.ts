@@ -5,6 +5,7 @@ export const DASHBOARD_SECTIONS = [
   "authorizations",
   "approvals",
   "audit",
+  "billing",
   "developers",
   "settings"
 ] as const;

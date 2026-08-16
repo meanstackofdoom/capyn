@@ -141,6 +141,69 @@ export type MandateStatus = (typeof MANDATE_STATUSES)[number];
 export const USER_ROLES = ["OWNER", "ADMIN", "APPROVER", "VIEWER"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
+export const BILLING_PLAN_IDS = ["DEVELOPER", "TEAM", "BUSINESS", "ENTERPRISE", "DESIGN_PARTNER"] as const;
+export type BillingPlanId = (typeof BILLING_PLAN_IDS)[number];
+
+export const SUBSCRIPTION_STATUSES = [
+  "TRIALING",
+  "ACTIVE",
+  "PAST_DUE",
+  "CANCELED",
+  "INCOMPLETE",
+  "UNPAID",
+  "PAUSED"
+] as const;
+export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
+
+export const BILLING_PROVIDER_NAMES = ["INTERNAL", "MANUAL", "STRIPE"] as const;
+export type BillingProviderName = (typeof BILLING_PROVIDER_NAMES)[number];
+
+export const BILLABLE_METRICS = [
+  "AUTHORIZATION_DECISION",
+  "APPROVAL_REQUEST",
+  "ACTIVE_AGENT",
+  "AUDIT_EVENT",
+  "INTEGRATION_CONNECTION"
+] as const;
+export type BillableMetric = (typeof BILLABLE_METRICS)[number];
+
+export interface BillingUsageLine {
+  metric: BillableMetric;
+  used: number;
+  included: number | null;
+  overage: number;
+  unitSize: number | null;
+  unitPriceCents: number | null;
+  projectedChargeCents: number;
+  enforcement: "HARD_LIMIT" | "METERED" | "INCLUDED" | "CONTRACT";
+}
+
+export interface BillingOverview {
+  planId: BillingPlanId;
+  planName: string;
+  subscriptionStatus: SubscriptionStatus;
+  provider: BillingProviderName;
+  currency: "USD";
+  basePriceCents: number | null;
+  priceRangeCents: readonly [number, number] | null;
+  estimatedMonthlyCents: number | null;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  auditRetentionDays: number | null;
+  approvalWorkflows: string;
+  reliability: string;
+  compliance: string;
+  usage: BillingUsageLine[];
+  checkoutAvailable: boolean;
+  customerPortalAvailable: boolean;
+}
+
+export const billingCheckoutSchema = z
+  .object({ planId: z.enum(["TEAM", "BUSINESS"]) })
+  .strict();
+export type BillingCheckoutRequest = z.infer<typeof billingCheckoutSchema>;
+
 export const AUTHORIZATION_STATES = [
   "REQUESTED",
   "ALLOWED",

@@ -5,6 +5,7 @@ import { ArrowLeft, CalendarDays, CircleDot, Clock3, FileText } from "lucide-rea
 import { DocsSidebar } from "@/components/public/docs-sidebar";
 import { MarkdownDocument } from "@/components/public/markdown-document";
 import { docsCatalog, getDoc } from "@/lib/docs";
+import { createPageMetadata } from "@/lib/metadata";
 
 export function generateStaticParams() {
   return docsCatalog.map((doc) => ({ slug: doc.slug }));
@@ -14,11 +15,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const doc = docsCatalog.find((entry) => entry.slug === slug);
   if (!doc) return {};
-  return {
+  return createPageMetadata({
     title: doc.title,
     description: doc.description,
-    alternates: { canonical: `/docs/${doc.slug}` }
-  };
+    path: `/docs/${doc.slug}`
+  });
 }
 
 export default async function DocumentationPage({ params }: { params: Promise<{ slug: string }> }) {

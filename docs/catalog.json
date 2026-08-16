@@ -50,6 +50,16 @@
     "order": 50
   },
   {
+    "slug": "billing",
+    "file": "billing.md",
+    "title": "Billing",
+    "description": "Hosted plans, metered economics, Stripe payment readiness and explicit commercial boundaries.",
+    "category": "Build",
+    "status": "Implemented",
+    "reviewedAt": "2026-08-17",
+    "order": 55
+  },
+  {
     "slug": "architecture",
     "file": "architecture.md",
     "title": "Architecture",
@@ -58,6 +68,16 @@
     "status": "Implemented",
     "reviewedAt": "2026-08-17",
     "order": 60
+  },
+  {
+    "slug": "website",
+    "file": "website.md",
+    "title": "Website and brand system",
+    "description": "Positioning, visual grammar, GSAP motion, SEO, accessibility and the honest defensibility boundary.",
+    "category": "Build",
+    "status": "Implemented",
+    "reviewedAt": "2026-08-17",
+    "order": 65
   },
   {
     "slug": "security",
@@ -98,6 +118,16 @@
     "status": "Live",
     "reviewedAt": "2026-08-17",
     "order": 100
+  },
+  {
+    "slug": "launch-checklist",
+    "file": "launch-checklist.md",
+    "title": "Public alpha launch checklist",
+    "description": "Twenty evidence-led gates from repository hygiene through the recoverable Railway cutover.",
+    "category": "Direction",
+    "status": "Live",
+    "reviewedAt": "2026-08-17",
+    "order": 105
   },
   {
     "slug": "agent-authority-problem",

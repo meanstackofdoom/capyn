@@ -71,9 +71,11 @@ The public surface is a complete, responsive Next.js site:
 - `/product` — lifecycle, policy model and execution boundary
 - `/security` — implemented controls, concurrency and explicit limitations
 - `/developers` — SDK, curl, REST surface and response contracts
+- `/pricing` — open-source, hosted, design-partner and enterprise commercial model
 - `/docs` — canonical repository documentation rendered as a public evidence register
 - `/about` — the agent authority thesis and roadmap
 - `/dashboard` — the working CAPYN control plane
+- `/dashboard/billing` — plan allowances, live usage, projected fees and hosted checkout controls
 
 ![CAPYN authorization evidence with a selected policy trace](outreach/screenshots/capyn-authorization-trace.png)
 
@@ -115,6 +117,14 @@ corepack pnpm start
 ```
 
 The selected service binds to `0.0.0.0` and respects the platform `PORT`. Set `NEXT_PUBLIC_SITE_URL` to the final public origin and use `/healthz` for the web health check. The API uses `/health`. No Docker configuration is required.
+
+After a production build, run the self-contained deployment smoke gate on unused ports `3110` and `4110`:
+
+```bash
+corepack pnpm smoke:production
+```
+
+It starts the built services temporarily, proves all four authority decisions plus approval/execution, checks every public documentation route and dashboard noindex boundary, verifies SEO/security headers, and releases both ports when complete.
 
 ## Central API
 
@@ -160,6 +170,7 @@ apps/
   video/               Reproducible Remotion launch video
   web/                 Next.js public website and App Router control plane
 packages/
+  billing/             Hosted plan catalogue, entitlements and overage calculator
   policy-engine/       Pure deterministic evaluator
   database/            Prisma/PostgreSQL and repository adapters
   sdk/                 Typed agent client
@@ -203,10 +214,18 @@ pnpm db:seed       # seed Acme AI and procurement-agent
 - API keys are organisation-scoped, revocable and bound to one agent.
 - Strict Zod request schemas reject extra identity fields.
 - PostgreSQL serializable transactions and per-agent advisory locks protect spend accounting.
+- Organisation advisory locks protect hosted quotas across simultaneous agents.
 - Approval rechecks every hard rule under the same lock and applies only to one authorization.
-- Execution is claimed once with a unique database record.
+- Execution is claimed once with a unique database record after rechecking the agent and exact mandate binding.
 - Audit events are append-only through the application and protected by a database trigger.
 - Structured logs redact authorization and bootstrap headers.
+- Stripe Checkout/portal remain server-side; Checkout and signed raw-body webhooks are both idempotent.
+
+## Commercial model
+
+The MIT-licensed policy engine remains free. The hosted Developer plan includes 3 active agents and 10,000 authorization decisions per month. Team is `$99/month`; Business is `$499/month`; Enterprise is scoped. Early design partners can be manually contracted at `$250–$1,000/month` for founder-led integration work.
+
+CAPYN meters decisions, active agents, approval operations, audit evidence and integration connections. It never charges a percentage of money moved, and approvals carry no per-request fee. Stripe Checkout, customer portal and signed subscription webhooks are implemented when configured. Automated Stripe overage invoicing remains explicitly deferred; current overage values are durable, test-backed projections. See [Billing](docs/billing.md).
 
 Read [docs/security.md](docs/security.md) before considering a non-demo deployment. v0.1 intentionally uses a demo human-auth adapter and a mock executor; both must be replaced for production.
 
@@ -216,14 +235,18 @@ Read [docs/security.md](docs/security.md) before considering a non-demo deployme
 - [Getting started](docs/getting-started.md)
 - [Configuration](docs/configuration.md)
 - [Domain model](docs/domain-model.md)
+- [Billing](docs/billing.md)
+- [Website and brand system](docs/website.md)
 - [Policy engine](docs/policy-engine.md)
 - [Security](docs/security.md)
 - [REST API](docs/api.md)
 - [Deployment](docs/deployment.md)
 - [Documentation policy](docs/documentation.md)
 - [Project status](docs/project-status.md)
+- [Public alpha launch checklist](docs/launch-checklist.md)
 - [Solana roadmap](docs/solana-roadmap.md)
 - [The Agent Authority Problem](docs/agent-authority-problem.md)
+- [Changelog](CHANGELOG.md)
 
 ## Status
 

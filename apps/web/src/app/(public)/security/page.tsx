@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Braces, Check, Fingerprint, KeyRound, LockKeyhole, RefreshCcw, ScrollText, ServerCog, Shield, ShieldCheck, Users } from "lucide-react";
 import { Eyebrow, PublicCta, SectionHeading, TextLink } from "@/components/public/marketing-primitives";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Security",
+  path: "/security",
   description: "CAPYN's fail-closed authorization model, credential handling, tenant isolation, concurrency controls, replay protection and known v0.1 limitations."
-};
+});
 
 const controls = [
   { icon: Fingerprint, title: "Server-resolved identity", copy: "The bearer key resolves to one agent and organisation. Strict request schemas reject client-supplied agent identity." },

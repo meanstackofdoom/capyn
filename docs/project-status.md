@@ -10,6 +10,7 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 | Public-alpha code package | Complete | The public repository, website, documentation site, launch copy, reproducible video and platform-neutral hosting commands are present. |
 | Public repository | Complete | Source and evidence are public at `github.com/meanstackofdoom/capyn`. |
 | Tagged public alpha | Complete | `v0.1.0` was cut from a green clean-clone CI run with the video, cover and selected policy trace attached. |
+| Commercial control plane | Payment-ready base plans | Plan catalogue, quotas, usage ledger, pricing, Checkout/portal adapters and signed webhooks are implemented. Automated provider overage reporting remains explicit follow-up work. |
 | Hosted public alpha | Waiting on Railway capacity | Authentication succeeded, but Railway refused another project because the current free-plan resource limit is exhausted. Existing projects were not altered. |
 | Real-money production | Not complete | Requires the security, identity, accounting, executor, operational and compliance work below. |
 
@@ -22,12 +23,20 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 - enforce vendor, transaction, UTC-day and calendar-month limits;
 - return deterministic `ALLOW`, `DENY` or `REQUIRE_APPROVAL` decisions with reason codes and traces;
 - bind approval to one exact request and prevent decision replay;
+- serialize approval decisions so competing human actions cannot both win;
+- revalidate current agent, exact mandate binding, capability, vendor and hard limits immediately before execution;
 - claim one execution and simulate it through `MockPaymentExecutor`;
 - serialize per-agent spend reservations so simultaneous requests cannot reuse the same budget;
 - isolate organisations in agent and human access paths;
+- make agent revocation terminal and prevent replacement credentials for revoked identities;
 - record append-oriented audit events;
+- enforce hosted Developer quotas, fail inactive subscriptions back to free entitlements, and project Team/Business usage and overage;
+- collect recurring Team/Business base fees through Stripe Checkout when provider credentials are configured;
+- bind Checkout retries to organisation-scoped idempotency keys and synchronize subscriptions through signed, idempotent Stripe webhooks;
 - use the TypeScript SDK, REST API, dashboard and four-scenario demo;
 - build and serve the public website and canonical documentation;
+- publish page-specific canonical/social metadata, software JSON-LD, search directives, security headers and an accessible GSAP authority console;
+- run a reusable production smoke harness across the API, all public routes, all dashboard routes, SEO boundaries and security headers;
 - reproduce the 24-second launch video and cover from checked-in Remotion source.
 
 ## Urgent public-alpha launch plan
@@ -41,6 +50,8 @@ The repository, tagged release, CI evidence and launch assets are public. Remain
 5. add the hosted URL and Matthew's preferred public contact email to the outreach pack;
 6. send the TechRadar briefing and publish “The Agent Authority Problem” as the first technical note;
 7. invite a small, named cohort of agent builders and collect failure cases.
+
+The exact release evidence and deployment handoff are maintained in the [Public alpha launch checklist](launch-checklist.md).
 
 Do not enable real settlement during this launch phase.
 
@@ -76,6 +87,14 @@ Do not enable real settlement during this launch phase.
 - SBOM, dependency scanning and patch policy;
 - independent threat model, penetration review and remediation;
 - legal/compliance review for the actual custody, payment and jurisdiction model.
+
+### Commercial operations
+
+- durable outbox/retry worker for Stripe Billing meter events;
+- invoice reconciliation for authorization, agent and integration overage;
+- tax, refund, cancellation, dunning and customer-support runbooks;
+- implemented SSO/SIEM integrations before representing Business entitlements as shipped;
+- written support and SLA terms before accepting Enterprise reliability obligations.
 
 ## Release rule
 

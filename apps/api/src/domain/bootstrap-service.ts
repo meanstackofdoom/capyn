@@ -29,11 +29,16 @@ export class BootstrapService {
     }
     const organisationId = createId("org");
     const ownerId = createId("usr");
+    const subscriptionId = createId("sub");
+    const now = this.clock();
+    const currentPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const currentPeriodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
     try {
       return await this.repository.transaction(async (tx) => {
         const result = await tx.createOrganisation({
           organisation: { id: organisationId, name: request.name, slug: request.slug },
-          owner: { id: ownerId, name: request.owner.name, email: request.owner.email.toLowerCase() }
+          owner: { id: ownerId, name: request.owner.name, email: request.owner.email.toLowerCase() },
+          subscription: { id: subscriptionId, currentPeriodStart, currentPeriodEnd }
         });
         await tx.appendAudit({
           id: createId("evt"),
@@ -43,7 +48,7 @@ export class BootstrapService {
           eventType: "ORGANISATION_CREATED",
           entityType: "Organisation",
           entityId: organisationId,
-          timestamp: this.clock(),
+          timestamp: now,
           metadata: { name: request.name, slug: request.slug }
         });
         return result;

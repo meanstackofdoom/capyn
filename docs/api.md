@@ -76,6 +76,9 @@ Executes one unexpired `ALLOWED` or `APPROVED` authorization. v0.1 returns a sim
 | Method | Path | Roles |
 |---|---|---|
 | `GET` | `/v1/dashboard` | all users |
+| `GET` | `/v1/billing` | all users |
+| `POST` | `/v1/billing/checkout` | owner, admin |
+| `POST` | `/v1/billing/portal` | owner, admin |
 | `POST` | `/v1/agents` | owner, admin |
 | `PATCH` | `/v1/agents/:id/status` | owner, admin |
 | `POST` | `/v1/agents/:id/credentials` | owner, admin |
@@ -85,6 +88,10 @@ Executes one unexpired `ALLOWED` or `APPROVED` authorization. v0.1 returns a sim
 | `POST` | `/v1/approvals/:id/decision` | owner, admin, approver |
 
 Agent/API-key creation responses contain plaintext once. CAPYN never returns it again.
+
+`GET /v1/billing` returns the authenticated user's organisation plan, billing period, live metric lines and projected monthly amount. The client cannot submit another organisation ID.
+
+Checkout accepts only `{ "planId": "TEAM" }` or `{ "planId": "BUSINESS" }` and requires an `Idempotency-Key` header using the same 8–200 character format as authorization. The key is organisation- and plan-bound before it reaches Stripe. Checkout returns a hosted provider URL when Stripe is fully configured, otherwise `503 BILLING_UNAVAILABLE`. Provider callbacks use unauthenticated `POST /v1/billing/webhooks/stripe`; authenticity comes from the required Stripe signature over the raw body, not a user session. See [Billing](billing.md).
 
 Approval body:
 
@@ -112,6 +119,8 @@ Approval body:
 ```
 
 Validation errors may include safe `{ path, message }` details. Internal exceptions are logged with a request ID and returned as `INTERNAL_ERROR` without a stack.
+
+Exhausting a hard Developer allowance returns HTTP `402` with `PLAN_LIMIT_REACHED`. An idempotent replay of an already recorded authorization still returns its original result without another usage event.
 
 ## Health
 

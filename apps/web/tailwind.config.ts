@@ -19,7 +19,8 @@ export default {
         review: "var(--review)",
         denial: "var(--denial)",
         authority: "var(--authority)",
-        code: "var(--code)"
+        code: "var(--code)",
+        wash: "var(--wash)"
       },
       boxShadow: {
         control: "0 1px 2px rgba(11,16,20,.05), 0 12px 30px rgba(11,16,20,.04)"

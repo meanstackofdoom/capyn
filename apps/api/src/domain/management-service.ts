@@ -1,4 +1,5 @@
 import { generateApiKey, hashApiKey, type CapynRepository } from "@capyn/database";
+import { canCreateActiveAgent, getEntitlementPlanId } from "@capyn/billing";
 import {
   moneyToMinorUnits,
   type AgentStatus,
@@ -6,7 +7,7 @@ import {
   type MandateCreateRequest,
   type UserPrincipal
 } from "@capyn/types";
-import { ConflictError, InvalidRequestError, NotFoundError } from "../http/errors";
+import { ConflictError, InvalidRequestError, NotFoundError, PlanLimitError } from "../http/errors";
 import { createId } from "./ids";
 
 export interface CreateAgentRequest {
@@ -35,6 +36,17 @@ export class ManagementService {
     const generated = generateApiKey("live");
     try {
       await this.repository.transaction(async (tx) => {
+        await tx.lockOrganisation(principal.organisationId);
+        const billing = await tx.getBillingAllowance(principal.organisationId, now);
+        const entitlementPlanId = getEntitlementPlanId(
+          billing.subscription.planId,
+          billing.subscription.status
+        );
+        if (!canCreateActiveAgent(entitlementPlanId, billing.activeAgents)) {
+          throw new PlanLimitError(
+            "The hosted active-agent allowance is exhausted; upgrade the organisation plan or suspend an existing agent"
+          );
+        }
         await tx.createAgent({
           id: agentId,
           organisationId: principal.organisationId,
@@ -88,9 +100,14 @@ export class ManagementService {
     const generated = generateApiKey("live");
     const credentialId = createId("key");
     await this.repository.transaction(async (tx) => {
+      const candidateAgent = await tx.findAgent(agentId);
+      if (!candidateAgent || candidateAgent.organisationId !== principal.organisationId) throw new NotFoundError("Agent not found");
+      await tx.lockAgent(agentId);
       const agent = await tx.findAgent(agentId);
       if (!agent || agent.organisationId !== principal.organisationId) throw new NotFoundError("Agent not found");
-      await tx.lockAgent(agentId);
+      if (agent.status === "REVOKED") {
+        throw new ConflictError("AGENT_REVOKED", "A revoked agent cannot receive new credentials");
+      }
       await tx.createCredential({
         id: credentialId,
         agentId,
@@ -136,9 +153,28 @@ export class ManagementService {
   async setAgentStatus(principal: UserPrincipal, agentId: string, status: AgentStatus) {
     const now = this.clock();
     return this.repository.transaction(async (tx) => {
+      await tx.lockOrganisation(principal.organisationId);
+      const candidateAgent = await tx.findAgent(agentId);
+      if (!candidateAgent || candidateAgent.organisationId !== principal.organisationId) throw new NotFoundError("Agent not found");
+      await tx.lockAgent(agentId);
       const agent = await tx.findAgent(agentId);
       if (!agent || agent.organisationId !== principal.organisationId) throw new NotFoundError("Agent not found");
-      await tx.lockAgent(agentId);
+      if (agent.status === "REVOKED" && status !== "REVOKED") {
+        throw new ConflictError("AGENT_REVOKED", "A revoked agent cannot be reactivated");
+      }
+      if (agent.status === status) return agent;
+      if (status === "ACTIVE" && agent.status !== "ACTIVE") {
+        const billing = await tx.getBillingAllowance(principal.organisationId, now);
+        const entitlementPlanId = getEntitlementPlanId(
+          billing.subscription.planId,
+          billing.subscription.status
+        );
+        if (!canCreateActiveAgent(entitlementPlanId, billing.activeAgents)) {
+          throw new PlanLimitError(
+            "The hosted active-agent allowance is exhausted; upgrade the organisation plan or suspend an existing agent"
+          );
+        }
+      }
       const updated = await tx.updateAgentStatus(agentId, status);
       if (status === "REVOKED") await tx.revokeAgentCredentials(agentId, now);
       await tx.appendAudit({
@@ -183,9 +219,14 @@ export class ManagementService {
     const vendors = [...new Map(request.allowedVendors.map((vendor) => [vendor.id.toLowerCase(), vendor])).values()];
     const mandateId = createId("man");
     return this.repository.transaction(async (tx) => {
+      const candidateAgent = await tx.findAgent(request.agentId);
+      if (!candidateAgent || candidateAgent.organisationId !== principal.organisationId) throw new NotFoundError("Agent not found");
+      await tx.lockAgent(candidateAgent.id);
       const agent = await tx.findAgent(request.agentId);
       if (!agent || agent.organisationId !== principal.organisationId) throw new NotFoundError("Agent not found");
-      await tx.lockAgent(agent.id);
+      if (agent.status === "REVOKED") {
+        throw new ConflictError("AGENT_REVOKED", "A revoked agent cannot receive a new mandate");
+      }
       const mandate = await tx.createActiveMandate({
         id: mandateId,
         policyId: createId("pol"),

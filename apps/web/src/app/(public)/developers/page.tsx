@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Braces, Clock3, KeyRound, LockKeyhole, Play, TerminalSquare } from "lucide-react";
 import { CodeWindow, Eyebrow, PublicCta, SectionHeading, TextLink } from "@/components/public/marketing-primitives";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Developers",
+  path: "/developers",
   description: "Authorize agent actions with CAPYN's typed TypeScript SDK and REST API. Explore request contracts, reason codes, idempotency and execution."
-};
+});
 
 const sdkExample = `import { Capyn } from "@capyn/sdk";
 

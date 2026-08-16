@@ -15,8 +15,12 @@ export const metadata: Metadata = {
     "Delegate spending and operational capabilities to AI agents with enforceable policies, limits, approvals and audit trails.",
   applicationName: "CAPYN",
   keywords: ["agent authorization", "AI agent security", "agent payments", "policy engine", "programmable authority"],
-  authors: [{ name: "CAPYN" }],
+  authors: [{ name: "Matthew Wicks", url: "https://github.com/meanstackofdoom" }],
   creator: "CAPYN",
+  publisher: "CAPYN",
+  category: "Security software",
+  referrer: "origin-when-cross-origin",
+  robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     title: "CAPYN — Authority infrastructure for autonomous agents",

@@ -20,10 +20,16 @@ import type {
   CreateMandateRecord,
   CreateOrganisationRecord,
   CredentialAuthRecord,
+  BillingAccountRecord,
+  BillingAllowance,
   DemoSeedIds,
+  RecordBillingUsage,
+  RecordBillingWebhook,
   StoredApproval,
   StoredAuthorization,
   StoredExecution,
+  StoredSubscription,
+  UpdateSubscriptionRecord,
   UserAuthRecord
 } from "./contracts";
 
@@ -62,6 +68,9 @@ interface MemoryState {
   approvals: StoredApproval[];
   executions: StoredExecution[];
   auditEvents: AppendAuditEvent[];
+  subscriptions: StoredSubscription[];
+  billingUsageEvents: RecordBillingUsage[];
+  billingWebhookEvents: RecordBillingWebhook[];
 }
 
 function blankState(): MemoryState {
@@ -74,7 +83,10 @@ function blankState(): MemoryState {
     authorizations: [],
     approvals: [],
     executions: [],
-    auditEvents: []
+    auditEvents: [],
+    subscriptions: [],
+    billingUsageEvents: [],
+    billingWebhookEvents: []
   };
 }
 
@@ -146,6 +158,10 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
 
   async lockAgent(_agentId: string): Promise<void> {
     // The repository-wide transaction mutex is stronger than a per-agent lock.
+  }
+
+  async lockOrganisation(_organisationId: string): Promise<void> {
+    // The repository-wide transaction mutex is stronger than an organisation lock.
   }
 
   async findAgent(agentId: string): Promise<AgentRecord | null> {
@@ -407,7 +423,73 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
       organisationId: input.organisation.id,
       role: "OWNER"
     });
+    this.state.subscriptions.push({
+      id: input.subscription.id,
+      organisationId: input.organisation.id,
+      planId: "DEVELOPER",
+      status: "ACTIVE",
+      provider: "INTERNAL",
+      providerCustomerId: null,
+      providerSubscriptionId: null,
+      currentPeriodStart: input.subscription.currentPeriodStart,
+      currentPeriodEnd: input.subscription.currentPeriodEnd,
+      cancelAtPeriodEnd: false
+    });
     return { organisationId: input.organisation.id, ownerId: input.owner.id };
+  }
+
+  async getBillingAllowance(organisationId: string, now: Date): Promise<BillingAllowance> {
+    const subscription = this.state.subscriptions.find((item) => item.organisationId === organisationId);
+    if (!subscription) throw new Error("Organisation subscription not found");
+    if (
+      subscription.planId === "DEVELOPER" &&
+      (now < subscription.currentPeriodStart || now >= subscription.currentPeriodEnd)
+    ) {
+      subscription.currentPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      subscription.currentPeriodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+    }
+    const inPeriod = (event: RecordBillingUsage) =>
+      event.organisationId === organisationId &&
+      event.occurredAt >= subscription.currentPeriodStart &&
+      event.occurredAt < subscription.currentPeriodEnd;
+    const authorizationDecisions = this.state.billingUsageEvents
+      .filter((event) => inPeriod(event) && event.metric === "AUTHORIZATION_DECISION")
+      .reduce((sum, event) => sum + Number(event.quantity), 0);
+    return {
+      subscription: structuredClone(subscription),
+      activeAgents: this.state.agents.filter(
+        (agent) => agent.organisationId === organisationId && agent.status === "ACTIVE"
+      ).length,
+      authorizationDecisions
+    };
+  }
+
+  async recordBillingUsage(input: RecordBillingUsage): Promise<void> {
+    const duplicate = this.state.billingUsageEvents.some(
+      (event) =>
+        event.organisationId === input.organisationId &&
+        event.metric === input.metric &&
+        event.sourceType === input.sourceType &&
+        event.sourceId === input.sourceId
+    );
+    if (!duplicate) this.state.billingUsageEvents.push(structuredClone(input));
+  }
+
+  async updateSubscription(input: UpdateSubscriptionRecord): Promise<StoredSubscription> {
+    const subscription = this.state.subscriptions.find((item) => item.organisationId === input.organisationId);
+    if (!subscription) throw new Error("Organisation subscription not found");
+    Object.assign(subscription, input, { planId: input.planId });
+    return structuredClone(subscription);
+  }
+
+  async recordBillingWebhook(input: RecordBillingWebhook): Promise<boolean> {
+    if (
+      this.state.billingWebhookEvents.some(
+        (event) => event.provider === input.provider && event.providerEventId === input.providerEventId
+      )
+    ) return false;
+    this.state.billingWebhookEvents.push(structuredClone(input));
+    return true;
   }
 
   async getDashboardSnapshot(organisationId: string, now: Date): Promise<DashboardSnapshot | null> {
@@ -550,6 +632,29 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
       }));
   }
 
+  async getBillingAccount(organisationId: string, now: Date): Promise<BillingAccountRecord | null> {
+    if (!this.state.organisations.some((organisation) => organisation.id === organisationId)) return null;
+    const allowance = await this.getBillingAllowance(organisationId, now);
+    const inPeriod = (occurredAt: Date) =>
+      occurredAt >= allowance.subscription.currentPeriodStart && occurredAt < allowance.subscription.currentPeriodEnd;
+    const approvalRequests = this.state.billingUsageEvents
+      .filter(
+        (event) =>
+          event.organisationId === organisationId && event.metric === "APPROVAL_REQUEST" && inPeriod(event.occurredAt)
+      )
+      .reduce((sum, event) => sum + Number(event.quantity), 0);
+    const auditEvents = this.state.auditEvents.filter(
+      (event) => event.organisationId === organisationId && inPeriod(event.timestamp)
+    ).length;
+
+    return {
+      ...allowance,
+      approvalRequests,
+      auditEvents,
+      integrationConnections: 0
+    };
+  }
+
   inspect(): Readonly<MemoryState> {
     return structuredClone(this.state);
   }
@@ -571,6 +676,18 @@ export function createDemoMemoryRepository(keyHash: string): {
   const createdAt = new Date("2026-08-01T00:00:00.000Z");
   const state = blankState();
   state.organisations.push({ id: ids.organisationId, name: "Acme AI", slug: "acme-ai", createdAt });
+  state.subscriptions.push({
+    id: "sub_demo_acme",
+    organisationId: ids.organisationId,
+    planId: "DEVELOPER",
+    status: "ACTIVE",
+    provider: "INTERNAL",
+    providerCustomerId: null,
+    providerSubscriptionId: null,
+    currentPeriodStart: new Date("2026-08-01T00:00:00.000Z"),
+    currentPeriodEnd: new Date("2026-09-01T00:00:00.000Z"),
+    cancelAtPeriodEnd: false
+  });
   state.users.push(
     {
       id: ids.ownerId,

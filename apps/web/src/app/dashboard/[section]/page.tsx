@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ControlPlane } from "@/components/control-plane";
 import { DASHBOARD_SECTIONS, type DashboardSection } from "@/lib/dashboard";
+
+export const metadata: Metadata = { title: "Control plane", robots: { index: false, follow: false } };
 
 export function generateStaticParams() {
   return DASHBOARD_SECTIONS.filter((section) => section !== "overview").map((section) => ({ section }));

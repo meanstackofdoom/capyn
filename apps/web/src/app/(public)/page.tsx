@@ -1,12 +1,16 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, ChevronRight, CircleDollarSign, Fingerprint, Gauge, KeyRound, LockKeyhole, Network, ScrollText, ShieldCheck, UserCheck, X } from "lucide-react";
-import { AuthorityRequest, CodeWindow, Eyebrow, PublicCta, SectionHeading, SecuritySeal, TextLink } from "@/components/public/marketing-primitives";
+import { AuthorityConsole } from "@/components/public/authority-console";
+import { CodeWindow, Eyebrow, PublicCta, SectionHeading, SecuritySeal, TextLink } from "@/components/public/marketing-primitives";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Authority infrastructure for autonomous agents",
-  description: "Give AI agents permission to spend and act within explicit capabilities, limits, vendor policies and human approval thresholds."
-};
+  absoluteTitle: "CAPYN — Authority infrastructure for autonomous agents",
+  path: "/",
+  description: "Give AI agents permission to spend and act within explicit capabilities, limits, vendor policies and human approval thresholds.",
+  keywords: ["AI agent authorization", "agent spending controls", "agent IAM", "agent payment policy"]
+});
 
 const decisions = [
   { amount: "$18.00", vendor: "OpenAI", capability: "spend.compute", decision: "ALLOW", reason: "All delegated limits pass", tone: "permission" },
@@ -38,8 +42,43 @@ const result = await capyn.authorize({
 // result.decision → "ALLOW"`;
 
 export default function HomePage() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3010";
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "CAPYN",
+      url: siteUrl,
+      description: "Authority infrastructure for autonomous agents."
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: "CAPYN",
+      applicationCategory: "SecurityApplication",
+      operatingSystem: "Web, Node.js",
+      softwareVersion: "0.1.0",
+      description: "A programmable authorization control plane for autonomous agents with capabilities, limits, approvals and audit evidence.",
+      url: siteUrl,
+      codeRepository: "https://github.com/meanstackofdoom/capyn",
+      license: "https://opensource.org/license/mit",
+      featureList: [
+        "Agent-scoped API credentials",
+        "Versioned authority mandates",
+        "Deterministic spending policy evaluation",
+        "Request-bound human approvals",
+        "Append-oriented audit evidence"
+      ],
+      offers: [
+        { "@type": "Offer", name: "Developer", price: "0", priceCurrency: "USD" },
+        { "@type": "Offer", name: "Team", price: "99", priceCurrency: "USD" },
+        { "@type": "Offer", name: "Business", price: "499", priceCurrency: "USD" }
+      ]
+    }
+  ];
   return (
     <main>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
       <section className="relative overflow-hidden border-b border-line">
         <div className="authority-field pointer-events-none absolute inset-x-0 top-0 h-[760px] opacity-60" />
         <div className="site-container relative grid gap-14 pb-20 pt-16 sm:pt-24 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:pb-28 lg:pt-28">
@@ -65,7 +104,7 @@ export default function HomePage() {
           <div className="enter-control relative mx-auto w-full max-w-xl [animation-delay:100ms]">
             <div className="absolute -left-7 top-14 hidden h-[72%] w-px bg-authority/30 lg:block" />
             <div className="absolute -left-[31px] top-14 hidden h-2 w-2 rounded-full bg-authority lg:block" />
-            <AuthorityRequest />
+            <AuthorityConsole />
           </div>
         </div>
         <div className="site-container relative pb-8">

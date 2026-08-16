@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, CircleDollarSign, FileKey2, ScrollText, WalletCards, X } from "lucide-react";
 import { Eyebrow, PublicCta, SectionHeading, TextLink } from "@/components/public/marketing-primitives";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "About",
+  path: "/about",
   description: "CAPYN's thesis: autonomous agents need explicit, bounded and auditable authority before they perform consequential actions."
-};
+});
 
 const framework = [
   ["Authentication", "Who is the agent?"],

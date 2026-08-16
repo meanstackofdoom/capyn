@@ -27,14 +27,14 @@ I've now built and open-sourced the first developer MVP of CAPYN, an authority c
 
 The demo is deliberately narrow. An authenticated procurement agent requests one action, and CAPYN returns ALLOW, DENY or REQUIRE_APPROVAL after checking its mandate, capability, vendor, hard limits, current daily/monthly spend and human-review threshold.
 
-In under 20 seconds it shows:
+The short demo shows:
 
 - $18 to OpenAI → ALLOW
 - $30 to an unknown vendor → DENY
 - $120 to AWS → REQUIRE_APPROVAL
 - transfer.wallet → DENY
 
-The less visible work is the part I think matters: request-bound approvals, idempotency, replay prevention, integer money accounting, explainable reason traces, and serialized concurrent approvals so two requests cannot trivially consume the same remaining limit.
+The less visible work is the part I think matters: request-bound approvals, idempotency, replay prevention, integer money accounting, explainable reason traces, serialized spend reservations and race-safe approval decisions.
 
 CAPYN is not another wallet or payment rail. The policy layer is chain-agnostic and designed to sit above x402, Solana/USDC, AP2, Stripe or another executor.
 
@@ -46,10 +46,9 @@ I'm Matthew Wicks, an independent builder in Australia. If this would be useful 
 
 Best,
 Matthew Wicks
-[YOUR_CONTACT_EMAIL]
 https://github.com/meanstackofdoom/capyn
 ```
 
 ## Final edit
 
-Add Matthew's preferred public contact email, keep the draft below roughly 250 words, and remove any sentence he would not naturally say. Verify every technical claim against the tagged release and add the hosted demo URL once Railway capacity is available.
+Send from Matthew's preferred public contact address, keep the draft below roughly 250 words, and remove any sentence he would not naturally say. Verify every technical claim against the current release and add the hosted demo URL once it is stable.

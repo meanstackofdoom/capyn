@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpenCheck, FileCheck2, Fingerprint, ShieldCheck, SquareTerminal } from "lucide-react";
 import { DOC_CATEGORIES, docsCatalog } from "@/lib/docs";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Documentation",
-  description: "Canonical CAPYN documentation for developers and security reviewers: getting started, API, policy engine, architecture, security, deployment and project status."
-};
+  path: "/docs",
+  description: "Canonical CAPYN documentation for developers and security reviewers: getting started, API, billing, policy engine, architecture, security, deployment and project status."
+});
 
 const categoryCopy = {
   Start: "Install, configure and run CAPYN locally.",

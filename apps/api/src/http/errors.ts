@@ -39,6 +39,18 @@ export class ConflictError extends AppError {
   }
 }
 
+export class PlanLimitError extends AppError {
+  constructor(message: string) {
+    super(402, "PLAN_LIMIT_REACHED", message);
+  }
+}
+
+export class BillingUnavailableError extends AppError {
+  constructor(message = "Hosted billing is not configured") {
+    super(503, "BILLING_UNAVAILABLE", message);
+  }
+}
+
 export class InvalidRequestError extends AppError {
   constructor(code: string, message: string, details?: ValidationDetail[]) {
     super(400, code, message, details);

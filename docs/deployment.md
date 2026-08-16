@@ -60,8 +60,9 @@ Use `/health` as the process health endpoint. A production-ready health strategy
 Create independent web and API services from the same repository. Configure each service with the commands above, let Railway assign each service's `PORT`, and set:
 
 - web: `CAPYN_SERVICE=web`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`;
-- API: `CAPYN_SERVICE=api`, `CAPYN_STORAGE=postgres`, `DATABASE_URL`, `API_KEY_PEPPER`, `WEB_ORIGIN`, `DEMO_HUMAN_AUTH=false` for any non-demo environment;
+- API: `CAPYN_SERVICE=api`, `CAPYN_STORAGE=postgres`, `DATABASE_URL`, `API_KEY_PEPPER`, `WEB_ORIGIN`, `TRUST_PROXY=true` behind Railway ingress, and `DEMO_HUMAN_AUTH=false` for any non-demo environment;
 - API bootstrap: omit `BOOTSTRAP_TOKEN` unless a controlled onboarding operation requires it.
+- optional billing: set all four Stripe variables from [Configuration](configuration.md), then deliver subscribed events to `/v1/billing/webhooks/stripe`.
 
 Provision PostgreSQL as a managed service and restrict connectivity to the API service. No container-specific configuration is required by CAPYN.
 
@@ -72,10 +73,12 @@ For a public demo:
 1. run `corepack pnpm check`;
 2. run `corepack pnpm docs:check`;
 3. run `corepack pnpm audit --prod`;
-4. confirm no `.env`, real credentials or customer data is committed;
-5. set the canonical web and API origins;
-6. verify `/healthz`, `/health`, `/`, `/docs`, `/dashboard` and one authorization request;
-7. confirm the interface states clearly that execution is simulated.
+4. build with final public origins and run `corepack pnpm smoke:production`;
+5. confirm no `.env`, real credentials or customer data is committed;
+6. set the canonical web and API origins;
+7. verify `/healthz`, `/health`, `/`, `/docs`, `/dashboard` and one authorization request;
+8. confirm the interface states clearly that execution is simulated;
+9. when billing is enabled, complete a test-mode Checkout, replay its webhook and confirm one subscription audit event.
 
 Before real money, every item in the [Security production gate](security.md#production-gate) is mandatory. Hosting the current MVP does not satisfy that gate.
 

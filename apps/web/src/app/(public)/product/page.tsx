@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, Clock3, Database, Fingerprint, Gauge, KeyRound, LockKeyhole, Play, ScrollText, ShieldCheck, UserCheck, X } from "lucide-react";
 import { AuthorityRequest, Eyebrow, PublicCta, SectionHeading, TextLink } from "@/components/public/marketing-primitives";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: "Product",
+  path: "/product",
   description: "Identity, mandates, policy evaluation, request-bound approvals, controlled execution and complete audit evidence for autonomous agents."
-};
+});
 
 const flow = [
   { icon: Fingerprint, title: "Authenticate the agent", copy: "A revocable API credential resolves to exactly one agent and organisation. The request body cannot choose another identity." },

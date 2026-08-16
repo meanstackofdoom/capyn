@@ -7,6 +7,7 @@
     "baseUrl": ".",
     "paths": {
       "@capyn/types": ["packages/types/src/index.ts"],
+      "@capyn/billing": ["packages/billing/src/index.ts"],
       "@capyn/policy-engine": ["packages/policy-engine/src/index.ts"],
       "@capyn/database": ["packages/database/src/index.ts"],
       "@capyn/sdk": ["packages/sdk/src/index.ts"]

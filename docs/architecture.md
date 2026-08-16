@@ -31,6 +31,7 @@ Human / organisation
 | `@capyn/types` | Schemas, public contracts, money conversion | Access infrastructure |
 | `@capyn/policy-engine` | Pure `PolicyEvaluationInput → PolicyEvaluation` | Query a database or execute payment |
 | `@capyn/database` | Persistence, transaction/locking primitives, projections | Make an HTTP decision |
+| `@capyn/billing` | Pure plan catalogue, entitlements and overage calculation | Change policy decisions or call a payment provider |
 | `apps/api` | Authentication, orchestration, lifecycle, safe HTTP errors | Trust client agent identity |
 | `@capyn/sdk` | Typed agent-facing client | Contain policy rules |
 | `apps/web` | Public website, canonical docs renderer and human control plane | Enforce authority in the browser |
@@ -43,16 +44,20 @@ Agent                 API                 PostgreSQL             Policy engine
   ├─ Bearer key ──────►│                      │                       │
   │                    ├─ HMAC lookup ───────►│                       │
   │                    ├─ serializable tx ───►│                       │
+  │                    ├─ organisation lock ─►│                       │
   │                    ├─ agent advisory lock►│                       │
   │                    ├─ idempotency lookup ►│                       │
+  │                    ├─ hosted allowance ──►│                       │
   │                    ├─ context + spend ───►│                       │
   │                    ├─────────────────────────────────────────────►│
   │                    │◄──────── decision + reason trace ───────────┤
-  │                    ├─ auth + approval? + audit ─────────────────►│
+  │                    ├─ auth + usage + approval? + audit ────────►│
   │◄─ deterministic ───┤                      │                       │
 ```
 
-The transaction lock makes the spend snapshot and the newly reserved `ALLOWED` authorization one serial operation. An awaiting approval is not reserved indefinitely; all hard limits are re-evaluated under the same lock when a human approves it.
+The transaction lock makes the spend snapshot and the newly reserved `ALLOWED` authorization one serial operation. An awaiting approval is not reserved indefinitely; its exact mandate binding and all hard limits are re-evaluated under the same lock when a human approves it. Execution acquires the same agent lock, reloads the authorization, and re-evaluates the current agent, exact mandate binding, capability, vendor and hard limits before it claims the one execution record. A suspension, revocation or replacement mandate invalidates unused authority instead of letting a stale decision move forward.
+
+The organisation lock serializes hosted quota checks across different agents. Billing is orchestration around the evaluator: exhausting a bounded free allowance can stop a new hosted request, but no billing code can turn a failed policy rule into permission.
 
 ## Lifecycle
 
@@ -70,7 +75,7 @@ REQUESTED
                            └── FAILED
 ```
 
-Transitions are server-side service operations. A client cannot set an authorization state.
+Transitions are server-side service operations. A client cannot set an authorization state. `EXPIRED` also represents an unused authorization invalidated by a changed authority context; its audit event preserves the machine-readable reason.
 
 ## Persistence
 

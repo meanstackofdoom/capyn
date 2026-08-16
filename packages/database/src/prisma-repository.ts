@@ -5,6 +5,7 @@ import {
   type AgentCredential,
   type ApprovalRequest,
   type Execution,
+  type OrganisationSubscription,
   type User
 } from "@prisma/client";
 import {
@@ -36,9 +37,15 @@ import type {
   CreateMandateRecord,
   CreateOrganisationRecord,
   CredentialAuthRecord,
+  BillingAccountRecord,
+  BillingAllowance,
+  RecordBillingUsage,
+  RecordBillingWebhook,
   StoredApproval,
   StoredAuthorization,
   StoredExecution,
+  StoredSubscription,
+  UpdateSubscriptionRecord,
   UserAuthRecord
 } from "./contracts";
 
@@ -143,6 +150,21 @@ function mapExecution(row: Execution): StoredExecution {
   };
 }
 
+function mapSubscription(row: OrganisationSubscription): StoredSubscription {
+  return {
+    id: row.id,
+    organisationId: row.organisationId,
+    planId: row.plan,
+    status: row.status,
+    provider: row.provider,
+    providerCustomerId: row.providerCustomerId,
+    providerSubscriptionId: row.providerSubscriptionId,
+    currentPeriodStart: row.currentPeriodStart,
+    currentPeriodEnd: row.currentPeriodEnd,
+    cancelAtPeriodEnd: row.cancelAtPeriodEnd
+  };
+}
+
 function purposeFromMetadata(value: Prisma.JsonValue): string | null {
   const metadata = metadataSchema.parse(value);
   return typeof metadata.purpose === "string" ? metadata.purpose : null;
@@ -190,6 +212,10 @@ class PrismaCapynTransaction implements CapynTransaction {
 
   async lockAgent(agentId: string): Promise<void> {
     await this.db.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${agentId}, 0))`;
+  }
+
+  async lockOrganisation(organisationId: string): Promise<void> {
+    await this.db.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`billing:${organisationId}`}, 0))`;
   }
 
   async findAgent(agentId: string): Promise<AgentRecord | null> {
@@ -465,10 +491,111 @@ class PrismaCapynTransaction implements CapynTransaction {
     await this.db.organisation.create({
       data: {
         ...input.organisation,
-        users: { create: { ...input.owner, role: "OWNER" } }
+        users: { create: { ...input.owner, role: "OWNER" } },
+        subscription: {
+          create: {
+            id: input.subscription.id,
+            plan: "DEVELOPER",
+            status: "ACTIVE",
+            provider: "INTERNAL",
+            currentPeriodStart: input.subscription.currentPeriodStart,
+            currentPeriodEnd: input.subscription.currentPeriodEnd
+          }
+        }
       }
     });
     return { organisationId: input.organisation.id, ownerId: input.owner.id };
+  }
+
+  async getBillingAllowance(organisationId: string, now: Date): Promise<BillingAllowance> {
+    let subscription = await this.db.organisationSubscription.findUnique({ where: { organisationId } });
+    if (!subscription) throw new Error("Organisation subscription not found");
+    if (
+      subscription.plan === "DEVELOPER" &&
+      (now < subscription.currentPeriodStart || now >= subscription.currentPeriodEnd)
+    ) {
+      subscription = await this.db.organisationSubscription.update({
+        where: { organisationId },
+        data: {
+          currentPeriodStart: utcMonthStart(now),
+          currentPeriodEnd: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
+        }
+      });
+    }
+    const [activeAgents, decisionUsage] = await Promise.all([
+      this.db.agent.count({ where: { organisationId, status: "ACTIVE" } }),
+      this.db.billingUsageEvent.aggregate({
+        where: {
+          organisationId,
+          metric: "AUTHORIZATION_DECISION",
+          occurredAt: { gte: subscription.currentPeriodStart, lt: subscription.currentPeriodEnd }
+        },
+        _sum: { quantity: true }
+      })
+    ]);
+    return {
+      subscription: mapSubscription(subscription),
+      activeAgents,
+      authorizationDecisions: Number(decisionUsage._sum.quantity ?? 0n)
+    };
+  }
+
+  async recordBillingUsage(input: RecordBillingUsage): Promise<void> {
+    await this.db.billingUsageEvent.upsert({
+      where: {
+        organisationId_metric_sourceType_sourceId: {
+          organisationId: input.organisationId,
+          metric: input.metric,
+          sourceType: input.sourceType,
+          sourceId: input.sourceId
+        }
+      },
+      create: {
+        id: input.id,
+        organisationId: input.organisationId,
+        metric: input.metric,
+        quantity: BigInt(input.quantity),
+        sourceType: input.sourceType,
+        sourceId: input.sourceId,
+        occurredAt: input.occurredAt,
+        metadata: jsonInput(input.metadata)
+      },
+      update: {}
+    });
+  }
+
+  async updateSubscription(input: UpdateSubscriptionRecord): Promise<StoredSubscription> {
+    return mapSubscription(
+      await this.db.organisationSubscription.update({
+        where: { organisationId: input.organisationId },
+        data: {
+          plan: input.planId,
+          status: input.status,
+          provider: input.provider,
+          providerCustomerId: input.providerCustomerId,
+          providerSubscriptionId: input.providerSubscriptionId,
+          currentPeriodStart: input.currentPeriodStart,
+          currentPeriodEnd: input.currentPeriodEnd,
+          cancelAtPeriodEnd: input.cancelAtPeriodEnd
+        }
+      })
+    );
+  }
+
+  async recordBillingWebhook(input: RecordBillingWebhook): Promise<boolean> {
+    const result = await this.db.billingWebhookEvent.createMany({
+      data: {
+        id: input.id,
+        provider: input.provider,
+        providerEventId: input.providerEventId,
+        eventType: input.eventType,
+        payloadHash: input.payloadHash,
+        receivedAt: input.receivedAt,
+        processedAt: input.processedAt
+      },
+      skipDuplicates: true
+    });
+    return result.count === 1;
   }
 }
 
@@ -689,5 +816,54 @@ export class PrismaCapynRepository implements CapynRepository {
       timestamp: row.timestamp.toISOString(),
       metadata: metadataSchema.parse(row.metadata)
     }));
+  }
+
+  async getBillingAccount(organisationId: string, now: Date): Promise<BillingAccountRecord | null> {
+    let subscription = await this.client.organisationSubscription.findUnique({ where: { organisationId } });
+    if (!subscription) return null;
+    if (
+      subscription.plan === "DEVELOPER" &&
+      (now < subscription.currentPeriodStart || now >= subscription.currentPeriodEnd)
+    ) {
+      subscription = await this.client.organisationSubscription.update({
+        where: { organisationId },
+        data: {
+          currentPeriodStart: utcMonthStart(now),
+          currentPeriodEnd: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
+        }
+      });
+    }
+    const periodStart = subscription.currentPeriodStart;
+    const periodEnd = subscription.currentPeriodEnd;
+    const [activeAgents, decisionUsage, approvalUsage, auditEvents] = await Promise.all([
+      this.client.agent.count({ where: { organisationId, status: "ACTIVE" } }),
+      this.client.billingUsageEvent.aggregate({
+        where: {
+          organisationId,
+          metric: "AUTHORIZATION_DECISION",
+          occurredAt: { gte: periodStart, lt: periodEnd }
+        },
+        _sum: { quantity: true }
+      }),
+      this.client.billingUsageEvent.aggregate({
+        where: {
+          organisationId,
+          metric: "APPROVAL_REQUEST",
+          occurredAt: { gte: periodStart, lt: periodEnd }
+        },
+        _sum: { quantity: true }
+      }),
+      this.client.auditEvent.count({
+        where: { organisationId, timestamp: { gte: periodStart, lt: periodEnd } }
+      })
+    ]);
+    return {
+      subscription: mapSubscription(subscription),
+      activeAgents,
+      authorizationDecisions: Number(decisionUsage._sum.quantity ?? 0n),
+      approvalRequests: Number(approvalUsage._sum.quantity ?? 0n),
+      auditEvents,
+      integrationConnections: 0
+    };
   }
 }

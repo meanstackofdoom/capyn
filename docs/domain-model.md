@@ -25,13 +25,13 @@ An `AgentCredential` belongs to exactly one agent. CAPYN generates 256 bits of r
 - an HMAC-SHA-256 hash using `API_KEY_PEPPER`;
 - creation, last-used and revocation timestamps.
 
-Revoking an agent also revokes its active credentials. Suspending an agent preserves credentials but the policy engine returns `AGENT_INACTIVE`.
+Revoking an agent is terminal: it revokes active credentials, prevents replacement credentials and cannot be reversed through the management API. Suspending an agent preserves credentials but the policy engine returns `AGENT_INACTIVE`.
 
 ## Mandate
 
 A mandate is a versioned, time-bounded grant to one agent. It contains namespaced capability strings and one spending policy. Creating a new active version revokes the previous active version inside the same transaction.
 
-The database guarantees at most one active mandate per agent. The policy engine still fails closed if an inconsistent repository ever supplies more than one.
+Mandate activation runs under the agent lock and revokes the previous active version in the same serializable transaction. The policy engine independently fails closed if an inconsistent store ever supplies more than one active mandate.
 
 ## Spending policy
 
@@ -58,8 +58,20 @@ An approval has a one-to-one relation with an authorization. A human decision ca
 
 ## Execution
 
-An execution has a one-to-one relation with an authorization. Its unique constraint is the replay barrier. v0.1 uses `MockPaymentExecutor`; a future adapter must use the CAPYN execution ID as its provider idempotency key.
+An execution has a one-to-one relation with an authorization. Its unique constraint is the replay barrier. Immediately before claiming execution, CAPYN rechecks the agent, the exact mandate binding, capability, vendor and current hard limits under the agent lock. v0.1 uses `MockPaymentExecutor`; a future adapter must use the CAPYN execution ID as its provider idempotency key.
 
 ## Audit event
 
 An audit event records tenant, actor, event type, entity, timestamp and safe metadata. Application code exposes create/list only. PostgreSQL rejects updates and deletes through a trigger. Database superusers remain a trust boundary, so production exports or hash chaining may be added later.
+
+## Organisation subscription
+
+Every organisation has exactly one hosted subscription record. It stores the plan, lifecycle status, provider identifiers, billing period and cancellation flag. Newly bootstrapped organisations receive an internal Developer subscription in the same transaction as the organisation and owner.
+
+Provider webhooks update the record only after raw-body signature verification, configured-price matching and provider-scoped event de-duplication. Non-paying terminal/incomplete states fall back to Developer entitlements. A subscription changes commercial allowance; it never grants a capability or bypasses policy.
+
+## Billing usage event
+
+Usage events are append-oriented accounting facts with a metric, integer quantity, occurrence time and exact source. `(organisationId, metric, sourceType, sourceId)` is unique. An authorization and its idempotent replay therefore map to one decision event, while approval usage maps to the exact approval request.
+
+Active-agent and audit counts are derived from canonical domain records rather than accepting client totals. See [Billing](billing.md) for the plan catalogue and payment boundary.

@@ -34,7 +34,7 @@ Do not send the pitch until each factual item is true at the public release URL.
 
 ## Before send
 
-- [ ] Replace every `[PLACEHOLDER]`.
+- [x] Remove unresolved template fields from the draft.
 - [ ] Confirm the recipient's current role and preferred contact route.
 - [ ] Use plain text; no tracking pixel or large attachment.
 - [ ] Rewrite the draft in Matthew's own voice.

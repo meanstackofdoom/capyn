@@ -3,6 +3,9 @@ import type {
   ApprovalView,
   AuditEventView,
   AuthorizationState,
+  BillableMetric,
+  BillingPlanId,
+  BillingProviderName,
   DashboardSnapshot,
   Decision,
   JsonValue,
@@ -10,6 +13,7 @@ import type {
   PolicyEvaluationInput,
   ReasonCode,
   RuleTrace,
+  SubscriptionStatus,
   UserRole
 } from "@capyn/types";
 
@@ -169,10 +173,70 @@ export interface CreateMandateRecord {
 export interface CreateOrganisationRecord {
   organisation: { id: string; name: string; slug: string };
   owner: { id: string; name: string; email: string };
+  subscription: { id: string; currentPeriodStart: Date; currentPeriodEnd: Date };
+}
+
+export interface StoredSubscription {
+  id: string;
+  organisationId: string;
+  planId: BillingPlanId;
+  status: SubscriptionStatus;
+  provider: BillingProviderName;
+  providerCustomerId: string | null;
+  providerSubscriptionId: string | null;
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface BillingAllowance {
+  subscription: StoredSubscription;
+  activeAgents: number;
+  authorizationDecisions: number;
+}
+
+export interface BillingAccountRecord extends BillingAllowance {
+  approvalRequests: number;
+  auditEvents: number;
+  integrationConnections: number;
+}
+
+export interface RecordBillingUsage {
+  id: string;
+  organisationId: string;
+  metric: BillableMetric;
+  quantity: string;
+  sourceType: string;
+  sourceId: string;
+  occurredAt: Date;
+  metadata: Record<string, JsonValue>;
+}
+
+export interface UpdateSubscriptionRecord {
+  organisationId: string;
+  planId: BillingPlanId;
+  status: SubscriptionStatus;
+  provider: BillingProviderName;
+  providerCustomerId: string | null;
+  providerSubscriptionId: string | null;
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface RecordBillingWebhook {
+  id: string;
+  provider: BillingProviderName;
+  providerEventId: string;
+  eventType: string;
+  payloadHash: string;
+  receivedAt: Date;
+  processedAt: Date;
 }
 
 export interface CapynTransaction {
   lockAgent(agentId: string): Promise<void>;
+  lockOrganisation(organisationId: string): Promise<void>;
   findAgent(agentId: string): Promise<AgentRecord | null>;
   findIdempotentAuthorization(agentId: string, idempotencyKey: string): Promise<StoredAuthorization | null>;
   loadPolicyContext(agentId: string, currency: "USD", now: Date): Promise<Omit<PolicyEvaluationInput, "request" | "approvalAlreadyGranted">>;
@@ -213,6 +277,10 @@ export interface CapynTransaction {
   createActiveMandate(input: CreateMandateRecord): Promise<{ id: string; version: number }>;
   revokeActiveMandates(agentId: string, at: Date): Promise<number>;
   createOrganisation(input: CreateOrganisationRecord): Promise<{ organisationId: string; ownerId: string }>;
+  getBillingAllowance(organisationId: string, now: Date): Promise<BillingAllowance>;
+  recordBillingUsage(input: RecordBillingUsage): Promise<void>;
+  updateSubscription(input: UpdateSubscriptionRecord): Promise<StoredSubscription>;
+  recordBillingWebhook(input: RecordBillingWebhook): Promise<boolean>;
 }
 
 export interface CapynRepository {
@@ -223,6 +291,7 @@ export interface CapynRepository {
   getDashboardSnapshot(organisationId: string, now: Date): Promise<DashboardSnapshot | null>;
   getApprovalView(organisationId: string, approvalId: string): Promise<ApprovalView | null>;
   getAuditEvents(organisationId: string, limit: number): Promise<AuditEventView[]>;
+  getBillingAccount(organisationId: string, now: Date): Promise<BillingAccountRecord | null>;
 }
 
 export interface DemoSeedIds {
