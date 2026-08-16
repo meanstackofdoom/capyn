@@ -13,6 +13,8 @@ Agent ────────────────────► API servic
 
 The web service has no direct database access. The API is the only application component allowed to mutate authority state.
 
+When a public-alpha account is limited to one application service, `CAPYN_SERVICE=combined` starts the same built web and API processes on private loopback ports and exposes them through a small first-party HTTP proxy. This is a deployment adapter for the synthetic, memory-backed demo only; the domain and application boundaries remain separate in code. Durable or customer-data environments should use the preferred separate-service shape above.
+
 ## Web service
 
 Build from the monorepo root:
@@ -51,7 +53,7 @@ Start directly:
 corepack pnpm --filter @capyn/api start
 ```
 
-For a shared monorepo deployment, set `CAPYN_SERVICE=api` and run `corepack pnpm start`. The root launcher applies checked-in migrations when `CAPYN_STORAGE=postgres`, then starts the API. The web service uses the same root command with `CAPYN_SERVICE=web`.
+For a shared monorepo deployment, set `CAPYN_SERVICE=api` and run `corepack pnpm start`. The root launcher applies checked-in migrations when `CAPYN_STORAGE=postgres`, then starts the API. The web service uses the same root command with `CAPYN_SERVICE=web`. A constrained demo can use `CAPYN_SERVICE=combined`; `CAPYN_INTERNAL_API_PORT` and `CAPYN_INTERNAL_WEB_PORT` default to `4100` and `3100` and must differ from the platform `PORT`.
 
 Use `/health` as the process health endpoint. A production-ready health strategy should add a separate readiness check that verifies the database and required executor dependencies without disclosing internal details.
 
@@ -65,6 +67,8 @@ Create independent web and API services from the same repository. Configure each
 - optional billing: set all four Stripe variables from [Configuration](configuration.md), then deliver subscribed events to `/v1/billing/webhooks/stripe`.
 
 Provision PostgreSQL as a managed service and restrict connectivity to the API service. No container-specific configuration is required by CAPYN.
+
+For a one-service synthetic demo, set `CAPYN_SERVICE=combined`, `CAPYN_STORAGE=memory`, `DEMO_HUMAN_AUTH=true`, and make `WEB_ORIGIN`, `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_URL` the same HTTPS public origin. Do not configure Stripe or real customer data in this topology. Verify it locally with `corepack pnpm smoke:combined` after the normal build.
 
 ## Pre-deployment checklist
 

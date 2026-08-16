@@ -2,16 +2,16 @@ import { spawn } from "node:child_process";
 import process from "node:process";
 
 const service = process.env.CAPYN_SERVICE;
-if (service !== "api" && service !== "web") {
-  process.stderr.write("CAPYN_SERVICE must be set to api or web\n");
+if (service !== "api" && service !== "web" && service !== "combined") {
+  process.stderr.write("CAPYN_SERVICE must be set to api, web or combined\n");
   process.exit(1);
 }
 
 const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
-function run(args, { forwardSignals = false } = {}) {
+function run(command, args, { forwardSignals = false } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(pnpm, args, { stdio: "inherit", shell: false });
+    const child = spawn(command, args, { stdio: "inherit", shell: false });
     const forwardInterrupt = () => {
       if (forwardSignals && !child.killed) child.kill("SIGINT");
     };
@@ -34,11 +34,12 @@ function run(args, { forwardSignals = false } = {}) {
   });
 }
 
-if (service === "api" && process.env.CAPYN_STORAGE === "postgres") {
-  const migrationCode = await run(["db:migrate"]);
+if ((service === "api" || service === "combined") && process.env.CAPYN_STORAGE === "postgres") {
+  const migrationCode = await run(pnpm, ["db:migrate"]);
   if (migrationCode !== 0) process.exit(migrationCode);
 }
 
-const workspace = service === "api" ? "@capyn/api" : "@capyn/web";
-const exitCode = await run(["--filter", workspace, "start"], { forwardSignals: true });
+const exitCode = service === "combined"
+  ? await run(process.execPath, ["scripts/start-combined.mjs"], { forwardSignals: true })
+  : await run(pnpm, ["--filter", service === "api" ? "@capyn/api" : "@capyn/web", "start"], { forwardSignals: true });
 process.exit(exitCode);

@@ -31,7 +31,9 @@ The API refuses to start in PostgreSQL mode without `DATABASE_URL`, with an `API
 | `NEXT_PUBLIC_DEMO_USER_ID` | `usr_demo_owner` | Development user sent only when demo human auth is intentionally enabled. |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3010` | Canonical origin for metadata, sitemap and social cards. |
 | `PORT` | platform supplied in production | Next.js listen port for `pnpm --filter @capyn/web start`. Development stays on `3010`. |
-| `CAPYN_SERVICE` | unset locally | Set to `web` or `api` when two hosting services share the root `pnpm start` command. |
+| `CAPYN_SERVICE` | unset locally | Set to `web` or `api` for the preferred split deployment, or `combined` only for the constrained synthetic demo. |
+| `CAPYN_INTERNAL_API_PORT` | `4100` | Private API port used only by the combined demo launcher. |
+| `CAPYN_INTERNAL_WEB_PORT` | `3100` | Private Next.js port used only by the combined demo launcher. |
 
 `NEXT_PUBLIC_*` values are embedded into the browser bundle at build time. Changing them requires a new web build.
 

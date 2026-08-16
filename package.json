@@ -22,6 +22,7 @@
     "db:seed": "pnpm --filter @capyn/database db:seed",
     "demo": "tsx --tsconfig examples/tsconfig.json examples/demo.ts",
     "smoke:production": "node scripts/smoke-production.mjs",
+    "smoke:combined": "node scripts/smoke-combined.mjs",
     "video:render": "pnpm --filter @capyn/video render",
     "video:still": "pnpm --filter @capyn/video still",
     "video:studio": "pnpm --filter @capyn/video exec remotion studio src/index.ts",

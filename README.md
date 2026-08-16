@@ -116,6 +116,8 @@ corepack pnpm build
 corepack pnpm start
 ```
 
+For a resource-constrained synthetic public demo, `CAPYN_SERVICE=combined` runs those same built processes behind one first-party proxy. It is deliberately not the durable/customer-data topology. Run `corepack pnpm smoke:combined` to verify that adapter; no Docker configuration is used.
+
 The selected service binds to `0.0.0.0` and respects the platform `PORT`. Set `NEXT_PUBLIC_SITE_URL` to the final public origin and use `/healthz` for the web health check. The API uses `/health`. No Docker configuration is required.
 
 After a production build, run the self-contained deployment smoke gate on unused ports `3110` and `4110`:

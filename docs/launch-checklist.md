@@ -36,7 +36,7 @@ corepack pnpm smoke:production
 git diff --check
 ```
 
-`smoke:production` starts the built API and web services temporarily on ports `4110` and `3110`, verifies the four policy outcomes and public surfaces, then releases both ports. It does not require Docker.
+`smoke:production` starts the built API and web services temporarily on ports `4110` and `3110`, verifies the four policy outcomes and public surfaces, then releases both ports. `smoke:combined` verifies the constrained one-service Railway adapter on three additional non-default ports. Neither requires Docker.
 
 ## Hosting safety boundary
 
