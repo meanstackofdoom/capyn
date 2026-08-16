@@ -27,6 +27,7 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 - Added billing and website documentation to the public documentation register.
 - Added a repeatable production smoke harness covering the four seeded decisions, approval/execution, 22 public routes, nine dashboard routes, SEO boundaries and response headers.
 - Added a tested one-service proxy adapter for a synthetic public alpha when a hosting account cannot provision the preferred split topology.
+- Pinned Railway's native Railpack build/start/health contract so a reused service cannot inherit a Dockerfile builder.
 
 ## v0.1.0 — 2026-08-16
 

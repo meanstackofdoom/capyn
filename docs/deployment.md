@@ -70,6 +70,8 @@ Provision PostgreSQL as a managed service and restrict connectivity to the API s
 
 For a one-service synthetic demo, set `CAPYN_SERVICE=combined`, `CAPYN_STORAGE=memory`, `DEMO_HUMAN_AUTH=true`, and make `WEB_ORIGIN`, `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_URL` the same HTTPS public origin. Do not configure Stripe or real customer data in this topology. Verify it locally with `corepack pnpm smoke:combined` after the normal build.
 
+The checked-in `railway.json` explicitly selects Railway's native Railpack builder, builds only the API/web dependency graphs, starts the root service launcher and checks `/healthz`. This prevents an older service-level Dockerfile setting from surviving a source swap; CAPYN contains no Dockerfile.
+
 ## Pre-deployment checklist
 
 For a public demo:
