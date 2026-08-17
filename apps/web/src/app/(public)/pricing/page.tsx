@@ -18,8 +18,8 @@ function dollars(cents: number | null): string {
 }
 
 function planCta(planId: "DEVELOPER" | "TEAM" | "BUSINESS") {
-  if (planId === "DEVELOPER") return { label: "Open the free demo", href: "/dashboard/billing" };
-  return { label: `Choose ${PLAN_CATALOG[planId].name}`, href: "/dashboard/billing" };
+  if (planId === "DEVELOPER") return { label: "Build a free mandate", href: "/start" };
+  return { label: `Shape a ${PLAN_CATALOG[planId].name} mandate`, href: "/start" };
 }
 
 export default function PricingPage() {
@@ -37,7 +37,7 @@ export default function PricingPage() {
               The policy engine stays MIT-licensed and free. Hosted CAPYN charges for decision volume, active agent identities, retained evidence, managed approvals, integrations and production service boundaries.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link href="/dashboard/billing" className="public-primary-button min-h-12 justify-center px-6">Inspect live metering <ArrowRight size={15} /></Link>
+              <Link href="/start" className="public-primary-button min-h-12 justify-center px-6">Build a mandate first <ArrowRight size={15} /></Link>
               <Link href="/docs/billing" className="public-secondary-button min-h-12 justify-center px-6">Read the billing contract</Link>
             </div>
           </div>

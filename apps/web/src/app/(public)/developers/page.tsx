@@ -88,8 +88,8 @@ export default function DevelopersPage() {
             <h1 className="display-title mt-7 text-balance text-5xl font-semibold leading-[.95] tracking-[-.065em] sm:text-7xl">One call before the agent acts.</h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-muted">Authenticate the agent once, describe the exact requested action and let CAPYN return the only three outcomes your integration needs.</p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <a href="#quickstart" className="public-primary-button min-h-12 justify-center px-6">Run the local demo <ArrowRight size={15} /></a>
-              <Link href="/dashboard/developers" className="public-secondary-button min-h-12 justify-center px-6">Inspect demo credentials</Link>
+              <Link href="/start" className="public-primary-button min-h-12 justify-center px-6">Generate your integration <ArrowRight size={15} /></Link>
+              <a href="#quickstart" className="public-secondary-button min-h-12 justify-center px-6">Run the local demo</a>
             </div>
           </div>
           <CodeWindow label="agent.ts" code={sdkExample} />

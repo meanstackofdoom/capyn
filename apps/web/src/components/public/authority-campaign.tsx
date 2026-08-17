@@ -90,7 +90,7 @@ export function AuthorityCampaign() {
           <p><span>Next / make it real</span>Watch one request cross the boundary.</p>
           <div className="authority-campaign__actions">
             <Link href="/lab">Run the sequence <ArrowRight size={15} /></Link>
-            <Link href="/design-partners">Bring your boundary</Link>
+            <Link href="/start">Build your boundary</Link>
           </div>
         </div>
       </div>

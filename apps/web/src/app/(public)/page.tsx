@@ -3,6 +3,7 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 import { AuthorityCampaign } from "@/components/public/authority-campaign";
 import { AuthorityConsole } from "@/components/public/authority-console";
 import { DelegatedEnvelope } from "@/components/public/delegated-envelope";
+import { MandateResume } from "@/components/public/mandate-resume";
 import { CodeWindow, Eyebrow, PublicCta, TextLink } from "@/components/public/marketing-primitives";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -85,8 +86,8 @@ export default function HomePage() {
               The authorization layer between what an autonomous agent wants to do and what your systems should permit—capabilities, hard limits, human approvals and evidence in one decision point.
             </p>
             <div className="home-hero__actions">
-              <Link href="#delegated-envelope" className="public-primary-button min-h-12 justify-center px-6">Build a mandate <ArrowRight size={16} /></Link>
-              <Link href="/lab" className="public-secondary-button min-h-12 justify-center px-6">Run the full evaluator <ChevronRight size={16} /></Link>
+              <Link href="/start" className="public-primary-button min-h-12 justify-center px-6">Start your mandate <ArrowRight size={16} /></Link>
+              <Link href="#delegated-envelope" className="public-secondary-button min-h-12 justify-center px-6">Move a live request <ChevronRight size={16} /></Link>
             </div>
           </div>
 
@@ -102,6 +103,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <MandateResume />
 
       <DelegatedEnvelope />
 

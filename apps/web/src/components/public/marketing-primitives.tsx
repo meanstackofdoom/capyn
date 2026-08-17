@@ -102,11 +102,11 @@ export function PublicCta() {
           <div className="relative max-w-2xl">
             <p className="font-mono text-[10px] uppercase tracking-[.17em] text-white/65">Start with the decision point</p>
             <h2 className="display-title mt-5 text-4xl font-semibold leading-[1.02] tracking-[-.055em] sm:text-5xl">Give the agent a mandate, not the treasury keys.</h2>
-            <p className="mt-5 max-w-xl text-sm leading-7 text-white/70">Run a real policy decision in the Authority Lab, then bring one consequential action to a design-partner brief.</p>
+            <p className="mt-5 max-w-xl text-sm leading-7 text-white/70">Turn one consequential action into a saved mandate, generate the integration, then rehearse its request in the Authority Lab.</p>
           </div>
           <div className="relative mt-8 flex flex-col gap-3 sm:flex-row lg:mt-0 lg:flex-col">
-            <Link href="/lab" className="inline-flex min-h-12 items-center justify-center gap-2 bg-white px-5 text-sm font-bold text-authority">Enter Authority Lab <ArrowRight size={15} /></Link>
-            <Link href="/design-partners" className="inline-flex min-h-12 items-center justify-center gap-2 border border-white/25 px-5 text-sm font-bold text-white">Bring a real boundary <ArrowRight size={15} /></Link>
+            <Link href="/start" className="inline-flex min-h-12 items-center justify-center gap-2 bg-white px-5 text-sm font-bold text-authority">Build your mandate <ArrowRight size={15} /></Link>
+            <Link href="/lab" className="inline-flex min-h-12 items-center justify-center gap-2 border border-white/25 px-5 text-sm font-bold text-white">Run the public Lab <ArrowRight size={15} /></Link>
           </div>
         </div>
       </div>

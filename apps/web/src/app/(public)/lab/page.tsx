@@ -87,8 +87,8 @@ export default function LabPage() {
             <h2 className="display-title">Now bring the boundary that matters.</h2>
           </div>
           <div className="lab-handoff__actions">
-            <Link href="/design-partners" className="public-primary-button">Bring a real boundary <ArrowRight size={15} /></Link>
-            <Link href="/developers" className="public-secondary-button">Build with CAPYN <ArrowRight size={15} /></Link>
+            <Link href="/start" className="public-primary-button">Build this boundary <ArrowRight size={15} /></Link>
+            <Link href="/developers" className="public-secondary-button">Integrate CAPYN <ArrowRight size={15} /></Link>
           </div>
         </div>
       </section>

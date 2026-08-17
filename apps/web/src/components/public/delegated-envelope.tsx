@@ -46,6 +46,7 @@ export function DelegatedEnvelope() {
   const request = createDemoRequest(actionId, vendorState, amount);
   const evaluation = evaluateDemoRequest(actionId, vendorState, amount);
   const labHref = createLabHandoffHref(request, "homepage");
+  const studioHref = labHref.replace(/^\/lab\?/, "/start?");
   const requestId = `demo_${action.id}_${vendor.id}_${amount}`;
   const requestPayload = JSON.stringify({
     mode: "SYNTHETIC",
@@ -213,10 +214,11 @@ export function DelegatedEnvelope() {
         </details>
 
         <div className="delegated-envelope__handoff">
-          <p><span>Seeded demo · no funds move</span>Take this exact request into the real evaluator.</p>
+          <p><span>Seeded demo · no funds move</span>Rehearse this request—or turn the pattern into a saved mandate.</p>
           <div className="delegated-envelope__handoff-actions">
             <button type="button" onClick={copyShareLink}><Link2 size={14} /> {copied === "link" ? "Link copied" : "Copy share link"}</button>
             <Link href={labHref}>Use this mandate <ArrowRight size={15} /></Link>
+            <Link href={studioHref}>Save as full mandate <ArrowRight size={15} /></Link>
           </div>
           <span className="sr-only" role="status" aria-live="polite">
             {copied === "link" ? "Share link copied" : copied === "request" ? "Request JSON copied" : ""}

@@ -4,7 +4,7 @@ import { publicDocsCatalog } from "@/lib/docs";
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3010";
   const siteReviewDate = new Date("2026-08-17T00:00:00.000Z");
-  const routes = ["", "/lab", "/design-partners", "/product", "/security", "/developers", "/pricing", "/docs", "/about"];
+  const routes = ["", "/start", "/lab", "/design-partners", "/product", "/security", "/developers", "/pricing", "/docs", "/about"];
   const publicRoutes: MetadataRoute.Sitemap = routes.map((route, index) => ({
     url: `${siteUrl}${route}`,
     lastModified: siteReviewDate,
