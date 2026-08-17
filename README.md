@@ -149,6 +149,8 @@ curl -X POST http://localhost:4000/v1/authorize \
 
 The authenticated agent comes only from the API key. `agentId` is not accepted in the payload.
 
+Owner/admin credential operations include atomic, idempotent key rotation. The replacement is returned without storing plaintext, the exact source key is revoked in the same transaction, and a transport retry can recover the same response with its original `Idempotency-Key`.
+
 ## TypeScript SDK
 
 ```ts

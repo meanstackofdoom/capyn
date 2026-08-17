@@ -317,6 +317,16 @@ export interface ApprovalView {
   comment: string | null;
 }
 
+export interface AgentCredentialView {
+  id: string;
+  keyPrefix: string;
+  status: "ACTIVE" | "REVOKED";
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  rotatedFromId: string | null;
+}
+
 export interface AgentView {
   id: string;
   name: string;
@@ -324,6 +334,7 @@ export interface AgentView {
   description: string | null;
   status: AgentStatus;
   keyPrefix: string | null;
+  credentials: AgentCredentialView[];
   mandate: {
     id: string;
     name: string;

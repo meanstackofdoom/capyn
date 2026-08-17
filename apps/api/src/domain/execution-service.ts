@@ -1,7 +1,7 @@
 import type { CapynRepository, StoredAuthorization, StoredExecution } from "@capyn/database";
 import { evaluatePolicy } from "@capyn/policy-engine";
 import type { AgentPrincipal, ExecutionResultView, NormalizedAuthorizationRequest } from "@capyn/types";
-import { ConflictError, GoneError, NotFoundError } from "../http/errors";
+import { AuthenticationError, ConflictError, GoneError, NotFoundError } from "../http/errors";
 import { createId } from "./ids";
 
 export interface ExecutionRequest {
@@ -80,6 +80,10 @@ export class ExecutionService {
         throw new NotFoundError("Authorization not found");
       }
       await tx.lockAgent(candidateAuthorization.agentId);
+      const credential = await tx.findCredential(principal.agentId, principal.credentialId);
+      if (!credential || credential.revokedAt) {
+        throw new AuthenticationError("A valid CAPYN agent API key is required");
+      }
       const authorization = await tx.findAuthorization(authorizationId);
       if (
         !authorization ||

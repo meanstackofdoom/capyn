@@ -4,7 +4,15 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
-      "env": ["DATABASE_URL", "NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_SITE_URL"]
+      "env": [
+        "DATABASE_URL",
+        "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_SITE_URL",
+        "NEXT_PUBLIC_DEMO_USER_ID",
+        "NEXT_PUBLIC_DEMO_USER_NAME",
+        "NEXT_PUBLIC_DEMO_USER_ROLE",
+        "NEXT_PUBLIC_DEMO_MANAGEMENT_ENABLED"
+      ]
     },
     "dev": {
       "cache": false,

@@ -7,9 +7,11 @@ CAPYN is security-sensitive infrastructure. v0.1 establishes boundaries and demo
 ### Authentication and identity
 
 - Agent identity is inferred from a bearer API key; request bodies cannot choose `agentId`.
-- Keys contain 256 bits of random material.
+- Keys contain 256 bits of cryptographically strong key material.
 - Only an HMAC-SHA-256 hash and short prefix are stored.
 - The server rejects revoked keys with the same response as unknown keys.
+- Owner/admin rotation atomically replaces and revokes one exact credential under the agent lock.
+- Rotation retries are idempotent without plaintext storage, and a captured principal is revalidated inside consequential authorization and execution transactions.
 - Agent revocation is terminal, revokes active credentials and prevents replacement credentials.
 - Human role checks execute in API handlers, never in the browser alone.
 - Production demo configuration refuses to start unless its header adapter is pinned to one explicit user; the public alpha pins it to an approver, so owner/admin routes remain unavailable even though seeded IDs are public.
@@ -37,6 +39,7 @@ Production defence in depth should add PostgreSQL row-level security or isolated
 - `Idempotency-Key` is mandatory for `/v1/authorize`.
 - The normalized canonical request is SHA-256 fingerprinted.
 - `(agentId, idempotencyKey)` is unique.
+- `(agentId, rotationIdempotencyKey)` is unique; the same source returns the same replacement and a different source conflicts.
 - Approval can transition from `PENDING` once.
 - One execution record can exist per authorization.
 - Repeated completed execution calls return the original result and never call the executor again.
@@ -83,7 +86,6 @@ For regulated deployments, add immutable external export, retention policy, cloc
 - Awaiting approvals do not reserve spend for 24 hours. Hard limits are rechecked at approval time instead.
 - Spend periods use authorization creation time. A production ledger should distinguish reservation, capture and refund timestamps.
 - Refunds, reversals, partial captures and currency conversion are not implemented.
-- API-key rotation overlap is manual.
 - No anomaly detection, sanctions screening or vendor risk intelligence exists.
 - Database administrators remain able to alter data outside application controls.
 - Automated delivery of overage usage to Stripe meters is not implemented; paid overage remains a local projection/manual reconciliation boundary.
@@ -97,7 +99,7 @@ Before real money:
 - treasury-level reservation model;
 - distributed rate limiting and abuse detection;
 - executor idempotency/reconciliation;
-- secret manager and key rotation;
+- secret-manager integration and deployment-pepper rotation;
 - encrypted backups, tested restore and disaster recovery;
 - audit export/retention controls;
 - observability, alerts and incident runbooks;

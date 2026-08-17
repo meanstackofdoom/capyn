@@ -5,8 +5,16 @@ import { dirname, join, resolve, sep } from "node:path";
 import process from "node:process";
 
 const dashboardUrl = process.env.CAPYN_SCREENSHOT_URL ?? "http://localhost:3010/dashboard/authorizations";
-const rowSelector = process.env.CAPYN_SCREENSHOT_SELECTOR ?? "tbody tr:nth-child(2)";
+const selectorSetting = process.env.CAPYN_SCREENSHOT_SELECTOR;
+const rowSelector = selectorSetting === "none" ? null : selectorSetting ?? "tbody tr:nth-child(2)";
 const outputPath = resolve(process.argv[2] ?? "outreach/screenshots/capyn-authorization-trace.png");
+const dashboardPath = new URL(dashboardUrl).pathname;
+const viewportWidth = Number(process.env.CAPYN_SCREENSHOT_WIDTH ?? 1600);
+const viewportHeight = Number(process.env.CAPYN_SCREENSHOT_HEIGHT ?? 1000);
+
+if (![viewportWidth, viewportHeight].every((value) => Number.isInteger(value) && value >= 320 && value <= 4_096)) {
+  throw new Error("Screenshot dimensions must be integers between 320 and 4096 pixels.");
+}
 
 const chromeCandidates = [
   process.env.CHROME_PATH,
@@ -38,7 +46,7 @@ const browser = spawn(
     "--headless=new",
     "--disable-gpu",
     "--hide-scrollbars",
-    "--window-size=1600,1000",
+    `--window-size=${viewportWidth},${viewportHeight}`,
     "--force-device-scale-factor=1",
     "--remote-debugging-port=0",
     `--user-data-dir=${profileDirectory}`,
@@ -79,7 +87,7 @@ try {
 
   for (let attempt = 0; attempt < 30; attempt += 1) {
     const targets = await fetch(targetsUrl).then((response) => response.json());
-    page = targets.find((target) => target.type === "page" && target.url.includes("/dashboard/authorizations"));
+    page = targets.find((target) => target.type === "page" && target.url.includes(dashboardPath));
     if (page) break;
     await delay(100);
   }
@@ -111,16 +119,18 @@ try {
   });
 
   await delay(2_000);
-  const clickResult = await call("Runtime.evaluate", {
-    expression: `(() => { const row = document.querySelector(${JSON.stringify(rowSelector)}); if (!row) return false; row.click(); return true; })()`,
-    returnByValue: true
-  });
+  if (rowSelector) {
+    const clickResult = await call("Runtime.evaluate", {
+      expression: `(() => { const row = document.querySelector(${JSON.stringify(rowSelector)}); if (!row) return false; row.click(); return true; })()`,
+      returnByValue: true
+    });
 
-  if (clickResult.result?.value !== true) {
-    throw new Error(`Dashboard row ${rowSelector} was not available. Seed the four demo authorizations first.`);
+    if (clickResult.result?.value !== true) {
+      throw new Error(`Dashboard row ${rowSelector} was not available. Seed the required dashboard state first.`);
+    }
+
+    await delay(400);
   }
-
-  await delay(400);
   const capture = await call("Page.captureScreenshot", {
     format: "png",
     fromSurface: true,

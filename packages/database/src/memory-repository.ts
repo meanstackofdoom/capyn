@@ -25,6 +25,7 @@ import type {
   DemoSeedIds,
   RecordBillingUsage,
   RecordBillingWebhook,
+  StoredCredential,
   StoredApproval,
   StoredAuthorization,
   StoredExecution,
@@ -48,6 +49,8 @@ interface MemoryCredential {
   createdAt: Date;
   lastUsedAt: Date | null;
   revokedAt: Date | null;
+  rotationIdempotencyKey: string | null;
+  rotatedFromId: string | null;
 }
 
 interface MemoryMandate extends MandatePolicyContext {
@@ -166,6 +169,20 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
 
   async findAgent(agentId: string): Promise<AgentRecord | null> {
     return structuredClone(this.state.agents.find((item) => item.id === agentId) ?? null);
+  }
+
+  async findCredential(agentId: string, credentialId: string): Promise<StoredCredential | null> {
+    const credential = this.state.credentials.find(
+      (item) => item.agentId === agentId && item.id === credentialId
+    );
+    return credential ? structuredClone(credential) : null;
+  }
+
+  async findCredentialRotation(agentId: string, idempotencyKey: string): Promise<StoredCredential | null> {
+    const credential = this.state.credentials.find(
+      (item) => item.agentId === agentId && item.rotationIdempotencyKey === idempotencyKey
+    );
+    return credential ? structuredClone(credential) : null;
   }
 
   async findIdempotentAuthorization(agentId: string, idempotencyKey: string): Promise<StoredAuthorization | null> {
@@ -344,6 +361,8 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
   async createCredential(input: CreateCredentialRecord): Promise<void> {
     this.state.credentials.push({
       ...input,
+      rotationIdempotencyKey: input.rotationIdempotencyKey ?? null,
+      rotatedFromId: input.rotatedFromId ?? null,
       createdAt: new Date(),
       lastUsedAt: null,
       revokedAt: null
@@ -550,9 +569,11 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
         const mandate = this.state.mandates
           .filter((item) => item.agentId === agent.id && item.status === "ACTIVE")
           .sort((left, right) => right.version - left.version)[0];
-        const credential = this.state.credentials
-          .filter((item) => item.agentId === agent.id && item.revokedAt === null)
-          .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())[0];
+        const credentials = this.state.credentials
+          .filter((item) => item.agentId === agent.id)
+          .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())
+          .slice(0, 10);
+        const credential = credentials.find((item) => item.revokedAt === null);
         const agentReserved = reserved.filter((item) => item.agentId === agent.id);
         return {
           id: agent.id,
@@ -561,6 +582,15 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
           description: agent.description,
           status: agent.status,
           keyPrefix: credential?.keyPrefix ?? null,
+          credentials: credentials.map((item) => ({
+            id: item.id,
+            keyPrefix: item.keyPrefix,
+            status: item.revokedAt ? "REVOKED" as const : "ACTIVE" as const,
+            createdAt: item.createdAt.toISOString(),
+            lastUsedAt: item.lastUsedAt?.toISOString() ?? null,
+            revokedAt: item.revokedAt?.toISOString() ?? null,
+            rotatedFromId: item.rotatedFromId
+          })),
           mandate: mandate
             ? {
                 id: mandate.id,
@@ -720,7 +750,9 @@ export function createDemoMemoryRepository(keyHash: string): {
     keyHash,
     createdAt,
     lastUsedAt: null,
-    revokedAt: null
+    revokedAt: null,
+    rotationIdempotencyKey: null,
+    rotatedFromId: null
   });
   state.mandates.push({
     id: ids.mandateId,

@@ -201,16 +201,22 @@ model Agent {
 }
 
 model AgentCredential {
-  id         String    @id @db.VarChar(40)
-  agentId    String    @map("agent_id") @db.VarChar(40)
-  keyPrefix  String    @map("key_prefix") @db.VarChar(32)
-  keyHash    String    @unique @map("key_hash") @db.Char(64)
-  createdAt  DateTime  @default(now()) @map("created_at")
-  lastUsedAt DateTime? @map("last_used_at")
-  revokedAt  DateTime? @map("revoked_at")
-  agent      Agent     @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  id                     String            @id @db.VarChar(40)
+  agentId                String            @map("agent_id") @db.VarChar(40)
+  keyPrefix              String            @map("key_prefix") @db.VarChar(32)
+  keyHash                String            @unique @map("key_hash") @db.Char(64)
+  rotationIdempotencyKey String?           @map("rotation_idempotency_key") @db.VarChar(200)
+  rotatedFromId          String?           @map("rotated_from_id") @db.VarChar(40)
+  createdAt              DateTime          @default(now()) @map("created_at")
+  lastUsedAt             DateTime?         @map("last_used_at")
+  revokedAt              DateTime?         @map("revoked_at")
+  agent                  Agent             @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  rotatedFrom            AgentCredential?  @relation("CredentialRotations", fields: [rotatedFromId], references: [id], onDelete: Restrict)
+  rotations              AgentCredential[] @relation("CredentialRotations")
 
+  @@unique([agentId, rotationIdempotencyKey])
   @@index([agentId, revokedAt])
+  @@index([rotatedFromId])
   @@map("agent_credentials")
 }
 

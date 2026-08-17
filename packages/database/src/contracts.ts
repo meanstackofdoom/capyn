@@ -25,6 +25,17 @@ export interface CredentialAuthRecord {
   revokedAt: Date | null;
 }
 
+export interface StoredCredential {
+  id: string;
+  agentId: string;
+  keyPrefix: string;
+  createdAt: Date;
+  lastUsedAt: Date | null;
+  revokedAt: Date | null;
+  rotationIdempotencyKey: string | null;
+  rotatedFromId: string | null;
+}
+
 export interface UserAuthRecord {
   id: string;
   organisationId: string;
@@ -150,6 +161,8 @@ export interface CreateCredentialRecord {
   agentId: string;
   keyPrefix: string;
   keyHash: string;
+  rotationIdempotencyKey?: string | null;
+  rotatedFromId?: string | null;
 }
 
 export interface CreateMandateRecord {
@@ -238,6 +251,8 @@ export interface CapynTransaction {
   lockAgent(agentId: string): Promise<void>;
   lockOrganisation(organisationId: string): Promise<void>;
   findAgent(agentId: string): Promise<AgentRecord | null>;
+  findCredential(agentId: string, credentialId: string): Promise<StoredCredential | null>;
+  findCredentialRotation(agentId: string, idempotencyKey: string): Promise<StoredCredential | null>;
   findIdempotentAuthorization(agentId: string, idempotencyKey: string): Promise<StoredAuthorization | null>;
   loadPolicyContext(agentId: string, currency: "USD", now: Date): Promise<Omit<PolicyEvaluationInput, "request" | "approvalAlreadyGranted">>;
   createAuthorization(input: CreateAuthorizationRecord): Promise<StoredAuthorization>;

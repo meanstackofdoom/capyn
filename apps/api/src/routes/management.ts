@@ -9,6 +9,7 @@ import type { ApprovalService } from "../domain/approval-service";
 import type { ManagementService } from "../domain/management-service";
 import type { AuthAdapter } from "../http/auth";
 import { requireRole } from "../http/auth";
+import { InvalidRequestError } from "../http/errors";
 import { parseInput } from "../http/validation";
 
 const agentCreateSchema = z
@@ -55,6 +56,26 @@ export async function registerManagementRoutes(
     requireRole(principal, ["OWNER", "ADMIN"]);
     return reply.code(201).send(await dependencies.management.createCredential(principal, request.params.id));
   });
+
+  app.post<{ Params: { agentId: string; credentialId: string } }>(
+    "/v1/agents/:agentId/credentials/:credentialId/rotate",
+    { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } },
+    async (request, reply) => {
+      const principal = await dependencies.auth.authenticateUser(request);
+      requireRole(principal, ["OWNER", "ADMIN"]);
+      const idempotencyKey = request.headers["idempotency-key"];
+      if (typeof idempotencyKey !== "string") {
+        throw new InvalidRequestError("IDEMPOTENCY_KEY_REQUIRED", "Idempotency-Key header is required");
+      }
+      const result = await dependencies.management.rotateCredential(
+        principal,
+        request.params.agentId,
+        request.params.credentialId,
+        idempotencyKey
+      );
+      return reply.code(201).send(result);
+    }
+  );
 
   app.delete<{ Params: { agentId: string; credentialId: string } }>(
     "/v1/agents/:agentId/credentials/:credentialId",

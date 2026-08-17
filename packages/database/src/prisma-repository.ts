@@ -41,6 +41,7 @@ import type {
   BillingAllowance,
   RecordBillingUsage,
   RecordBillingWebhook,
+  StoredCredential,
   StoredApproval,
   StoredAuthorization,
   StoredExecution,
@@ -81,6 +82,19 @@ function mapCredential(row: AgentCredential & { agent: PrismaAgent }): Credentia
     organisationId: row.agent.organisationId,
     agentId: row.agentId,
     revokedAt: row.revokedAt
+  };
+}
+
+function mapStoredCredential(row: AgentCredential): StoredCredential {
+  return {
+    id: row.id,
+    agentId: row.agentId,
+    keyPrefix: row.keyPrefix,
+    createdAt: row.createdAt,
+    lastUsedAt: row.lastUsedAt,
+    revokedAt: row.revokedAt,
+    rotationIdempotencyKey: row.rotationIdempotencyKey,
+    rotatedFromId: row.rotatedFromId
   };
 }
 
@@ -221,6 +235,23 @@ class PrismaCapynTransaction implements CapynTransaction {
   async findAgent(agentId: string): Promise<AgentRecord | null> {
     const row = await this.db.agent.findUnique({ where: { id: agentId } });
     return row ? mapAgent(row) : null;
+  }
+
+  async findCredential(agentId: string, credentialId: string): Promise<StoredCredential | null> {
+    const row = await this.db.agentCredential.findFirst({ where: { id: credentialId, agentId } });
+    return row ? mapStoredCredential(row) : null;
+  }
+
+  async findCredentialRotation(agentId: string, idempotencyKey: string): Promise<StoredCredential | null> {
+    const row = await this.db.agentCredential.findUnique({
+      where: {
+        agentId_rotationIdempotencyKey: {
+          agentId,
+          rotationIdempotencyKey: idempotencyKey
+        }
+      }
+    });
+    return row ? mapStoredCredential(row) : null;
   }
 
   async findIdempotentAuthorization(agentId: string, idempotencyKey: string): Promise<StoredAuthorization | null> {
@@ -643,7 +674,7 @@ export class PrismaCapynRepository implements CapynRepository {
           where: { organisationId },
           orderBy: { createdAt: "asc" },
           include: {
-            credentials: { where: { revokedAt: null }, orderBy: { createdAt: "desc" }, take: 1 },
+            credentials: { orderBy: { createdAt: "desc" }, take: 10 },
             mandates: {
               where: { status: "ACTIVE" },
               orderBy: { version: "desc" },
@@ -710,7 +741,16 @@ export class PrismaCapynRepository implements CapynRepository {
           slug: agent.slug,
           description: agent.description,
           status: agent.status,
-          keyPrefix: agent.credentials[0]?.keyPrefix ?? null,
+          keyPrefix: agent.credentials.find((credential) => credential.revokedAt === null)?.keyPrefix ?? null,
+          credentials: agent.credentials.map((credential) => ({
+            id: credential.id,
+            keyPrefix: credential.keyPrefix,
+            status: credential.revokedAt ? "REVOKED" as const : "ACTIVE" as const,
+            createdAt: credential.createdAt.toISOString(),
+            lastUsedAt: credential.lastUsedAt?.toISOString() ?? null,
+            revokedAt: credential.revokedAt?.toISOString() ?? null,
+            rotatedFromId: credential.rotatedFromId
+          })),
           mandate: mandate
             ? {
                 id: mandate.id,

@@ -85,6 +85,7 @@ PostgreSQL is the production persistence target. Prisma supplies typed access, w
 - valid mandate windows;
 - ordered positive spend limits;
 - positive authorization amounts;
+- one credential-rotation idempotency record per agent and source-bound replacement lineage;
 - an update/delete prevention trigger on audit events.
 
 The in-memory repository implements the same interface for deterministic API/security tests and the one-command demo. It is not a production store.

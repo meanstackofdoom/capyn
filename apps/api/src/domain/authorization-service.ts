@@ -11,7 +11,7 @@ import {
   type AuthorizeRequest,
   type NormalizedAuthorizationRequest
 } from "@capyn/types";
-import { ConflictError, InvalidRequestError, NotFoundError, PlanLimitError } from "../http/errors";
+import { AuthenticationError, ConflictError, InvalidRequestError, NotFoundError, PlanLimitError } from "../http/errors";
 import { requestFingerprint } from "./canonical-json";
 import { createId } from "./ids";
 
@@ -89,6 +89,10 @@ export class AuthorizationService {
       await tx.lockAgent(principal.agentId);
       const agent = await tx.findAgent(principal.agentId);
       if (!agent || agent.organisationId !== principal.organisationId) throw new NotFoundError("Agent not found");
+      const credential = await tx.findCredential(principal.agentId, principal.credentialId);
+      if (!credential || credential.revokedAt) {
+        throw new AuthenticationError("A valid CAPYN agent API key is required");
+      }
 
       const existing = await tx.findIdempotentAuthorization(principal.agentId, idempotencyKey);
       if (existing) {

@@ -25,6 +25,8 @@ An `AgentCredential` belongs to exactly one agent. CAPYN generates 256 bits of r
 - an HMAC-SHA-256 hash using `API_KEY_PEPPER`;
 - creation, last-used and revocation timestamps.
 
+An atomic rotation also stores the source credential ID and an agent-scoped idempotency reference. The replacement key is derived with domain-separated HMAC input from the deployment pepper and a random credential ID, allowing an exact retry to recover the same response without persisting plaintext. The source revocation, replacement creation and `API_KEY_ROTATED` audit event share the agent-locked transaction. A reused idempotency key cannot rotate a different source credential.
+
 Revoking an agent is terminal: it revokes active credentials, prevents replacement credentials and cannot be reversed through the management API. Suspending an agent preserves credentials but the policy engine returns `AGENT_INACTIVE`.
 
 ## Mandate

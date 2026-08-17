@@ -29,6 +29,7 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 - serialize per-agent spend reservations so simultaneous requests cannot reuse the same budget;
 - isolate organisations in agent and human access paths;
 - make agent revocation terminal and prevent replacement credentials for revoked identities;
+- rotate one exact agent credential atomically with replay-safe recovery, source binding and audit evidence;
 - record append-oriented audit events;
 - enforce hosted Developer quotas, fail inactive subscriptions back to free entitlements, and project Team/Business usage and overage;
 - collect recurring Team/Business base fees through Stripe Checkout when provider credentials are configured;
@@ -62,7 +63,7 @@ The live demo is [capyn-production.up.railway.app](https://capyn-production.up.r
 
 - production human identity adapter with SSO, MFA, secure sessions and offboarding;
 - reviewed role and organisation membership lifecycle;
-- API-key rotation workflow and secret-manager integration;
+- secret-manager integration and a deployment-pepper rotation runbook;
 - controlled onboarding that replaces the bootstrap token route.
 
 ### Accounting and concurrency

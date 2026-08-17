@@ -84,12 +84,23 @@ Executes one unexpired `ALLOWED` or `APPROVED` authorization. v0.1 returns a sim
 | `POST` | `/v1/agents` | owner, admin |
 | `PATCH` | `/v1/agents/:id/status` | owner, admin |
 | `POST` | `/v1/agents/:id/credentials` | owner, admin |
+| `POST` | `/v1/agents/:agentId/credentials/:credentialId/rotate` | owner, admin |
 | `DELETE` | `/v1/agents/:agentId/credentials/:credentialId` | owner, admin |
 | `POST` | `/v1/mandates` | owner, admin |
 | `DELETE` | `/v1/agents/:agentId/mandate` | owner, admin |
 | `POST` | `/v1/approvals/:id/decision` | owner, admin, approver |
 
-Agent/API-key creation responses contain plaintext once. CAPYN never returns it again.
+Normal agent/API-key creation responses contain plaintext once. CAPYN never persists or later recovers that random plaintext.
+
+Credential rotation requires an `Idempotency-Key` header. In one agent-locked transaction CAPYN creates the replacement, revokes the exact source credential and appends `API_KEY_ROTATED`. A replay with the same key and source returns the same logical replacement, while reuse for another source returns `409 IDEMPOTENCY_CONFLICT`. The replay-safe replacement is deterministically derived from the high-entropy deployment pepper and its random credential ID, then only its HMAC hash is stored.
+
+```bash
+curl -X POST "$CAPYN_API_URL/v1/agents/$AGENT_ID/credentials/$CREDENTIAL_ID/rotate" \
+  -H "x-capyn-user-id: $CAPYN_USER_ID" \
+  -H "Idempotency-Key: rotation-2026-08-17-0001"
+```
+
+Copy the returned key before leaving the response. The previous key stops authenticating immediately. If transport fails before the response is received, retry the exact request with the same idempotency key to recover the same result.
 
 `GET /v1/billing` returns the authenticated user's organisation plan, billing period, live metric lines and projected monthly amount. The client cannot submit another organisation ID.
 

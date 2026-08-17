@@ -500,6 +500,37 @@ function Agents({ snapshot, reload, notify, canAdmin }: { snapshot: DashboardSna
     finally { setBusy(false); }
   };
 
+  const rotateCredential = async (agentId: string, credentialId: string) => {
+    if (!window.confirm("Rotate this credential now? The existing key will stop working immediately.")) return;
+    const storageKey = `capyn:credential-rotation:${agentId}:${credentialId}`;
+    const idempotencyKey = window.sessionStorage.getItem(storageKey) ?? `credential-rotation-${crypto.randomUUID()}`;
+    window.sessionStorage.setItem(storageKey, idempotencyKey);
+    setBusy(true);
+    try {
+      const result = await humanRequest<{ apiKey: string }>(
+        `/v1/agents/${agentId}/credentials/${credentialId}/rotate`,
+        { method: "POST", headers: { "Idempotency-Key": idempotencyKey } }
+      );
+      window.sessionStorage.removeItem(storageKey);
+      setIssuedKey(result.apiKey);
+      await reload();
+      notify("Credential rotated atomically. Copy the replacement key now; the previous key is revoked.");
+    } catch (caught) {
+      notify(caught instanceof Error ? `${caught.message} Retry to recover the same rotation result.` : "Could not rotate credential");
+    } finally { setBusy(false); }
+  };
+
+  const revokeCredential = async (agentId: string, credentialId: string) => {
+    if (!window.confirm("Revoke this credential? Requests using it will be rejected immediately.")) return;
+    setBusy(true);
+    try {
+      await humanRequest(`/v1/agents/${agentId}/credentials/${credentialId}`, { method: "DELETE" });
+      await reload();
+      notify("Credential revoked.");
+    } catch (caught) { notify(caught instanceof Error ? caught.message : "Could not revoke credential"); }
+    finally { setBusy(false); }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between"><p className="text-sm text-muted">{snapshot.agents.length} registered identities</p>{canAdmin ? <Button tone="primary" onClick={() => { setShowCreate((value) => !value); setIssuedKey(null); }}><Plus size={14} /> Create agent</Button> : <span className="font-mono text-[9px] uppercase tracking-[.12em] text-muted">Administration disabled</span>}</div>
@@ -518,12 +549,28 @@ function Agents({ snapshot, reload, notify, canAdmin }: { snapshot: DashboardSna
             <div className="flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center border border-line bg-paper"><Bot size={18} /></div><div className="min-w-0"><h2 className="truncate text-sm font-bold">{agent.name}</h2><p className="mt-1 truncate font-mono text-[9px] text-muted">{agent.id}</p></div></div><AgentStatus status={agent.status} /></div>
             <p className="mt-5 min-h-10 text-xs leading-5 text-muted">{agent.description ?? "No description supplied."}</p>
             <div className="mt-5 border-y border-line py-4">
-              <div className="flex items-center justify-between"><span className="font-mono text-[9px] uppercase tracking-[.12em] text-muted">Credential</span><span className="font-mono text-[10px]">{agent.keyPrefix ? `${agent.keyPrefix}••••` : "none"}</span></div>
-              <div className="mt-3 flex items-center justify-between"><span className="font-mono text-[9px] uppercase tracking-[.12em] text-muted">Mandate</span><span className="text-[10px] font-semibold">{agent.mandate ? `${agent.mandate.name} v${agent.mandate.version}` : "Not assigned"}</span></div>
+              <div className="flex items-center justify-between"><span className="font-mono text-[9px] uppercase tracking-[.12em] text-muted">Credentials</span><span className="font-mono text-[10px]">{agent.credentials.filter((credential) => credential.status === "ACTIVE").length} active</span></div>
+              <div className="mt-3 space-y-2">
+                {agent.credentials.length ? agent.credentials.slice(0, 4).map((credential) => (
+                  <div className="border border-line bg-paper p-3" key={credential.id}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0"><p className="truncate font-mono text-[9px]">{credential.keyPrefix}••••</p><p className="mt-1 text-[9px] text-muted">Created {formatTime(credential.createdAt)}{credential.lastUsedAt ? ` · used ${formatTime(credential.lastUsedAt)}` : " · unused"}</p></div>
+                      <span className={cn("font-mono text-[8px]", credential.status === "ACTIVE" ? "text-permission" : "text-muted")}>{credential.status}</span>
+                    </div>
+                    {canAdmin && credential.status === "ACTIVE" && (
+                      <div className="mt-3 flex gap-2 border-t border-line pt-3">
+                        <Button disabled={busy} onClick={() => void rotateCredential(agent.id, credential.id)}><RefreshCw size={11} /> Rotate key</Button>
+                        <Button tone="danger" disabled={busy} onClick={() => void revokeCredential(agent.id, credential.id)}><XCircle size={11} /> Revoke key</Button>
+                      </div>
+                    )}
+                  </div>
+                )) : <p className="text-[10px] text-muted">No credentials issued.</p>}
+              </div>
+              <div className="mt-4 flex items-center justify-between border-t border-line pt-4"><span className="font-mono text-[9px] uppercase tracking-[.12em] text-muted">Mandate</span><span className="text-[10px] font-semibold">{agent.mandate ? `${agent.mandate.name} v${agent.mandate.version}` : "Not assigned"}</span></div>
             </div>
             <div className="mt-4 flex flex-wrap gap-1.5">{agent.mandate?.capabilities.map((capability) => <span className="bg-paper px-2 py-1 font-mono text-[9px]" key={capability}>{capability}</span>)}</div>
             <div className="mt-5 grid grid-cols-2 gap-px bg-line"><div className="bg-paper p-3"><p className="font-mono text-[8px] text-muted">TODAY</p><p className="mono-number mt-1 text-sm font-medium">${agent.spendToday}</p></div><div className="bg-paper p-3"><p className="font-mono text-[8px] text-muted">MONTH</p><p className="mono-number mt-1 text-sm font-medium">${agent.spendMonth}</p></div></div>
-            {canAdmin ? <div className="mt-5 flex flex-wrap gap-2"><Button disabled={busy} onClick={() => void newCredential(agent.id)}><KeyRound size={12} /> New key</Button>{agent.status === "ACTIVE" ? <Button disabled={busy} onClick={() => void setStatus(agent.id, "SUSPENDED")}><Clock3 size={12} /> Suspend</Button> : agent.status === "SUSPENDED" ? <Button disabled={busy} onClick={() => void setStatus(agent.id, "ACTIVE")}><Check size={12} /> Reactivate</Button> : null}<Button tone="danger" disabled={busy || agent.status === "REVOKED"} onClick={() => void setStatus(agent.id, "REVOKED")}><XCircle size={12} /> Revoke</Button></div> : <p className="mt-5 border-t border-line pt-4 text-[10px] text-muted">Identity controls are hidden in the public demonstration.</p>}
+            {canAdmin ? <div className="mt-5 flex flex-wrap gap-2"><Button disabled={busy} onClick={() => void newCredential(agent.id)}><KeyRound size={12} /> New key</Button>{agent.status === "ACTIVE" ? <Button disabled={busy} onClick={() => void setStatus(agent.id, "SUSPENDED")}><Clock3 size={12} /> Suspend agent</Button> : agent.status === "SUSPENDED" ? <Button disabled={busy} onClick={() => void setStatus(agent.id, "ACTIVE")}><Check size={12} /> Reactivate agent</Button> : null}<Button tone="danger" disabled={busy || agent.status === "REVOKED"} onClick={() => void setStatus(agent.id, "REVOKED")}><XCircle size={12} /> Revoke agent</Button></div> : <p className="mt-5 border-t border-line pt-4 text-[10px] text-muted">Identity controls are hidden in the public demonstration.</p>}
           </article>
         ))}
       </div>

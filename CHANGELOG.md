@@ -14,6 +14,9 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 ### Security and correctness
 
+- Added source-bound, idempotent agent credential rotation with atomic revocation, deterministic response recovery, tenant isolation, race serialization and audit evidence.
+- Revalidate the authenticating credential inside authorization and execution transactions to close revocation timing races.
+- Include public demo identity and management-boundary variables in web build cache fingerprints.
 - Revalidate agent status, exact mandate binding and hard policy constraints immediately before execution.
 - Revalidate the exact mandate binding before a human approval can grant authority.
 - Serialize simultaneous decisions against the same approval request.
