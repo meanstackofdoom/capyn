@@ -1,5 +1,6 @@
 import "server-only";
 
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { cache } from "react";
@@ -32,8 +33,13 @@ export interface DocPage extends DocMetadata {
 }
 
 export const docsCatalog = [...(catalogSource as DocMetadata[])].sort((left, right) => left.order - right.order);
+export const PROJECT_STATUS_SLUG = "project-status";
+export const publicDocsCatalog = docsCatalog.filter((doc) => doc.slug !== PROJECT_STATUS_SLUG);
 
-const docsDirectory = path.resolve(process.cwd(), "..", "..", "docs");
+const docsDirectoryFromRepositoryRoot = path.resolve(process.cwd(), "docs");
+const docsDirectory = existsSync(docsDirectoryFromRepositoryRoot)
+  ? docsDirectoryFromRepositoryRoot
+  : path.resolve(process.cwd(), "..", "..", "docs");
 
 export function slugifyHeading(value: string): string {
   return value
@@ -79,5 +85,8 @@ export function docRouteForMarkdown(href: string): string {
   const file = target.split("/").at(-1);
   const matchingDoc = docsCatalog.find((entry) => entry.file === file);
   if (!matchingDoc) return href;
+  if (matchingDoc.slug === PROJECT_STATUS_SLUG) {
+    return `/private/project-status${hash ? `#${hash}` : ""}`;
+  }
   return `/docs/${matchingDoc.slug}${hash ? `#${hash}` : ""}`;
 }

@@ -4,16 +4,16 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, CircleDot, Clock3, FileText } from "lucide-react";
 import { DocsSidebar } from "@/components/public/docs-sidebar";
 import { MarkdownDocument } from "@/components/public/markdown-document";
-import { docsCatalog, getDoc } from "@/lib/docs";
+import { getDoc, publicDocsCatalog } from "@/lib/docs";
 import { createPageMetadata } from "@/lib/metadata";
 
 export function generateStaticParams() {
-  return docsCatalog.map((doc) => ({ slug: doc.slug }));
+  return publicDocsCatalog.map((doc) => ({ slug: doc.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const doc = docsCatalog.find((entry) => entry.slug === slug);
+  const doc = publicDocsCatalog.find((entry) => entry.slug === slug);
   if (!doc) return {};
   return createPageMetadata({
     title: doc.title,
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function DocumentationPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  if (!publicDocsCatalog.some((entry) => entry.slug === slug)) notFound();
   const doc = await getDoc(slug);
   if (!doc) notFound();
 

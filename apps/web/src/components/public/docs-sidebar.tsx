@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
-import { DOC_CATEGORIES, docsCatalog } from "@/lib/docs";
+import { DOC_CATEGORIES, publicDocsCatalog } from "@/lib/docs";
 
 interface DocsSidebarProps {
   activeSlug?: string;
@@ -14,7 +14,7 @@ function DocsNavigation({ activeSlug }: { activeSlug: string | undefined }) {
         <div className="mb-7 last:mb-0" key={category}>
           <p className="mb-2 font-mono text-[9px] uppercase tracking-[.16em] text-muted">{category}</p>
           <div className="grid gap-px">
-            {docsCatalog.filter((doc) => doc.category === category).map((doc) => {
+            {publicDocsCatalog.filter((doc) => doc.category === category).map((doc) => {
               const active = doc.slug === activeSlug;
               return (
                 <Link

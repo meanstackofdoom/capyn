@@ -168,6 +168,7 @@ async function smokeApi() {
 
 async function smokeWeb() {
   const catalog = JSON.parse(await readFile(resolve(root, "docs/catalog.json"), "utf8"));
+  const publicCatalog = catalog.filter((document) => document.slug !== "project-status");
   const publicRoutes = [
     "/",
     "/product",
@@ -176,7 +177,7 @@ async function smokeWeb() {
     "/pricing",
     "/docs",
     "/about",
-    ...catalog.map((document) => `/docs/${document.slug}`)
+    ...publicCatalog.map((document) => `/docs/${document.slug}`)
   ];
   const dashboardRoutes = [
     "/dashboard",
@@ -223,6 +224,30 @@ async function smokeWeb() {
   const sitemap = await (await request(`${webOrigin}/sitemap.xml`)).text();
   assert(sitemap.includes(`${canonicalOrigin}/pricing`) && sitemap.includes(`${canonicalOrigin}/docs/billing`), "sitemap is incomplete");
   assert(!sitemap.includes("/dashboard"), "sitemap exposes noindex dashboard routes");
+  assert(!sitemap.includes("project-status"), "sitemap exposes the private project status");
+  assert(robots.includes("Disallow: /private/"), "robots.txt does not exclude private routes");
+
+  await request(`${webOrigin}/docs/project-status`, {}, 404);
+  const privateGate = await request(`${webOrigin}/private/project-status`);
+  const privateGateHtml = await privateGate.text();
+  assert(privateGateHtml.includes("Unlock status ledger"), "Private status gate is missing");
+  assert(!privateGateHtml.includes("Required before real money"), "Private status content leaked before authentication");
+  assert(privateGate.headers.get("cache-control")?.includes("no-store"), "Private status route may be cached");
+  assert(privateGate.headers.get("x-robots-tag")?.includes("noindex"), "Private status route is missing noindex headers");
+
+  const login = await fetch(`${webOrigin}/private/project-status/session`, {
+    method: "POST",
+    body: new URLSearchParams({ password: "capyn-private-status-smoke-password" }),
+    redirect: "manual",
+    signal: AbortSignal.timeout(5_000)
+  });
+  assert(login.status === 303, `Private status login returned ${login.status}`);
+  const sessionCookie = login.headers.get("set-cookie")?.split(";", 1)[0];
+  assert(sessionCookie, "Private status login did not issue a session cookie");
+  const privateRecord = await request(`${webOrigin}/private/project-status`, { headers: { Cookie: sessionCookie } });
+  const privateRecordHtml = await privateRecord.text();
+  assert(privateRecordHtml.includes("Required before real money"), "Authenticated status record is incomplete");
+  assert(privateRecordHtml.includes("Private record open"), "Authenticated status state is missing");
   const manifest = await (await request(`${webOrigin}/manifest.webmanifest`)).json();
   assert(manifest.short_name === "CAPYN" && manifest.name?.startsWith("CAPYN"), "Web manifest is invalid");
   const socialImage = await request(`${webOrigin}/opengraph-image`);
@@ -258,7 +283,13 @@ try {
       "-H",
       "127.0.0.1"
     ],
-    { ...process.env, NODE_ENV: "production", PORT: String(webPort) }
+    {
+      ...process.env,
+      NODE_ENV: "production",
+      PORT: String(webPort),
+      PROJECT_STATUS_PASSWORD: "capyn-private-status-smoke-password",
+      PROJECT_STATUS_SESSION_SECRET: "capyn-private-status-smoke-session-secret-with-entropy"
+    }
   );
   await Promise.all([waitFor(`${apiOrigin}/health`), waitFor(`${webOrigin}/healthz`)]);
   const [api, web] = await Promise.all([smokeApi(), smokeWeb()]);

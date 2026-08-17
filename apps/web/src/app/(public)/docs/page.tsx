@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, BookOpenCheck, FileCheck2, Fingerprint, ShieldCheck, SquareTerminal } from "lucide-react";
-import { DOC_CATEGORIES, docsCatalog } from "@/lib/docs";
+import { ArrowRight, BookOpenCheck, Braces, Fingerprint, ShieldCheck, SquareTerminal } from "lucide-react";
+import { DOC_CATEGORIES, publicDocsCatalog } from "@/lib/docs";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
   title: "Documentation",
   path: "/docs",
-  description: "Canonical CAPYN documentation for developers and security reviewers: getting started, API, billing, policy engine, architecture, security, deployment and project status."
+  description: "Canonical CAPYN documentation for developers and security reviewers: getting started, API, billing, policy engine, architecture, security and deployment."
 });
 
 const categoryCopy = {
@@ -19,7 +19,7 @@ const categoryCopy = {
 const entryPoints = [
   { href: "/docs/getting-started", label: "Run CAPYN locally", detail: "Demo → API → dashboard", icon: SquareTerminal },
   { href: "/docs/security", label: "Review security", detail: "Controls → limits → production gate", icon: ShieldCheck },
-  { href: "/docs/project-status", label: "Check project status", detail: "Complete → external action → real money", icon: FileCheck2 }
+  { href: "/docs/api", label: "Inspect the API", detail: "Intent → decision → evidence", icon: Braces }
 ] as const;
 
 export default function DocsIndexPage() {
@@ -52,7 +52,7 @@ export default function DocsIndexPage() {
                 ["Canonical source", "/docs/*.md"],
                 ["Public renderer", "/docs/[slug]"],
                 ["Consistency gate", "pnpm docs:check"],
-                ["Catalogued records", `${docsCatalog.length} documents`]
+                ["Public records", `${publicDocsCatalog.length} documents`]
               ].map(([label, value]) => (
                 <div className="grid grid-cols-[1fr_auto] items-center gap-4 bg-panel px-5 py-4" key={label}>
                   <span className="text-xs text-muted">{label}</span>
@@ -63,7 +63,7 @@ export default function DocsIndexPage() {
             <div className="border-t border-line bg-code px-5 py-5 text-white">
               <p className="font-mono text-[9px] uppercase tracking-[.16em] text-white/50">Latest reviewed records</p>
               <div className="mt-4 grid gap-3">
-                {docsCatalog.slice(0, 4).map((doc, index) => (
+                {publicDocsCatalog.slice(0, 4).map((doc, index) => (
                   <div className="flex items-center gap-3 text-xs" key={doc.slug}>
                     <span className="font-mono text-[9px] text-white/35">{String(index + 1).padStart(2, "0")}</span>
                     <span className="flex-1 font-semibold">{doc.title}</span>
@@ -105,7 +105,7 @@ export default function DocsIndexPage() {
                   <p className="mt-3 max-w-[190px] text-xs leading-6 text-muted">{categoryCopy[category]}</p>
                 </div>
                 <div className="border-t border-line">
-                  {docsCatalog.filter((doc) => doc.category === category).map((doc) => (
+                  {publicDocsCatalog.filter((doc) => doc.category === category).map((doc) => (
                     <Link className="group grid gap-3 border-b border-line py-6 sm:grid-cols-[1fr_auto] sm:items-center" href={`/docs/${doc.slug}`} key={doc.slug}>
                       <div>
                         <div className="flex flex-wrap items-center gap-3">

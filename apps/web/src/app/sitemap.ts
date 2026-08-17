@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { docsCatalog } from "@/lib/docs";
+import { publicDocsCatalog } from "@/lib/docs";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3010";
@@ -11,7 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: index === 0 ? "weekly" : "monthly",
     priority: index === 0 ? 1 : 0.8
   }));
-  const docRoutes: MetadataRoute.Sitemap = docsCatalog.map((doc) => ({
+  const docRoutes: MetadataRoute.Sitemap = publicDocsCatalog.map((doc) => ({
     url: `${siteUrl}/docs/${doc.slug}`,
     lastModified: new Date(`${doc.reviewedAt}T00:00:00.000Z`),
     changeFrequency: doc.status === "Live" ? "weekly" : "monthly",
