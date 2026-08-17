@@ -3,8 +3,8 @@ import { ArrowUpRight } from "lucide-react";
 import { Brand } from "@/components/brand";
 
 const columns = [
-  { title: "Explore", links: [["Product", "/product"], ["Security", "/security"], ["Pricing", "/pricing"], ["Developers", "/developers"], ["Documentation", "/docs"]] },
-  { title: "CAPYN", links: [["About", "/about"], ["Live demo", "/dashboard"], ["Audit log", "/dashboard/audit"]] },
+  { title: "Explore", links: [["Authority Lab", "/lab"], ["Product", "/product"], ["Security", "/security"], ["Pricing", "/pricing"], ["Developers", "/developers"], ["Documentation", "/docs"]] },
+  { title: "CAPYN", links: [["About", "/about"], ["Control plane", "/dashboard"], ["Audit log", "/dashboard/audit"]] },
   { title: "Read", links: [["Getting started", "/docs/getting-started"], ["Architecture", "/docs/architecture"], ["Security model", "/docs/security"], ["API reference", "/docs/api"]] }
 ] as const;
 
@@ -28,7 +28,7 @@ export function PublicFooter() {
               <div className="mt-5 grid gap-3">
                 {column.links.map(([label, href]) => (
                   <Link key={href} href={href} className="inline-flex items-center gap-1.5 text-sm font-semibold hover:text-authority">
-                    {label}{label === "Live demo" && <ArrowUpRight size={12} />}
+                    {label}{label === "Authority Lab" && <ArrowUpRight size={12} />}
                   </Link>
                 ))}
               </div>

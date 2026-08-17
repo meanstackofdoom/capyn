@@ -102,10 +102,10 @@ export function PublicCta() {
           <div className="relative max-w-2xl">
             <p className="font-mono text-[10px] uppercase tracking-[.17em] text-white/65">Start with the decision point</p>
             <h2 className="display-title mt-5 text-4xl font-semibold leading-[1.02] tracking-[-.055em] sm:text-5xl">Give the agent a mandate, not the treasury keys.</h2>
-            <p className="mt-5 max-w-xl text-sm leading-7 text-white/70">Run the four-scenario demo locally or inspect the working control plane in the browser.</p>
+            <p className="mt-5 max-w-xl text-sm leading-7 text-white/70">Run a real policy decision in the Authority Lab or inspect the working control plane in the browser.</p>
           </div>
           <div className="relative mt-8 flex flex-col gap-3 sm:flex-row lg:mt-0 lg:flex-col">
-            <Link href="/dashboard" className="inline-flex min-h-12 items-center justify-center gap-2 bg-white px-5 text-sm font-bold text-authority">Open control plane <ArrowRight size={15} /></Link>
+            <Link href="/lab" className="inline-flex min-h-12 items-center justify-center gap-2 bg-white px-5 text-sm font-bold text-authority">Enter Authority Lab <ArrowRight size={15} /></Link>
             <Link href="/developers" className="inline-flex min-h-12 items-center justify-center gap-2 border border-white/25 px-5 text-sm font-bold text-white">Read developer guide <ArrowRight size={15} /></Link>
           </div>
         </div>

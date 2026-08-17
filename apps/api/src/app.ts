@@ -9,12 +9,14 @@ import { DisabledBillingProvider, type BillingProvider } from "./domain/billing-
 import { BillingService } from "./domain/billing-service";
 import { BootstrapService } from "./domain/bootstrap-service";
 import { ExecutionService, MockPaymentExecutor, type PaymentExecutor } from "./domain/execution-service";
+import { LabService } from "./domain/lab-service";
 import { ManagementService } from "./domain/management-service";
 import { RepositoryAuthAdapter } from "./http/auth";
 import { AppError } from "./http/errors";
 import { registerAgentRoutes } from "./routes/agent";
 import { registerBillingRoutes } from "./routes/billing";
 import { registerBootstrapRoutes } from "./routes/bootstrap";
+import { registerLabRoutes } from "./routes/lab";
 import { registerManagementRoutes } from "./routes/management";
 
 export interface AppDependencies {
@@ -102,8 +104,10 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
     dependencies.webOrigin ?? "http://localhost:3010",
     clock
   );
+  const lab = new LabService(clock);
 
   app.get("/health", async () => ({ status: "ok", service: "capyn-api", version: "0.1.0" }));
+  await registerLabRoutes(app, lab);
   await registerAgentRoutes(app, { auth, authorizations, executions });
   await registerManagementRoutes(app, { auth, approvals, management });
   await registerBillingRoutes(app, { auth, billing });

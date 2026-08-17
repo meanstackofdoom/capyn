@@ -157,13 +157,33 @@ async function smokeApi() {
   const malformedBody = await malformed.json();
   assert(malformedBody.error?.code === "VALIDATION_ERROR" && !JSON.stringify(malformedBody).includes("stack"), "Malformed input did not return a safe validation error");
 
+  const labEvaluation = await request(`${apiOrigin}/v1/lab/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      capability: "spend.compute",
+      amount: { value: "120.00", currency: "USD" },
+      vendor: { id: "aws", name: "AWS" },
+      purpose: "Separated-service smoke approval boundary"
+    })
+  }, 202);
+  const labDecision = await labEvaluation.json();
+  assert(labDecision.mode === "SYNTHETIC" && labDecision.decision === "REQUIRE_APPROVAL", "Authority Lab did not reach its human boundary");
+  const labApproval = await request(`${apiOrigin}/v1/lab/approvals/${labDecision.approval.id}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ decision: "APPROVE" })
+  });
+  const labResolution = await labApproval.json();
+  assert(labResolution.resolution === "APPROVED" && labResolution.outcome === "SIMULATED_EXECUTION", "Authority Lab approval did not resolve safely");
+
   const billing = await (await request(`${apiOrigin}/v1/billing`, {
     headers: { "x-capyn-user-id": demoUserId }
   })).json();
   assert(billing.planId === "DEVELOPER", "Demo billing account is not on Developer");
   assert(billing.usage.some((line) => line.metric === "AUTHORIZATION_DECISION" && line.used === 4), "Decision usage was not recorded exactly once");
 
-  return { decisions: [allow.decision, unknown.decision, approval.decision, transfer.decision], execution: execution.status };
+  return { decisions: [allow.decision, unknown.decision, approval.decision, transfer.decision], execution: execution.status, authorityLab: labResolution.resolution };
 }
 
 async function smokeWeb() {
@@ -171,6 +191,7 @@ async function smokeWeb() {
   const publicCatalog = catalog.filter((document) => document.slug !== "project-status");
   const publicRoutes = [
     "/",
+    "/lab",
     "/product",
     "/security",
     "/developers",
@@ -218,6 +239,10 @@ async function smokeWeb() {
   assert(home.headers.get("x-content-type-options") === "nosniff", "nosniff header is missing");
   assert(home.headers.get("x-frame-options") === "DENY", "frame denial header is missing");
   assert(home.headers.get("cross-origin-opener-policy") === "same-origin", "COOP header is missing");
+
+  const lab = await request(`${webOrigin}/lab`);
+  const labHtml = await lab.text();
+  assert(labHtml.includes("Try to cross") && labHtml.includes("Run the decision"), "Authority Lab instrument is missing");
 
   const robots = await (await request(`${webOrigin}/robots.txt`)).text();
   assert(robots.includes("Disallow: /dashboard/"), "robots.txt does not exclude the control plane");

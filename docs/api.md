@@ -18,6 +18,12 @@ approver user: usr_demo_approver
 
 These are intentionally public, fixed demonstration credentials. Use them only against disposable local state or the explicit synthetic public demo. Never reuse them for durable data, customer environments or real authority.
 
+## Public Authority Lab
+
+`POST /v1/lab/evaluate` and `POST /v1/lab/approvals/:id` power the public [Authority Lab](https://capyn-production.up.railway.app/lab). They require no credential because they can evaluate only CAPYN's fixed synthetic mandate. Inputs are strictly validated, both routes are IP-rate-limited, approvals expire after ten minutes, and each approval can be decided once.
+
+Lab operations are isolated from the repository and billing ledger. They hold only short-lived in-memory approval state, never call a payment provider, never move funds, and return `mode: "SYNTHETIC"` with an explicit notice. The evidence digest demonstrates a canonical receipt shape; it is not a production signature or durable audit record.
+
 ## Agent endpoints
 
 ### `GET /v1/me`

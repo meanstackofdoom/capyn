@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Brand } from "@/components/brand";
 
 const navigation = [
+  { href: "/lab", label: "Authority Lab" },
   { href: "/product", label: "Product" },
   { href: "/security", label: "Security" },
   { href: "/developers", label: "Developers" },
@@ -22,7 +23,7 @@ export function PublicHeader() {
   useEffect(() => setOpen(false), [pathname]);
 
   return (
-    <header className={`public-header sticky top-0 z-50 border-b border-line/80 bg-paper/90 backdrop-blur-xl ${pathname === "/" ? "public-header-home" : ""}`}>
+    <header className={`public-header sticky top-0 z-50 border-b border-line/80 bg-paper/90 backdrop-blur-xl ${pathname === "/" || pathname === "/lab" ? "public-header-home" : ""}`}>
       <div className="site-container flex h-[72px] items-center justify-between gap-5">
         <Brand />
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Public website">
@@ -41,8 +42,8 @@ export function PublicHeader() {
           })}
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="public-primary-button public-header__desktop-cta hidden sm:inline-flex">
-            View live demo <ArrowRight size={14} />
+          <Link href="/lab" className="public-primary-button public-header__desktop-cta hidden sm:inline-flex">
+            Run a decision <ArrowRight size={14} />
           </Link>
           <button
             type="button"
@@ -63,8 +64,8 @@ export function PublicHeader() {
                 {item.label}<ArrowRight size={14} className="text-muted" />
               </Link>
             ))}
-            <Link href="/dashboard" className="public-primary-button mt-3 justify-center sm:hidden">
-              View live demo <ArrowRight size={14} />
+            <Link href="/lab" className="public-primary-button mt-3 justify-center sm:hidden">
+              Run a decision <ArrowRight size={14} />
             </Link>
           </nav>
         </div>

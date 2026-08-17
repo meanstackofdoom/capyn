@@ -89,7 +89,7 @@ export default function HomePage() {
               The authorization layer between what an autonomous agent wants to do and what your systems should permit—capabilities, hard limits, human approvals and evidence in one decision point.
             </p>
             <div className="home-hero__actions">
-              <Link href="/dashboard" className="public-primary-button min-h-12 justify-center px-6">Try the live decision flow <ArrowRight size={16} /></Link>
+              <Link href="/lab" className="public-primary-button min-h-12 justify-center px-6">Enter the Authority Lab <ArrowRight size={16} /></Link>
               <Link href="/product" className="public-secondary-button min-h-12 justify-center px-6">See how authority works <ChevronRight size={16} /></Link>
             </div>
           </div>

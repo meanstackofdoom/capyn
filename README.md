@@ -5,7 +5,7 @@
 [![CI](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml/badge.svg)](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ac39c.svg)](LICENSE)
 
-[Try the live CAPYN public alpha](https://capyn-production.up.railway.app) or inspect the [v0.1.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0) with its generated video and dashboard evidence.
+[Run a real decision in the live CAPYN Authority Lab](https://capyn-production.up.railway.app/lab) or inspect the [v0.1.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0) with its generated video and dashboard evidence.
 
 The hosted alpha is a synthetic, memory-backed demonstration with mock execution. Its state can reset during deployment, it contains no customer data, and it does not move real money.
 
@@ -70,6 +70,7 @@ The seeded hard per-transaction ceiling is `$150`, not `$50`. A `$50` hard ceili
 The public surface is a complete, responsive Next.js site:
 
 - `/` — positioning, authority rail and the core demo story
+- `/lab` — a public, ephemeral instrument backed by the real policy evaluator
 - `/product` — lifecycle, policy model and execution boundary
 - `/security` — implemented controls, concurrency and explicit limitations
 - `/developers` — SDK, curl, REST surface and response contracts

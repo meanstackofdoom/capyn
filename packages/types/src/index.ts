@@ -49,6 +49,25 @@ export const authorizeRequestSchema = z
 
 export type AuthorizeRequest = z.infer<typeof authorizeRequestSchema>;
 
+export const labEvaluateRequestSchema = z
+  .object({
+    capability: capabilitySchema,
+    amount: moneyInputSchema,
+    vendor: vendorSchema,
+    purpose: z.string().trim().min(3).max(160)
+  })
+  .strict();
+
+export type LabEvaluateRequest = z.infer<typeof labEvaluateRequestSchema>;
+
+export const labApprovalDecisionSchema = z
+  .object({
+    decision: z.enum(["APPROVE", "REJECT"])
+  })
+  .strict();
+
+export type LabApprovalDecision = z.infer<typeof labApprovalDecisionSchema>;
+
 export const DECISIONS = ["ALLOW", "DENY", "REQUIRE_APPROVAL"] as const;
 export type Decision = (typeof DECISIONS)[number];
 
@@ -263,6 +282,77 @@ export interface PolicyEvaluation {
   decision: Decision;
   reasonCodes: ReasonCode[];
   trace: RuleTrace[];
+}
+
+export interface LabEvidenceEvent {
+  sequence: number;
+  type:
+    | "REQUEST_RECEIVED"
+    | "POLICY_EVALUATED"
+    | "APPROVAL_OPENED"
+    | "APPROVAL_RECORDED"
+    | "REQUEST_STOPPED"
+    | "EXECUTION_SIMULATED";
+  actor: "procurement-agent" | "CAPYN policy engine" | "human approver" | "synthetic executor";
+  timestamp: string;
+  detail: string;
+}
+
+export interface LabEvidence {
+  receiptId: string;
+  digest: string;
+  events: LabEvidenceEvent[];
+}
+
+export interface LabMandateView {
+  id: "lab_mandate_procurement_v3";
+  name: "Procurement / bounded compute";
+  version: 3;
+  capabilities: string[];
+  allowedVendors: Array<{ id: string; name: string }>;
+  limits: {
+    perTransaction: string;
+    daily: string;
+    monthly: string;
+    approvalAbove: string;
+  };
+  observedSpend: {
+    today: string;
+    month: string;
+  };
+}
+
+export interface LabEvaluationResult {
+  mode: "SYNTHETIC";
+  notice: string;
+  authorizationId: string;
+  evaluatedAt: string;
+  agent: { id: "lab_agent_procurement"; name: "procurement-agent"; status: "ACTIVE" };
+  mandate: LabMandateView;
+  request: LabEvaluateRequest;
+  decision: Decision;
+  reasonCodes: ReasonCode[];
+  reasons: Array<{ code: ReasonCode; description: string }>;
+  trace: RuleTrace[];
+  outcome: "SIMULATED_EXECUTION" | "AWAITING_HUMAN" | "STOPPED";
+  approval: { id: string; expiresAt: string } | null;
+  evidence: LabEvidence;
+}
+
+export interface LabResolutionResult {
+  mode: "SYNTHETIC";
+  notice: string;
+  authorizationId: string;
+  approvalId: string;
+  resolvedAt: string;
+  request: LabEvaluateRequest;
+  resolution: "APPROVED" | "REJECTED";
+  policyDecision: "ALLOW" | "REQUIRE_APPROVAL";
+  outcome: "SIMULATED_EXECUTION" | "STOPPED";
+  reasonCodes: ReasonCode[];
+  reasons: Array<{ code: ReasonCode; description: string }>;
+  trace: RuleTrace[];
+  evidence: LabEvidence;
 }
 
 export interface AgentPrincipal {

@@ -84,6 +84,29 @@ try {
   );
   assert(home.headers.get("content-security-policy")?.includes("frame-ancestors 'none'"), "Combined CSP is missing");
 
+  const labPage = await fetch(`${origin}/lab`);
+  const labHtml = await labPage.text();
+  assert(labPage.ok && labHtml.includes("Try to cross") && labHtml.includes("Run the decision"), "Combined Authority Lab page is invalid");
+  const labEvaluation = await fetch(`${origin}/v1/lab/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      capability: "spend.compute",
+      amount: { value: "120.00", currency: "USD" },
+      vendor: { id: "aws", name: "AWS" },
+      purpose: "Combined smoke approval boundary"
+    })
+  });
+  const labDecision = await labEvaluation.json();
+  assert(labEvaluation.status === 202 && labDecision.decision === "REQUIRE_APPROVAL", "Combined Authority Lab API is invalid");
+  const labApproval = await fetch(`${origin}/v1/lab/approvals/${labDecision.approval.id}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ decision: "APPROVE" })
+  });
+  const labResolution = await labApproval.json();
+  assert(labApproval.ok && labResolution.resolution === "APPROVED", "Combined Authority Lab approval is invalid");
+
   const privateGate = await fetch(`${origin}/private/project-status`);
   const privateGateHtml = await privateGate.text();
   assert(privateGateHtml.includes("Unlock status ledger"), "Combined private status gate is missing");
@@ -105,7 +128,7 @@ try {
 
   const me = await fetch(`${origin}/v1/me`, { headers: { Authorization: `Bearer ${agentApiKey}` } });
   assert(me.ok && (await me.json()).name === "procurement-agent", "Combined agent route is invalid");
-  process.stdout.write(`combined-smoke · ${JSON.stringify({ origin, api: "ok", web: "ok", proxy: "ok", privateStatus: "ok" })}\n`);
+  process.stdout.write(`combined-smoke · ${JSON.stringify({ origin, api: "ok", web: "ok", proxy: "ok", authorityLab: "ok", privateStatus: "ok" })}\n`);
 } catch (error) {
   process.stderr.write(`${output.join("").slice(-8_000)}\n`);
   throw error;
