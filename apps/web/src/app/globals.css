@@ -565,13 +565,10 @@ a {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid rgba(179, 201, 213, 0.2);
-  background:
-    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--boundary-signal) 9%, transparent), transparent 16rem),
-    rgba(4, 14, 20, 0.82);
-  box-shadow: 0 3rem 8rem rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(179, 201, 213, 0.22);
+  background: #06131b;
+  box-shadow: 0 2rem 6rem rgba(0, 0, 0, 0.3);
   color: #edf5f2;
-  backdrop-filter: blur(18px);
 }
 
 .authority-boundary--permission {
@@ -588,296 +585,416 @@ a {
 
 .authority-boundary::before {
   position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 44px 44px;
+  inset: 0 0 auto;
+  z-index: 2;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--boundary-signal) 55%, transparent), transparent);
   content: "";
-  mask-image: linear-gradient(to bottom, black, transparent 88%);
+  pointer-events: none;
 }
 
 .authority-boundary__toolbar {
-  display: flex;
-  min-height: 3.5rem;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
-  background: rgba(255, 255, 255, 0.025);
+  display: grid;
+  min-height: 4.5rem;
+  grid-template-columns: minmax(18rem, 1fr) auto;
+  border-bottom: 1px solid rgba(204, 220, 227, 0.14);
+  background: #081720;
 }
 
-.authority-boundary__live {
+.authority-boundary__identity {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding-inline: 1.25rem;
-  color: rgba(237, 245, 242, 0.68);
+  gap: 0.8rem;
+  min-width: 0;
+  padding: 0.9rem 1.25rem;
+}
+
+.authority-boundary__identity > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.18rem;
+}
+
+.authority-boundary__identity p,
+.authority-boundary__identity code {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.5625rem;
-  letter-spacing: 0.12em;
+}
+
+.authority-boundary__identity p {
+  color: rgba(237, 245, 242, 0.78);
+  font-size: 0.58rem;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
+.authority-boundary__identity code {
+  overflow: hidden;
+  color: rgba(237, 245, 242, 0.34);
+  font-size: 0.52rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .authority-boundary__live-dot {
-  width: 0.375rem;
-  height: 0.375rem;
+  flex: 0 0 auto;
+  width: 0.42rem;
+  height: 0.42rem;
   border-radius: 999px;
   background: var(--permission);
-  box-shadow: 0 0 0 0.25rem rgba(99, 230, 183, 0.1), 0 0 1.2rem rgba(99, 230, 183, 0.65);
+  box-shadow: 0 0 0 0.25rem rgba(99, 230, 183, 0.08), 0 0 0.9rem rgba(99, 230, 183, 0.42);
   animation: boundary-live 2.4s ease-in-out infinite;
 }
 
-.authority-boundary__authorization {
-  color: rgba(237, 245, 242, 0.32);
+.authority-boundary__mode {
+  margin-left: 0.35rem;
+  border: 1px solid rgba(204, 220, 227, 0.14);
+  padding: 0.35rem 0.48rem;
+  color: rgba(237, 245, 242, 0.38);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.45rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .authority-boundary__scenarios {
   display: grid;
-  grid-template-columns: repeat(3, minmax(5.5rem, 1fr));
-  border-left: 1px solid rgba(255, 255, 255, 0.11);
+  grid-template-columns: repeat(3, minmax(7.75rem, 1fr));
+  border-left: 1px solid rgba(204, 220, 227, 0.14);
 }
 
 .authority-boundary__scenario {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.65rem;
   border: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.11);
+  border-right: 1px solid rgba(204, 220, 227, 0.14);
   background: transparent;
-  padding: 0.75rem 0.9rem;
-  color: rgba(237, 245, 242, 0.4);
+  padding: 0.8rem 0.9rem;
+  color: rgba(237, 245, 242, 0.42);
   cursor: pointer;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.5625rem;
-  transition: background-color 160ms ease, color 160ms ease;
+  text-align: left;
+  transition: background-color 160ms ease, box-shadow 160ms ease, color 160ms ease;
 }
 
 .authority-boundary__scenario:last-child {
   border-right: 0;
 }
 
-.authority-boundary__scenario span:first-child {
+.authority-boundary__scenario-index {
   color: rgba(237, 245, 242, 0.22);
-  font-size: 0.5rem;
+  font-size: 0.48rem;
+}
+
+.authority-boundary__scenario-copy {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.authority-boundary__scenario-copy strong {
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.authority-boundary__scenario-copy small {
+  color: rgba(237, 245, 242, 0.26);
+  font-size: 0.43rem;
+  font-weight: 400;
 }
 
 .authority-boundary__scenario[aria-selected="true"] {
-  background: color-mix(in srgb, var(--boundary-signal) 9%, transparent);
+  background: color-mix(in srgb, var(--boundary-signal) 8%, #081720);
+  box-shadow: inset 0 -2px var(--boundary-signal);
   color: var(--boundary-signal);
+}
+
+.authority-boundary__scenario[aria-selected="true"] .authority-boundary__scenario-copy small {
+  color: color-mix(in srgb, var(--boundary-signal) 58%, rgba(237, 245, 242, 0.35));
 }
 
 .authority-boundary__scenario:hover {
   color: #edf5f2;
 }
 
-.authority-boundary__stage {
-  position: relative;
+.authority-boundary__workspace {
   display: grid;
-  min-height: 23rem;
-  grid-template-columns: minmax(0, 1fr) 12rem minmax(0, 1fr);
-  align-items: center;
-  gap: 2.5rem;
-  padding: 4.75rem clamp(1.5rem, 4vw, 4rem) 2.5rem;
-}
-
-.authority-boundary__stage-labels {
-  position: absolute;
-  top: 1.4rem;
-  left: clamp(1.5rem, 4vw, 4rem);
-  right: clamp(1.5rem, 4vw, 4rem);
-  display: grid;
-  grid-template-columns: 1fr 12rem 1fr;
-  gap: 2.5rem;
-  color: rgba(237, 245, 242, 0.32);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.5rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.authority-boundary__stage-labels span:nth-child(2) {
-  color: var(--boundary-signal);
-  text-align: center;
-}
-
-.authority-boundary__stage-labels span:last-child {
-  text-align: right;
-}
-
-.authority-boundary__flow {
-  position: absolute;
-  top: 50%;
-  right: 7%;
-  left: 7%;
-  height: 1px;
-  overflow: hidden;
-  background: linear-gradient(90deg, rgba(237, 245, 242, 0.08), var(--boundary-signal), rgba(237, 245, 242, 0.08));
-}
-
-.authority-boundary__packet {
-  position: absolute;
-  top: -2px;
-  left: 0;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--boundary-signal) 20%, transparent), 0 0 1.25rem var(--boundary-signal);
-  animation: boundary-packet 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  grid-template-columns: minmax(15rem, 0.86fr) minmax(22rem, 1.32fr) minmax(15rem, 0.82fr);
+  gap: 1px;
+  background: rgba(204, 220, 227, 0.14);
 }
 
 .authority-boundary__request,
+.authority-boundary__evaluation,
 .authority-boundary__result {
-  position: relative;
-  z-index: 2;
-  width: min(100%, 17rem);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(7, 22, 30, 0.9);
-  padding: 1.2rem;
-  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(12px);
+  min-width: 0;
+  background: #07151d;
+  padding: clamp(1.4rem, 2.3vw, 2.2rem);
 }
 
 .authority-boundary__request {
-  justify-self: start;
+  background: #081720;
 }
 
 .authority-boundary__result {
-  justify-self: end;
-  border-color: color-mix(in srgb, var(--boundary-signal) 55%, rgba(255, 255, 255, 0.14));
-  background: color-mix(in srgb, var(--boundary-signal) 7%, rgba(7, 22, 30, 0.92));
+  background: color-mix(in srgb, var(--boundary-signal) 6%, #07151d);
+  box-shadow: inset 3px 0 var(--boundary-signal);
 }
 
-.authority-boundary__card-label {
+.authority-boundary__section-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  color: rgba(237, 245, 242, 0.38);
+  color: rgba(237, 245, 242, 0.34);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.5rem;
-  letter-spacing: 0.12em;
+  font-size: 0.49rem;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
-.authority-boundary__request-main {
-  margin-top: 1.6rem;
+.authority-boundary__section-label > span:first-child {
+  color: color-mix(in srgb, var(--boundary-signal) 68%, #edf5f2);
+}
+
+.authority-boundary__request-kicker,
+.authority-boundary__result-kicker {
+  margin-top: clamp(2rem, 4vw, 3.25rem);
+  color: rgba(237, 245, 242, 0.42);
+  font-size: 0.65rem;
+  line-height: 1.5;
+}
+
+.authority-boundary__transaction {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.8rem;
+  border-block: 1px solid rgba(204, 220, 227, 0.12);
+  padding-block: 1.35rem;
+}
+
+.authority-boundary__transaction > strong {
   font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(1.25rem, 2vw, 1.8rem);
+  font-size: clamp(1.7rem, 3vw, 2.55rem);
+  font-variation-settings: "wght" 590, "SHRP" 24;
+  font-weight: 590;
+  letter-spacing: -0.06em;
+  white-space: nowrap;
+}
+
+.authority-boundary__transaction > svg {
+  color: rgba(237, 245, 242, 0.28);
+}
+
+.authority-boundary__transaction > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.18rem;
+}
+
+.authority-boundary__transaction span {
+  color: rgba(237, 245, 242, 0.3);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.47rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.authority-boundary__transaction b {
+  overflow: hidden;
+  color: #dfe8e6;
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.authority-boundary__request-details {
+  display: grid;
+  gap: 0;
+  margin-top: 1.25rem;
+}
+
+.authority-boundary__request-details > div {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 0.72fr) minmax(0, 1fr);
+  gap: 1rem;
+  border-bottom: 1px solid rgba(204, 220, 227, 0.09);
+  padding-block: 0.8rem;
+  font-size: 0.63rem;
+}
+
+.authority-boundary__request-details dt {
+  color: rgba(237, 245, 242, 0.34);
+}
+
+.authority-boundary__request-details dd {
+  overflow: hidden;
+  color: rgba(237, 245, 242, 0.72);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.52rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.authority-boundary__evaluation {
+  padding-top: 1.55rem;
+  padding-bottom: 1.55rem;
+}
+
+.authority-boundary__evaluation-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.15rem;
+}
+
+.authority-boundary__evaluation-header > div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.authority-boundary__evaluation-header > div > span {
+  color: color-mix(in srgb, var(--boundary-signal) 68%, #edf5f2);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.49rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.authority-boundary__evaluation-header h3 {
+  font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.05rem;
   font-variation-settings: "wght" 570, "SHRP" 20;
   font-weight: 570;
-  letter-spacing: -0.045em;
-  line-height: 1.05;
+  letter-spacing: -0.035em;
 }
 
-.authority-boundary__request-main p:last-child {
-  margin-top: 0.4rem;
-  color: #aab8bd;
-  font-size: 0.72em;
-}
-
-.authority-boundary__request-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.8rem;
-  margin-top: 1.4rem;
-  padding-top: 0.8rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-  color: rgba(237, 245, 242, 0.38);
+.authority-boundary__evaluation-header > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(237, 245, 242, 0.4);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.5rem;
+  font-size: 0.48rem;
+  text-transform: uppercase;
 }
 
-.authority-boundary__gate {
-  position: relative;
-  z-index: 3;
+.authority-boundary__trace {
   display: grid;
-  width: 12rem;
-  height: 16rem;
-  place-items: center;
-  justify-self: center;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(204, 220, 227, 0.11);
+  background: rgba(204, 220, 227, 0.11);
 }
 
-.authority-boundary__gate::before,
-.authority-boundary__gate::after {
+.authority-boundary__rule {
+  --rule-color: rgba(237, 245, 242, 0.3);
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 3.15rem;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  background: #091820;
+  padding: 0.62rem 0.75rem;
+}
+
+.authority-boundary__rule::before {
   position: absolute;
-  top: -3.5rem;
-  bottom: -3.5rem;
-  left: 50%;
-  width: 1px;
-  background: linear-gradient(to bottom, transparent, var(--boundary-signal) 28%, var(--boundary-signal) 72%, transparent);
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--rule-color);
   content: "";
 }
 
-.authority-boundary__gate::after {
-  width: 3.5rem;
-  transform: translateX(-50%);
-  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--boundary-signal) 8%, transparent), transparent);
-  filter: blur(12px);
+.authority-boundary__rule--pass {
+  --rule-color: var(--permission);
 }
 
-.authority-boundary__ring,
-.authority-boundary__core,
-.authority-boundary__axis {
-  grid-area: 1 / 1;
+.authority-boundary__rule--fail {
+  --rule-color: var(--denial);
 }
 
-.authority-boundary__ring {
-  border: 1px solid color-mix(in srgb, var(--boundary-signal) 46%, transparent);
-  border-radius: 50%;
-  box-shadow: inset 0 0 1.8rem color-mix(in srgb, var(--boundary-signal) 6%, transparent), 0 0 1.8rem color-mix(in srgb, var(--boundary-signal) 7%, transparent);
+.authority-boundary__rule--review {
+  --rule-color: var(--review);
 }
 
-.authority-boundary__ring--outer {
-  width: 11rem;
-  height: 15rem;
-  opacity: 0.25;
+.authority-boundary__rule-index {
+  color: rgba(237, 245, 242, 0.24);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.45rem;
 }
 
-.authority-boundary__ring--middle {
-  width: 7.2rem;
-  height: 11.5rem;
-  opacity: 0.45;
-}
-
-.authority-boundary__ring--inner {
-  width: 4rem;
-  height: 7.5rem;
-  opacity: 0.78;
-}
-
-.authority-boundary__axis {
-  width: 17rem;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--boundary-signal), transparent);
-}
-
-.authority-boundary__core {
-  position: relative;
-  z-index: 2;
+.authority-boundary__rule-copy {
   display: grid;
-  width: 3.5rem;
-  height: 3.5rem;
+  min-width: 0;
+  grid-template-columns: minmax(6rem, 0.72fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.authority-boundary__rule-copy p {
+  color: rgba(237, 245, 242, 0.84);
+  font-size: 0.64rem;
+  font-weight: 750;
+}
+
+.authority-boundary__rule-copy code {
+  overflow: hidden;
+  color: rgba(237, 245, 242, 0.38);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.47rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.authority-boundary__rule-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 4.6rem;
+  color: var(--rule-color);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.45rem;
+  text-transform: uppercase;
+}
+
+.authority-boundary__rule-status i {
+  display: grid;
+  width: 1rem;
+  height: 1rem;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--boundary-signal) 72%, white 6%);
+  border: 1px solid currentColor;
   border-radius: 50%;
-  background: #081820;
+  font-size: 0.48rem;
+  font-style: normal;
+}
+
+.authority-boundary__result-mark {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--boundary-signal) 50%, transparent);
+  background: color-mix(in srgb, var(--boundary-signal) 8%, transparent);
   color: var(--boundary-signal);
-  box-shadow: 0 0 2.5rem color-mix(in srgb, var(--boundary-signal) 28%, transparent);
 }
 
 .authority-boundary__decision {
-  margin-top: 1.4rem;
+  margin-top: 0.9rem;
   color: var(--boundary-signal);
   font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
-  font-size: clamp(1.45rem, 2.5vw, 2.3rem);
-  font-variation-settings: "wght" 630, "SHRP" 30;
-  font-weight: 630;
-  letter-spacing: -0.055em;
-  line-height: 0.9;
+  font-size: clamp(2rem, 3.6vw, 3.25rem);
+  font-variation-settings: "wght" 620, "SHRP" 28;
+  font-weight: 620;
+  letter-spacing: -0.065em;
+  line-height: 0.88;
 }
 
 .authority-boundary__decision span {
@@ -885,105 +1002,98 @@ a {
 }
 
 .authority-boundary__reason {
-  overflow: hidden;
+  display: block;
+  overflow-wrap: anywhere;
   margin-top: 1rem;
   color: color-mix(in srgb, var(--boundary-signal) 68%, #edf5f2);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.48rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 0.47rem;
+  line-height: 1.55;
 }
 
-.authority-boundary__trace-scroll {
-  overflow-x: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.11);
+.authority-boundary__next-step {
+  margin-top: clamp(2rem, 4vw, 3.2rem);
+  border-top: 1px solid color-mix(in srgb, var(--boundary-signal) 25%, rgba(204, 220, 227, 0.1));
+  padding-top: 1rem;
 }
 
-.authority-boundary__trace {
+.authority-boundary__next-step span {
+  color: rgba(237, 245, 242, 0.3);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.authority-boundary__next-step p {
+  margin-top: 0.6rem;
+  color: rgba(237, 245, 242, 0.66);
+  font-size: 0.66rem;
+  line-height: 1.65;
+}
+
+.authority-boundary__receipt {
   display: grid;
-  min-width: 43rem;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  grid-template-columns: minmax(10rem, 0.72fr) minmax(0, 3fr);
+  border-top: 1px solid rgba(204, 220, 227, 0.14);
+  background: #081720;
 }
 
-.authority-boundary__rule {
-  min-width: 0;
-  background: #07151d;
-  padding: 1rem;
-}
-
-.authority-boundary__rule-top {
+.authority-boundary__receipt-title {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  color: rgba(237, 245, 242, 0.25);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.5rem;
+  gap: 0.55rem;
+  border-right: 1px solid rgba(204, 220, 227, 0.12);
+  padding: 1rem 1.25rem;
+  color: rgba(237, 245, 242, 0.72);
+  font-size: 0.6rem;
+  font-weight: 750;
 }
 
-.authority-boundary__rule-glyph {
+.authority-boundary__receipt-title svg {
+  color: var(--boundary-signal);
+}
+
+.authority-boundary__receipt dl {
   display: grid;
-  width: 1.15rem;
-  height: 1.15rem;
-  place-items: center;
-  border: 1px solid currentColor;
-  border-radius: 50%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.authority-boundary__rule--pass .authority-boundary__rule-glyph {
-  color: var(--permission);
+.authority-boundary__receipt dl > div {
+  min-width: 0;
+  border-right: 1px solid rgba(204, 220, 227, 0.1);
+  padding: 0.85rem 1rem;
 }
 
-.authority-boundary__rule--fail .authority-boundary__rule-glyph {
-  color: var(--denial);
+.authority-boundary__receipt dl > div:last-child {
+  border-right: 0;
 }
 
-.authority-boundary__rule--review .authority-boundary__rule-glyph {
-  color: var(--review);
-}
-
-.authority-boundary__rule--closed .authority-boundary__rule-glyph {
-  color: rgba(237, 245, 242, 0.28);
-}
-
-.authority-boundary__rule > p {
-  margin-top: 0.8rem;
-  color: rgba(237, 245, 242, 0.82);
-  font-size: 0.6875rem;
-  font-weight: 700;
-}
-
-.authority-boundary__rule-value {
-  display: block;
+.authority-boundary__receipt dt,
+.authority-boundary__receipt dd {
   overflow: hidden;
-  margin-top: 0.35rem;
-  color: rgba(237, 245, 242, 0.36);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.5rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.authority-boundary__receipt dt {
+  color: rgba(237, 245, 242, 0.28);
+  font-size: 0.43rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.authority-boundary__receipt dd {
+  margin-top: 0.35rem;
+  color: rgba(237, 245, 242, 0.62);
+  font-size: 0.48rem;
 }
 
 @keyframes boundary-live {
   50% {
     opacity: 0.55;
     transform: scale(0.82);
-  }
-}
-
-@keyframes boundary-packet {
-  0% {
-    left: 0;
-    opacity: 0;
-  }
-  12%, 76% {
-    opacity: 1;
-  }
-  88%, 100% {
-    left: 100%;
-    opacity: 0;
-    transform: translateX(-100%);
   }
 }
 
@@ -996,26 +1106,8 @@ a {
     justify-content: flex-start;
   }
 
-  .authority-boundary__stage,
-  .authority-boundary__stage-labels {
-    grid-template-columns: minmax(0, 1fr) 8rem minmax(0, 1fr);
-    gap: 1.25rem;
-  }
-
-  .authority-boundary__gate {
-    width: 8rem;
-  }
-
-  .authority-boundary__ring--outer {
-    width: 7.5rem;
-  }
-
-  .authority-boundary__ring--middle {
-    width: 5.25rem;
-  }
-
-  .authority-boundary__axis {
-    width: 10rem;
+  .authority-boundary__workspace {
+    grid-template-columns: minmax(13rem, 0.86fr) minmax(19rem, 1.32fr) minmax(13rem, 0.82fr);
   }
 }
 
@@ -1042,90 +1134,50 @@ a {
     display: block;
   }
 
-  .authority-boundary__live {
-    min-height: 3.25rem;
+  .authority-boundary__identity {
+    min-height: 4.25rem;
   }
 
   .authority-boundary__scenarios {
-    border-top: 1px solid rgba(255, 255, 255, 0.11);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid rgba(204, 220, 227, 0.14);
     border-left: 0;
   }
 
-  .authority-boundary__stage {
-    min-height: 20rem;
-    grid-template-columns: minmax(0, 1fr) 4.75rem minmax(0, 1fr);
-    gap: 0.6rem;
-    padding: 4.25rem 0.85rem 2rem;
-  }
-
-  .authority-boundary__stage-labels {
-    right: 0.85rem;
-    left: 0.85rem;
-    grid-template-columns: 1fr 4.75rem 1fr;
-    gap: 0.6rem;
-  }
-
-  .authority-boundary__stage-labels span:nth-child(2) {
-    font-size: 0;
-  }
-
-  .authority-boundary__stage-labels span:nth-child(2)::after {
-    content: "CAPYN";
-    font-size: 0.45rem;
+  .authority-boundary__workspace {
+    grid-template-columns: 1fr;
   }
 
   .authority-boundary__request,
+  .authority-boundary__evaluation,
   .authority-boundary__result {
-    padding: 0.85rem;
+    padding: 1.25rem;
   }
 
-  .authority-boundary__card-label span:last-child,
-  .authority-boundary__request-meta span:last-child,
-  .authority-boundary__reason {
-    display: none;
+  .authority-boundary__result {
+    box-shadow: inset 0 3px var(--boundary-signal);
   }
 
-  .authority-boundary__request-main {
-    margin-top: 1.1rem;
-    font-size: clamp(1rem, 4.5vw, 1.4rem);
+  .authority-boundary__request-kicker,
+  .authority-boundary__result-kicker {
+    margin-top: 1.8rem;
   }
 
-  .authority-boundary__request-meta {
-    margin-top: 1rem;
+  .authority-boundary__next-step {
+    margin-top: 2rem;
   }
 
-  .authority-boundary__decision {
-    margin-top: 1.1rem;
-    font-size: clamp(1rem, 4.8vw, 1.45rem);
+  .authority-boundary__receipt {
+    grid-template-columns: 1fr;
   }
 
-  .authority-boundary__gate {
-    width: 4.75rem;
-    height: 13rem;
+  .authority-boundary__receipt-title {
+    border-right: 0;
+    border-bottom: 1px solid rgba(204, 220, 227, 0.12);
   }
 
-  .authority-boundary__ring--outer {
-    width: 4.6rem;
-    height: 12rem;
-  }
-
-  .authority-boundary__ring--middle {
-    width: 3.2rem;
-    height: 8.5rem;
-  }
-
-  .authority-boundary__ring--inner {
-    width: 2.25rem;
-    height: 5.5rem;
-  }
-
-  .authority-boundary__axis {
-    width: 6rem;
-  }
-
-  .authority-boundary__core {
-    width: 2.6rem;
-    height: 2.6rem;
+  .authority-boundary__receipt dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1144,17 +1196,33 @@ a {
     grid-template-columns: 1fr;
   }
 
-  .authority-boundary__authorization {
+  .authority-boundary__mode {
     display: none;
   }
 
   .authority-boundary__scenario {
     justify-content: center;
-    padding-inline: 0.4rem;
+    padding-inline: 0.5rem;
+    text-align: center;
   }
 
-  .authority-boundary__scenario span:first-child {
+  .authority-boundary__scenario-index,
+  .authority-boundary__scenario-copy small {
     display: none;
+  }
+
+  .authority-boundary__rule-copy {
+    grid-template-columns: 1fr;
+    gap: 0.18rem;
+  }
+
+  .authority-boundary__rule-status {
+    min-width: 1rem;
+    font-size: 0;
+  }
+
+  .authority-boundary__rule-status i {
+    font-size: 0.48rem;
   }
 }
 
@@ -1172,8 +1240,7 @@ a {
     transition: none;
   }
 
-  .authority-boundary__live-dot,
-  .authority-boundary__packet {
+  .authority-boundary__live-dot {
     animation: none;
   }
 }
