@@ -103,4 +103,4 @@ Before real money, every item in the [Security production gate](security.md#prod
 - do not roll back a migration destructively without a reviewed data-recovery plan;
 - record deployment identity and version in operational audit/observability systems.
 
-The current mock executor has no external settlement state to reconcile. A real executor requires an outbox, provider idempotency and reconciliation before rollout can be considered safe.
+The executor contract now requires `execute()` and read-only `reconcile()` using the same CAPYN execution ID. Leased request-driven recovery prevents an ambiguous response from automatically becoming a duplicate payment, but the mock executor has no external settlement state against which to validate that contract. A real rollout still requires a transactional outbox/worker, automatic stale-lease scanning, provider-specific alerts and reconciliation runbooks.

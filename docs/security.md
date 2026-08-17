@@ -43,6 +43,9 @@ Production defence in depth should add PostgreSQL row-level security or isolated
 - Approval can transition from `PENDING` once.
 - One execution record can exist per authorization.
 - Repeated completed execution calls return the original result and never call the executor again.
+- Pending execution attempts hold a time-bounded lease; only one expired attempt can claim reconciliation under the agent lock.
+- Unknown provider outcomes remain `EXECUTING` and reserved. An exact retry calls `reconcile()` with the original execution ID rather than issuing payment again.
+- Finalization is attempt-conditional, so a slow superseded attempt cannot overwrite a newer reconciliation result.
 - Immediately before execution, CAPYN rechecks the agent, exact mandate binding, capability, vendor and hard spend rules under the agent lock. Suspension, revocation or mandate replacement invalidates an unused authorization.
 
 ### Concurrent spend accounting
@@ -81,7 +84,7 @@ For regulated deployments, add immutable external export, retention policy, cloc
 - Human authentication is a demo header adapter. It may be exposed only when pinned to a least-privilege user with synthetic, disposable state and mock execution; disable it and install a real identity adapter before any customer-data or real-money deployment.
 - The fixed public agent key lets visitors consume the synthetic demo's in-memory allowance. Rate limits bound request volume, but this instance makes no availability promise and may be reset; design-partner environments require unique revocable credentials and durable isolation.
 - `MockPaymentExecutor` moves no funds.
-- A process crash after an external provider succeeds but before CAPYN finalizes can leave `EXECUTING`. Real adapters need provider idempotency, reconciliation and an outbox/state-machine worker.
+- Request-driven leased reconciliation can recover an `EXECUTING` record after a lost provider response, but no background worker scans stale leases yet. Real adapters still require provider idempotency, a transactional outbox, automated reconciliation and alerting.
 - Rate-limit state is process-local.
 - Awaiting approvals do not reserve spend for 24 hours. Hard limits are rechecked at approval time instead.
 - Spend periods use authorization creation time. A production ledger should distinguish reservation, capture and refund timestamps.
@@ -98,7 +101,7 @@ Before real money:
 - real human SSO/MFA and session controls;
 - treasury-level reservation model;
 - distributed rate limiting and abuse detection;
-- executor idempotency/reconciliation;
+- one reviewed real executor plus transactional outbox, automated reconciliation and alerting;
 - secret-manager integration and deployment-pepper rotation;
 - encrypted backups, tested restore and disaster recovery;
 - audit export/retention controls;

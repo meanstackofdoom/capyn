@@ -16,7 +16,7 @@ export interface ExecutionRequest {
 }
 
 export interface PaymentExecutionResult {
-  status: "EXECUTED" | "FAILED";
+  status: "EXECUTED" | "FAILED" | "UNKNOWN";
   reference: string | null;
   errorCode: string | null;
 }
@@ -24,6 +24,7 @@ export interface PaymentExecutionResult {
 export interface PaymentExecutor {
   readonly name: string;
   execute(request: ExecutionRequest): Promise<PaymentExecutionResult>;
+  reconcile(request: ExecutionRequest): Promise<PaymentExecutionResult>;
 }
 
 export class MockPaymentExecutor implements PaymentExecutor {
@@ -36,13 +37,22 @@ export class MockPaymentExecutor implements PaymentExecutor {
       errorCode: null
     };
   }
+
+  async reconcile(request: ExecutionRequest): Promise<PaymentExecutionResult> {
+    return {
+      status: "EXECUTED",
+      reference: `mock_${request.executionId}`,
+      errorCode: null
+    };
+  }
 }
 
 function toView(execution: StoredExecution): ExecutionResultView {
+  if (execution.status === "PENDING") throw new Error("A pending execution has no final result");
   return {
     executionId: execution.id,
     authorizationId: execution.authorizationId,
-    status: execution.status === "PENDING" ? "FAILED" : execution.status,
+    status: execution.status,
     provider: execution.provider,
     reference: execution.externalReference,
     executedAt: execution.completedAt?.toISOString() ?? null
@@ -51,6 +61,7 @@ function toView(execution: StoredExecution): ExecutionResultView {
 
 type ClaimOutcome =
   | { kind: "claimed"; execution: StoredExecution; authorization: StoredAuthorization }
+  | { kind: "recovering"; execution: StoredExecution; authorization: StoredAuthorization }
   | { kind: "existing"; execution: StoredExecution }
   | { kind: "expired" }
   | { kind: "invalidated"; reasons: string[] };
@@ -61,12 +72,30 @@ function subtractReservation(total: string, authorization: StoredAuthorization, 
   return (remaining > 0n ? remaining : 0n).toString();
 }
 
+export const DEFAULT_EXECUTION_LEASE_MS = 30_000;
+
+function executionRequest(execution: StoredExecution, authorization: StoredAuthorization): ExecutionRequest {
+  return {
+    executionId: execution.id,
+    authorizationId: authorization.id,
+    organisationId: authorization.organisationId,
+    agentId: authorization.agentId,
+    capability: authorization.capability,
+    amountMinor: authorization.amountMinor,
+    currency: authorization.currency,
+    vendor: { id: authorization.vendorId, name: authorization.vendorName }
+  };
+}
+
 export class ExecutionService {
   constructor(
     private readonly repository: CapynRepository,
     private readonly executor: PaymentExecutor = new MockPaymentExecutor(),
-    private readonly clock: () => Date = () => new Date()
-  ) {}
+    private readonly clock: () => Date = () => new Date(),
+    private readonly leaseMs: number = DEFAULT_EXECUTION_LEASE_MS
+  ) {
+    if (!Number.isInteger(leaseMs) || leaseMs <= 0) throw new Error("Execution lease must be a positive integer");
+  }
 
   async execute(principal: AgentPrincipal, authorizationId: string): Promise<ExecutionResultView> {
     const now = this.clock();
@@ -93,7 +122,45 @@ export class ExecutionService {
         throw new NotFoundError("Authorization not found");
       }
       const existing = await tx.findExecutionByAuthorization(authorization.id);
-      if (existing) return { kind: "existing", execution: existing };
+      if (existing) {
+        if (existing.status !== "PENDING") return { kind: "existing", execution: existing };
+        if (existing.provider !== this.executor.name) {
+          throw new ConflictError(
+            "EXECUTION_PROVIDER_UNAVAILABLE",
+            "The executor that owns this pending execution is not available"
+          );
+        }
+        if (existing.leaseExpiresAt && existing.leaseExpiresAt > now) {
+          return { kind: "existing", execution: existing };
+        }
+        const recovering = await tx.claimExecutionRecovery(
+          existing.id,
+          now,
+          new Date(now.getTime() + this.leaseMs)
+        );
+        if (!recovering) {
+          const current = await tx.findExecutionByAuthorization(authorization.id);
+          if (!current) throw new Error("Execution disappeared during recovery claim");
+          return { kind: "existing", execution: current };
+        }
+        await tx.appendAudit({
+          id: createId("evt"),
+          organisationId: principal.organisationId,
+          actorType: "SYSTEM",
+          actorId: null,
+          eventType: "EXECUTION_RECONCILIATION_STARTED",
+          entityType: "Execution",
+          entityId: recovering.id,
+          timestamp: now,
+          metadata: {
+            authorizationId: authorization.id,
+            provider: recovering.provider,
+            attemptCount: recovering.attemptCount,
+            requestedByAgentId: principal.agentId
+          }
+        });
+        return { kind: "recovering", execution: recovering, authorization };
+      }
       if (authorization.expiresAt && authorization.expiresAt <= now) {
         await tx.updateAuthorization(authorization.id, { state: "EXPIRED", expiresAt: authorization.expiresAt });
         await tx.appendAudit({
@@ -159,9 +226,26 @@ export class ExecutionService {
         id: createId("exe"),
         organisationId: principal.organisationId,
         authorizationId: authorization.id,
-        provider: this.executor.name
+        provider: this.executor.name,
+        attemptedAt: now,
+        leaseExpiresAt: new Date(now.getTime() + this.leaseMs)
       });
       await tx.updateAuthorization(authorization.id, { state: "EXECUTING", expiresAt: authorization.expiresAt });
+      await tx.appendAudit({
+        id: createId("evt"),
+        organisationId: principal.organisationId,
+        actorType: "AGENT",
+        actorId: principal.agentId,
+        eventType: "EXECUTION_CLAIMED",
+        entityType: "Execution",
+        entityId: execution.id,
+        timestamp: now,
+        metadata: {
+          authorizationId: authorization.id,
+          provider: this.executor.name,
+          attemptCount: execution.attemptCount
+        }
+      });
       return { kind: "claimed", execution, authorization };
     });
 
@@ -179,33 +263,74 @@ export class ExecutionService {
       return toView(claim.execution);
     }
 
+    const request = executionRequest(claim.execution, claim.authorization);
     let result: PaymentExecutionResult;
     try {
-      result = await this.executor.execute({
-        executionId: claim.execution.id,
-        authorizationId: claim.authorization.id,
-        organisationId: claim.authorization.organisationId,
-        agentId: claim.authorization.agentId,
-        capability: claim.authorization.capability,
-        amountMinor: claim.authorization.amountMinor,
-        currency: claim.authorization.currency,
-        vendor: { id: claim.authorization.vendorId, name: claim.authorization.vendorName }
-      });
+      result = claim.kind === "recovering"
+        ? await this.executor.reconcile(request)
+        : await this.executor.execute(request);
     } catch {
-      result = { status: "FAILED", reference: null, errorCode: "EXECUTOR_ERROR" };
+      result = { status: "UNKNOWN", reference: claim.execution.externalReference, errorCode: "PROVIDER_OUTCOME_UNKNOWN" };
     }
 
     const completedAt = this.clock();
+    if (result.status === "UNKNOWN") {
+      const current = await this.repository.transaction(async (tx) => {
+        await tx.lockAgent(claim.authorization.agentId);
+        const uncertain = await tx.markExecutionUncertain(claim.execution.id, claim.execution.attemptCount, {
+          externalReference: result.reference ?? claim.execution.externalReference,
+          errorCode: result.errorCode ?? "PROVIDER_OUTCOME_UNKNOWN",
+          leaseExpiresAt: new Date(completedAt.getTime() + this.leaseMs)
+        });
+        if (!uncertain) {
+          const latest = await tx.findExecutionByAuthorization(claim.authorization.id);
+          if (!latest) throw new Error("Execution disappeared while recording an uncertain outcome");
+          return latest;
+        }
+        await tx.appendAudit({
+          id: createId("evt"),
+          organisationId: principal.organisationId,
+          actorType: "SYSTEM",
+          actorId: null,
+          eventType: "EXECUTION_OUTCOME_UNKNOWN",
+          entityType: "Execution",
+          entityId: uncertain.id,
+          timestamp: completedAt,
+          metadata: {
+            authorizationId: claim.authorization.id,
+            provider: this.executor.name,
+            attemptCount: uncertain.attemptCount,
+            errorCode: uncertain.errorCode
+          }
+        });
+        return uncertain;
+      });
+      if (current.status !== "PENDING") return toView(current);
+      throw new ConflictError(
+        "EXECUTION_OUTCOME_UNKNOWN",
+        "The provider outcome is not yet known; retry after the execution lease expires to reconcile this exact execution"
+      );
+    }
+
+    const finalResult = result as PaymentExecutionResult & { status: "EXECUTED" | "FAILED" };
     return this.repository.transaction(async (tx) => {
       await tx.lockAgent(claim.authorization.agentId);
-      const execution = await tx.updateExecution(claim.execution.id, {
-        status: result.status,
-        externalReference: result.reference,
-        errorCode: result.errorCode,
+      const execution = await tx.completeExecution(claim.execution.id, claim.execution.attemptCount, {
+        status: finalResult.status,
+        externalReference: finalResult.reference,
+        errorCode: finalResult.errorCode,
         completedAt
       });
+      if (!execution) {
+        const current = await tx.findExecutionByAuthorization(claim.authorization.id);
+        if (!current) throw new Error("Execution disappeared while recording its final outcome");
+        if (current.status === "PENDING") {
+          throw new ConflictError("EXECUTION_IN_PROGRESS", "A newer execution reconciliation attempt is in progress");
+        }
+        return toView(current);
+      }
       await tx.updateAuthorization(claim.authorization.id, {
-        state: result.status === "EXECUTED" ? "EXECUTED" : "FAILED",
+        state: finalResult.status === "EXECUTED" ? "EXECUTED" : "FAILED",
         expiresAt: claim.authorization.expiresAt
       });
       await tx.appendAudit({
@@ -213,15 +338,16 @@ export class ExecutionService {
         organisationId: principal.organisationId,
         actorType: "AGENT",
         actorId: principal.agentId,
-        eventType: "EXECUTION_RECORDED",
+        eventType: claim.kind === "recovering" ? "EXECUTION_RECONCILED" : "EXECUTION_RECORDED",
         entityType: "Execution",
         entityId: execution.id,
         timestamp: completedAt,
         metadata: {
           authorizationId: claim.authorization.id,
           provider: this.executor.name,
-          status: result.status,
-          reference: result.reference
+          status: finalResult.status,
+          reference: finalResult.reference,
+          attemptCount: execution.attemptCount
         }
       });
       return toView(execution);

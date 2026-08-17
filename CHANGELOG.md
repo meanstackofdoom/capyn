@@ -14,6 +14,7 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 ### Security and correctness
 
+- Added leased execution claims and request-driven provider reconciliation so ambiguous outcomes remain reserved and exact retries cannot issue a second payment.
 - Added source-bound, idempotent agent credential rotation with atomic revocation, deterministic response recovery, tenant isolation, race serialization and audit evidence.
 - Revalidate the authenticating credential inside authorization and execution transactions to close revocation timing races.
 - Include public demo identity and management-boundary variables in web build cache fingerprints.

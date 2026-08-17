@@ -18,7 +18,7 @@ Human / organisation
         └── append-oriented audit
         │
         ▼
- PaymentExecutor interface
+ PaymentExecutor execute + reconcile interface
         │
         ├── MockPaymentExecutor (v0.1)
         └── future adapters: Solana / x402 / Stripe / AP2
@@ -72,7 +72,10 @@ REQUESTED
                               ▼
                           EXECUTING
                            ├── EXECUTED
-                           └── FAILED
+                           ├── FAILED
+                           └── UNKNOWN OUTCOME
+                                  │ lease expires
+                                  └── reconcile same execution ID
 ```
 
 Transitions are server-side service operations. A client cannot set an authorization state. `EXPIRED` also represents an unused authorization invalidated by a changed authority context; its audit event preserves the machine-readable reason.
@@ -86,6 +89,7 @@ PostgreSQL is the production persistence target. Prisma supplies typed access, w
 - ordered positive spend limits;
 - positive authorization amounts;
 - one credential-rotation idempotency record per agent and source-bound replacement lineage;
+- leased execution attempts with a recovery index over pending lease expiry;
 - an update/delete prevention trigger on audit events.
 
 The in-memory repository implements the same interface for deterministic API/security tests and the one-command demo. It is not a production store.
@@ -103,4 +107,4 @@ Agent ─────► Fastify API ─────► PostgreSQL
                 └─────────────► executor adapter
 ```
 
-The API should be the only component with database write access. A real human identity provider replaces the demo header adapter. Distributed rate limiting, database backups, audit export and executor reconciliation are required before production money movement. See [Deployment](deployment.md) for the platform-neutral service handoff.
+The API should be the only component with database write access. A real human identity provider replaces the demo header adapter. CAPYN now supports request-driven reconciliation of leased ambiguous executions, but distributed rate limiting, database backups, audit export, a durable executor worker/outbox and provider-specific reconciliation operations remain required before production money movement. See [Deployment](deployment.md) for the platform-neutral service handoff.

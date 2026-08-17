@@ -22,7 +22,7 @@ signature + outcome in execution/audit records
 
 ## Adapter boundary
 
-A future `SolanaUSDCExecutor` implements the existing `PaymentExecutor` interface. It receives an already-authorized exact request. It must never evaluate vendors, capabilities or spend policy.
+A future `SolanaUSDCExecutor` implements the existing `PaymentExecutor` interface. It receives an already-authorized exact request. It must never evaluate vendors, capabilities or spend policy. Its `execute()` and read-only `reconcile()` methods must bind to the same CAPYN execution ID so an RPC timeout can be resolved by signature/status lookup without constructing a second transfer.
 
 The adapter should:
 

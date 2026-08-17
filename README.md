@@ -225,6 +225,7 @@ pnpm db:seed       # seed Acme AI and procurement-agent
 - Organisation advisory locks protect hosted quotas across simultaneous agents.
 - Approval rechecks every hard rule under the same lock and applies only to one authorization.
 - Execution is claimed once with a unique database record after rechecking the agent and exact mandate binding.
+- Ambiguous provider outcomes remain `EXECUTING`; a leased exact retry calls `reconcile()` with the original execution ID instead of issuing payment again.
 - Audit events are append-only through the application and protected by a database trigger.
 - Structured logs redact authorization and bootstrap headers.
 - Stripe Checkout/portal remain server-side; Checkout and signed raw-body webhooks are both idempotent.

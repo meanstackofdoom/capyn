@@ -15,14 +15,14 @@ const controls = [
   { icon: Users, title: "Organisation isolation", copy: "Every resource read and mutation is scoped with the authenticated organisation; cross-tenant lookups return not found." },
   { icon: Braces, title: "Strict input contracts", copy: "Zod schemas reject unknown fields, bound metadata size and accept money only as decimal strings converted to integer minor units." },
   { icon: LockKeyhole, title: "Request-bound approval", copy: "An approval applies once to one authorization. Hard policy is re-evaluated under lock at approval time." },
-  { icon: RefreshCcw, title: "Idempotency and replay defense", copy: "Agent and idempotency key are unique. Conflicting payloads fail, and completed execution cannot call the provider twice." },
+  { icon: RefreshCcw, title: "Idempotency and replay defense", copy: "Completed execution replays its stored result. Ambiguous provider outcomes hold a lease and reconcile the original execution ID instead of issuing payment again." },
   { icon: ScrollText, title: "Append-oriented audit", copy: "Repository interfaces expose append only. A PostgreSQL trigger rejects ordinary update and delete operations on historical events." },
   { icon: ServerCog, title: "Safe operational defaults", copy: "Structured logs redact credentials, bodies are capped, errors omit internal details and process-level rate limiting is enabled." }
 ] as const;
 
 const limits = [
   "Human authentication is a local demo adapter, not production SSO or MFA.",
-  "MockPaymentExecutor moves no real funds and does not prove provider reconciliation.",
+  "MockPaymentExecutor moves no real funds, so its reconciliation contract is not evidence against a real provider.",
   "Shared treasury limits across multiple agents require a treasury-level reservation lock.",
   "Rate limiting is process-local rather than backed by a distributed store.",
   "Refunds, reversals, partial capture and currency conversion are not implemented.",
@@ -113,7 +113,7 @@ export default function SecurityPage() {
             <Eyebrow>Production gate</Eyebrow>
             <h2 className="display-title mt-6 text-3xl font-semibold tracking-[-.045em]">Before any real money moves.</h2>
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {["Independent threat model and review", "Real human SSO, MFA and sessions", "Treasury-level reservations", "Distributed abuse controls", "Executor reconciliation and outbox", "External audit export and retention", "Secrets, backups and disaster recovery", "Legal and compliance review"].map((item) => <div key={item} className="flex items-start gap-3 border-t border-line py-3 text-xs font-semibold"><Check size={13} className="mt-0.5 shrink-0 text-permission" />{item}</div>)}
+              {["Independent threat model and review", "Real human SSO, MFA and sessions", "Treasury-level reservations", "Distributed abuse controls", "Executor outbox, worker and alerts", "External audit export and retention", "Secrets, backups and disaster recovery", "Legal and compliance review"].map((item) => <div key={item} className="flex items-start gap-3 border-t border-line py-3 text-xs font-semibold"><Check size={13} className="mt-0.5 shrink-0 text-permission" />{item}</div>)}
             </div>
           </div>
           <div className="bg-authority p-7 text-white sm:p-10">

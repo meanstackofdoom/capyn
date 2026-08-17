@@ -73,6 +73,10 @@ Returns the normalized request, lifecycle state, decision, reasons and complete 
 
 Executes one unexpired `ALLOWED` or `APPROVED` authorization. v0.1 returns a simulated provider reference. A denied, rejected or expired authorization returns `409` or `410`.
 
+CAPYN creates one execution ID before calling the provider and holds a short execution lease. If the provider response is lost or explicitly uncertain, the authorization remains `EXECUTING` and the API returns `409 EXECUTION_OUTCOME_UNKNOWN`; CAPYN does not translate ambiguity into failure or issue a replacement payment. A retry before the lease expires returns `409 EXECUTION_IN_PROGRESS`. After expiry, the same endpoint calls the owning executor's `reconcile()` method with the original execution ID. A known result is finalized once; an unresolved result remains reserved and returns `EXECUTION_OUTCOME_UNKNOWN` again.
+
+Real executors must use `executionId` as their provider idempotency/reconciliation key. They must distinguish definitive failure from unknown outcome and implement read-only reconciliation. Request-driven recovery is implemented, while automatic background scanning, provider-specific alerts and a transactional outbox remain production follow-up work.
+
 ## Human management endpoints
 
 | Method | Path | Roles |

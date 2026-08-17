@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@capyn/types", "@capyn/billing"],
   poweredByHeader: false,
+  // Keep static generation predictable on constrained CI and single-service hosts.
+  experimental: { cpus: 1 },
   async headers() {
     return [
       {

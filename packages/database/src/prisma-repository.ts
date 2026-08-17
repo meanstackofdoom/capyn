@@ -159,6 +159,9 @@ function mapExecution(row: Execution): StoredExecution {
     provider: row.provider,
     externalReference: row.externalReference,
     errorCode: row.errorCode,
+    attemptCount: row.attemptCount,
+    lastAttemptAt: row.lastAttemptAt,
+    leaseExpiresAt: row.leaseExpiresAt,
     createdAt: row.createdAt,
     completedAt: row.completedAt
   };
@@ -413,22 +416,69 @@ class PrismaCapynTransaction implements CapynTransaction {
           id: input.id,
           organisationId: input.organisationId,
           authorizationId: input.authorizationId,
-          provider: input.provider
+          provider: input.provider,
+          lastAttemptAt: input.attemptedAt,
+          leaseExpiresAt: input.leaseExpiresAt
         }
       })
     );
   }
 
-  async updateExecution(
+  async claimExecutionRecovery(
     id: string,
+    attemptedAt: Date,
+    leaseExpiresAt: Date
+  ): Promise<StoredExecution | null> {
+    const result = await this.db.execution.updateMany({
+      where: {
+        id,
+        status: "PENDING",
+        OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lte: attemptedAt } }]
+      },
+      data: {
+        attemptCount: { increment: 1 },
+        lastAttemptAt: attemptedAt,
+        leaseExpiresAt,
+        errorCode: null
+      }
+    });
+    if (result.count !== 1) return null;
+    return mapExecution(await this.db.execution.findUniqueOrThrow({ where: { id } }));
+  }
+
+  async markExecutionUncertain(
+    id: string,
+    expectedAttemptCount: number,
+    update: {
+      externalReference: string | null;
+      errorCode: string;
+      leaseExpiresAt: Date;
+    }
+  ): Promise<StoredExecution | null> {
+    const result = await this.db.execution.updateMany({
+      where: { id, status: "PENDING", attemptCount: expectedAttemptCount },
+      data: update
+    });
+    if (result.count !== 1) return null;
+    return mapExecution(await this.db.execution.findUniqueOrThrow({ where: { id } }));
+  }
+
+  async completeExecution(
+    id: string,
+    expectedAttemptCount: number,
     update: {
       status: "EXECUTED" | "FAILED";
       externalReference: string | null;
       errorCode: string | null;
       completedAt: Date;
     }
-  ): Promise<StoredExecution> {
-    return mapExecution(await this.db.execution.update({ where: { id }, data: update }));
+  ): Promise<StoredExecution | null> {
+    const result = await this.db.execution.updateMany({
+      where: { id, status: "PENDING", attemptCount: expectedAttemptCount },
+      data: { ...update, leaseExpiresAt: null }
+    });
+    if (result.count !== 1) return null;
+    return mapExecution(await this.db.execution.findUniqueOrThrow({ where: { id } }));
   }
 
   async appendAudit(input: AppendAuditEvent): Promise<void> {

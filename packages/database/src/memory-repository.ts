@@ -312,10 +312,16 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
       throw new Error("Execution already exists");
     }
     const record: StoredExecution = {
-      ...input,
+      id: input.id,
+      organisationId: input.organisationId,
+      authorizationId: input.authorizationId,
+      provider: input.provider,
       status: "PENDING",
       externalReference: null,
       errorCode: null,
+      attemptCount: 1,
+      lastAttemptAt: input.attemptedAt,
+      leaseExpiresAt: input.leaseExpiresAt,
       createdAt: new Date(),
       completedAt: null
     };
@@ -323,18 +329,55 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
     return structuredClone(record);
   }
 
-  async updateExecution(
+  async claimExecutionRecovery(
     id: string,
+    attemptedAt: Date,
+    leaseExpiresAt: Date
+  ): Promise<StoredExecution | null> {
+    const item = this.state.executions.find((execution) => execution.id === id);
+    if (
+      !item ||
+      item.status !== "PENDING" ||
+      (item.leaseExpiresAt !== null && item.leaseExpiresAt > attemptedAt)
+    ) {
+      return null;
+    }
+    item.attemptCount += 1;
+    item.lastAttemptAt = attemptedAt;
+    item.leaseExpiresAt = leaseExpiresAt;
+    item.errorCode = null;
+    return structuredClone(item);
+  }
+
+  async markExecutionUncertain(
+    id: string,
+    expectedAttemptCount: number,
+    update: {
+      externalReference: string | null;
+      errorCode: string;
+      leaseExpiresAt: Date;
+    }
+  ): Promise<StoredExecution | null> {
+    const item = this.state.executions.find((execution) => execution.id === id);
+    if (!item || item.status !== "PENDING" || item.attemptCount !== expectedAttemptCount) return null;
+    Object.assign(item, update);
+    return structuredClone(item);
+  }
+
+  async completeExecution(
+    id: string,
+    expectedAttemptCount: number,
     update: {
       status: "EXECUTED" | "FAILED";
       externalReference: string | null;
       errorCode: string | null;
       completedAt: Date;
     }
-  ): Promise<StoredExecution> {
+  ): Promise<StoredExecution | null> {
     const item = this.state.executions.find((execution) => execution.id === id);
-    if (!item) throw new Error("Execution not found");
+    if (!item || item.status !== "PENDING" || item.attemptCount !== expectedAttemptCount) return null;
     Object.assign(item, update);
+    item.leaseExpiresAt = null;
     return structuredClone(item);
   }
 

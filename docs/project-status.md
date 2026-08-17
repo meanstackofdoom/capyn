@@ -25,7 +25,7 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 - bind approval to one exact request and prevent decision replay;
 - serialize approval decisions so competing human actions cannot both win;
 - revalidate current agent, exact mandate binding, capability, vendor and hard limits immediately before execution;
-- claim one execution and simulate it through `MockPaymentExecutor`;
+- claim one leased execution, simulate it through `MockPaymentExecutor` and reconcile ambiguous outcomes by exact execution ID;
 - serialize per-agent spend reservations so simultaneous requests cannot reuse the same budget;
 - isolate organisations in agent and human access paths;
 - make agent revocation terminal and prevent replacement credentials for revoked identities;
@@ -76,7 +76,7 @@ The live demo is [capyn-production.up.railway.app](https://capyn-production.up.r
 ### Execution
 
 - one selected real executor with destination binding, provider idempotency and reconciliation;
-- transactional outbox/worker and recovery for stuck `EXECUTING` records;
+- transactional outbox/worker, automatic stale-lease scanning and operational recovery alerts (request-driven leased reconciliation is implemented);
 - provider simulation/validation and durable external references;
 - adversarial integration tests against a sandbox or testnet.
 

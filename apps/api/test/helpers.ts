@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { createDemoMemoryRepository, hashApiKey, type InMemoryCapynRepository } from "@capyn/database";
 import { buildApp } from "../src/app";
 import type { BillingProvider } from "../src/domain/billing-provider";
+import type { PaymentExecutor } from "../src/domain/execution-service";
 
 export const TEST_PEPPER = "capyn-test-pepper-with-at-least-thirty-two-characters";
 export const TEST_NOW = new Date("2026-08-16T10:00:00.000Z");
@@ -14,7 +15,9 @@ export interface TestContext {
 
 export async function createTestContext(options: {
   billingProvider?: BillingProvider;
+  clock?: () => Date;
   demoHumanUserId?: string;
+  executor?: PaymentExecutor;
 } = {}): Promise<TestContext> {
   const { repository } = createDemoMemoryRepository(hashApiKey(DEMO_KEY, TEST_PEPPER));
   const app = await buildApp({
@@ -23,10 +26,11 @@ export async function createTestContext(options: {
     allowDemoHumanHeader: true,
     ...(options.demoHumanUserId ? { demoHumanUserId: options.demoHumanUserId } : {}),
     bootstrapToken: "capyn-test-bootstrap-token-123456789",
-    clock: () => new Date(TEST_NOW),
+    clock: options.clock ?? (() => new Date(TEST_NOW)),
     logger: process.env.CAPYN_TEST_LOGS === "true",
     disableRateLimit: true,
-    ...(options.billingProvider ? { billingProvider: options.billingProvider } : {})
+    ...(options.billingProvider ? { billingProvider: options.billingProvider } : {}),
+    ...(options.executor ? { executor: options.executor } : {})
   });
   return { app, repository };
 }

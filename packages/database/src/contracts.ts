@@ -98,6 +98,9 @@ export interface StoredExecution {
   provider: string;
   externalReference: string | null;
   errorCode: string | null;
+  attemptCount: number;
+  lastAttemptAt: Date;
+  leaseExpiresAt: Date | null;
   createdAt: Date;
   completedAt: Date | null;
 }
@@ -134,6 +137,8 @@ export interface CreateExecutionRecord {
   organisationId: string;
   authorizationId: string;
   provider: string;
+  attemptedAt: Date;
+  leaseExpiresAt: Date;
 }
 
 export interface AppendAuditEvent {
@@ -274,15 +279,30 @@ export interface CapynTransaction {
   ): Promise<StoredApproval>;
   findExecutionByAuthorization(authorizationId: string): Promise<StoredExecution | null>;
   createExecution(input: CreateExecutionRecord): Promise<StoredExecution>;
-  updateExecution(
+  claimExecutionRecovery(
     id: string,
+    attemptedAt: Date,
+    leaseExpiresAt: Date
+  ): Promise<StoredExecution | null>;
+  markExecutionUncertain(
+    id: string,
+    expectedAttemptCount: number,
+    update: {
+      externalReference: string | null;
+      errorCode: string;
+      leaseExpiresAt: Date;
+    }
+  ): Promise<StoredExecution | null>;
+  completeExecution(
+    id: string,
+    expectedAttemptCount: number,
     update: {
       status: "EXECUTED" | "FAILED";
       externalReference: string | null;
       errorCode: string | null;
       completedAt: Date;
     }
-  ): Promise<StoredExecution>;
+  ): Promise<StoredExecution | null>;
   appendAudit(input: AppendAuditEvent): Promise<void>;
   createAgent(input: CreateAgentRecord): Promise<AgentRecord>;
   updateAgentStatus(agentId: string, status: AgentStatus): Promise<AgentRecord>;
