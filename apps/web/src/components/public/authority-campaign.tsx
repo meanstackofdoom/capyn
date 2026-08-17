@@ -65,6 +65,7 @@ export function AuthorityCampaign() {
                     alt={stage.alt}
                     fill
                     quality={90}
+                    priority={stage.id === "intent"}
                     sizes="(max-width: 760px) calc(100vw - 2.5rem), (max-width: 1280px) 75vw, 960px"
                     className="authority-campaign__image"
                   />

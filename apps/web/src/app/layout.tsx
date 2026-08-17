@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/geologica";
 import "@fontsource-variable/manrope";
 import "@fontsource/ibm-plex-mono/400.css";
@@ -34,9 +34,17 @@ export const metadata: Metadata = {
   }
 };
 
+export const viewport: Viewport = {
+  colorScheme: "dark light",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f7f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#07131c" }
+  ]
+};
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );

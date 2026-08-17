@@ -21,6 +21,14 @@ export function PublicHeader() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    function closeOnEscape(event: KeyboardEvent): void {
+      if (event.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
 
   return (
     <header className={`public-header sticky top-0 z-50 border-b border-line/80 bg-paper/90 backdrop-blur-xl ${pathname === "/" || pathname === "/lab" ? "public-header-home" : ""}`}>
@@ -43,7 +51,7 @@ export function PublicHeader() {
         </nav>
         <div className="flex items-center gap-2">
           <Link href="/lab" className="public-primary-button public-header__desktop-cta hidden sm:inline-flex">
-            Run a decision <ArrowRight size={14} />
+            Try live policy <ArrowRight size={14} />
           </Link>
           <button
             type="button"
@@ -51,13 +59,14 @@ export function PublicHeader() {
             onClick={() => setOpen((value) => !value)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls="public-mobile-menu"
           >
             {open ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </div>
       {open && (
-        <div className="border-t border-line bg-panel lg:hidden">
+        <div id="public-mobile-menu" className="border-t border-line bg-panel lg:hidden">
           <nav className="site-container grid gap-px py-3" aria-label="Mobile website">
             {navigation.map((item) => (
               <Link key={item.href} href={item.href} aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined} className="flex min-h-12 items-center justify-between border-b border-line/60 text-sm font-semibold last:border-0">
@@ -65,7 +74,7 @@ export function PublicHeader() {
               </Link>
             ))}
             <Link href="/lab" className="public-primary-button mt-3 justify-center sm:hidden">
-              Run a decision <ArrowRight size={14} />
+              Try live policy <ArrowRight size={14} />
             </Link>
           </nav>
         </div>

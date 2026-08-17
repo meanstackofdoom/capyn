@@ -1711,6 +1711,7 @@ a {
   --envelope-muted: #94a2aa;
   --envelope-line: rgba(203, 220, 228, 0.16);
   position: relative;
+  scroll-margin-top: 4.5rem;
   isolation: isolate;
   overflow: hidden;
   border-block: 1px solid #263743;
@@ -1922,7 +1923,10 @@ a {
 .delegated-envelope__choices button:focus-visible,
 .delegated-envelope__vendor button:focus-visible,
 .delegated-envelope__control input:focus-visible,
-.delegated-envelope__handoff a:focus-visible {
+.delegated-envelope__payload summary:focus-visible,
+.delegated-envelope__payload button:focus-visible,
+.delegated-envelope__handoff a:focus-visible,
+.delegated-envelope__handoff button:focus-visible {
   outline: 2px solid #a9b8ff;
   outline-offset: 3px;
 }
@@ -2406,7 +2410,7 @@ a {
 
 .delegated-envelope__receipt dl {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .delegated-envelope__receipt dl > div {
@@ -2440,6 +2444,86 @@ a {
   font-size: 0.46rem;
 }
 
+.delegated-envelope__payload {
+  border: 1px solid rgba(203, 220, 228, 0.18);
+  border-top: 0;
+  background: #081720;
+}
+
+.delegated-envelope__payload summary {
+  display: flex;
+  min-height: 3.4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.15rem;
+  color: rgba(237, 244, 241, 0.68);
+  cursor: pointer;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.delegated-envelope__payload summary::-webkit-details-marker {
+  display: none;
+}
+
+.delegated-envelope__payload summary > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.delegated-envelope__payload summary > span:last-child {
+  color: rgba(237, 244, 241, 0.28);
+}
+
+.delegated-envelope__payload summary svg {
+  color: var(--envelope-signal);
+  transition: transform 160ms ease;
+}
+
+.delegated-envelope__payload[open] summary > span:last-child svg {
+  transform: rotate(180deg);
+}
+
+.delegated-envelope__payload > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+  border-top: 1px solid rgba(203, 220, 228, 0.1);
+  padding: 1rem 1.15rem;
+}
+
+.delegated-envelope__payload pre {
+  overflow: auto;
+  max-height: 18rem;
+  color: rgba(237, 244, 241, 0.62);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.55rem;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.delegated-envelope__payload button,
+.delegated-envelope__handoff-actions button {
+  display: inline-flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(203, 220, 228, 0.16);
+  background: transparent;
+  padding: 0.65rem 0.8rem;
+  color: rgba(237, 244, 241, 0.68);
+  cursor: pointer;
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
 .delegated-envelope__handoff {
   display: flex;
   align-items: center;
@@ -2466,6 +2550,12 @@ a {
   text-transform: uppercase;
 }
 
+.delegated-envelope__handoff-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .delegated-envelope__handoff a {
   display: inline-flex;
   min-height: 2.8rem;
@@ -2483,6 +2573,12 @@ a {
 .delegated-envelope__handoff a:hover {
   background: #ffffff;
   transform: translateY(-2px);
+}
+
+.delegated-envelope__handoff-actions button:hover,
+.delegated-envelope__payload button:hover {
+  border-color: rgba(203, 220, 228, 0.36);
+  color: #ffffff;
 }
 
 @media (max-width: 1080px) {
@@ -2569,6 +2665,11 @@ a {
     align-items: stretch;
     flex-direction: column;
   }
+
+  .delegated-envelope__handoff-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 520px) {
@@ -2613,11 +2714,17 @@ a {
   .delegated-envelope__receipt dl > div:last-child {
     border-bottom: 0;
   }
+
+  .delegated-envelope__payload > div,
+  .delegated-envelope__handoff-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .delegated-envelope__choices button,
   .delegated-envelope__request-marker,
+  .delegated-envelope__payload summary svg,
   .delegated-envelope__handoff a {
     transition: none;
   }
@@ -2853,6 +2960,71 @@ a {
 
 .authority-lab__bar-actions button:hover {
   color: #fff;
+}
+
+.authority-lab__bar-actions button:focus-visible,
+.authority-lab__imported button:focus-visible {
+  outline: 2px solid #a9b8ff;
+  outline-offset: 2px;
+}
+
+.authority-lab__bar-actions button:disabled,
+.authority-lab__imported button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.authority-lab__imported {
+  display: flex;
+  min-height: 3.4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(141, 164, 255, 0.24);
+  background: rgba(141, 164, 255, 0.08);
+  padding: 0.7rem 1rem;
+}
+
+.authority-lab__imported > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.authority-lab__imported svg {
+  flex: 0 0 auto;
+  color: var(--authority);
+}
+
+.authority-lab__imported span,
+.authority-lab__imported strong,
+.authority-lab__imported button {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.48rem;
+}
+
+.authority-lab__imported span {
+  color: rgba(241, 247, 244, 0.68);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.authority-lab__imported strong {
+  overflow: hidden;
+  color: rgba(241, 247, 244, 0.38);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.authority-lab__imported button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(141, 164, 255, 0.24);
+  background: transparent;
+  padding: 0.55rem 0.7rem;
+  color: rgba(241, 247, 244, 0.68);
+  cursor: pointer;
 }
 
 .authority-lab__workbench {
@@ -3830,6 +4002,34 @@ a {
   .authority-lab__bar-muted,
   .authority-lab__bar-actions > span {
     display: none;
+  }
+
+  .authority-lab__bar-actions {
+    gap: 0.25rem;
+  }
+
+  .authority-lab__bar-actions button {
+    font-size: 0;
+  }
+
+  .authority-lab__bar-actions button svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  .authority-lab__imported {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .authority-lab__imported > div {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .authority-lab__imported strong {
+    flex-basis: 100%;
+    padding-left: 1.4rem;
   }
 
   .lab-field-grid {

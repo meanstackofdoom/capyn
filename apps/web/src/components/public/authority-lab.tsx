@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import type { CSSProperties, FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Check,
   Clipboard,
   Fingerprint,
   Gauge,
+  Link2,
   LoaderCircle,
   LockKeyhole,
   RotateCcw,
@@ -23,6 +24,13 @@ import type {
   LabResolutionResult,
   RuleTrace
 } from "@capyn/types";
+import {
+  parseLabHandoff,
+  publicLabCapabilities,
+  publicLabVendors,
+  serializeLabHandoff,
+  type LabHandoff
+} from "@/lib/demo-authority";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -66,20 +74,6 @@ const presets = [
   expectation: string;
   request: LabEvaluateRequest;
 }>;
-
-const vendors = [
-  { id: "openai", name: "OpenAI", status: "approved" },
-  { id: "anthropic", name: "Anthropic", status: "approved" },
-  { id: "aws", name: "AWS", status: "approved" },
-  { id: "github", name: "GitHub", status: "not approved" }
-] as const;
-
-const capabilities = [
-  { id: "spend.compute", label: "Spend / compute", status: "granted" },
-  { id: "spend.api", label: "Spend / API", status: "granted" },
-  { id: "spend.software", label: "Spend / software", status: "not granted" },
-  { id: "transfer.wallet", label: "Transfer / wallet", status: "not granted" }
-] as const;
 
 const idleRules = [
   "agentStatus",
@@ -195,6 +189,23 @@ export function AuthorityLab() {
   const [resolution, setResolution] = useState<LabResolutionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [configurationCopied, setConfigurationCopied] = useState(false);
+  const [importedSource, setImportedSource] = useState<LabHandoff["source"] | null>(null);
+
+  useEffect(() => {
+    const handoff = parseLabHandoff(window.location.search);
+    if (!handoff) return;
+    setForm({
+      ...handoff.request,
+      amount: { ...handoff.request.amount },
+      vendor: { ...handoff.request.vendor }
+    });
+    setImportedSource(handoff.source);
+    setPhase("idle");
+    setEvaluation(null);
+    setResolution(null);
+    setError(null);
+  }, []);
 
   const tone = decisionTone(evaluation, resolution, error);
   const decision = decisionCopy(evaluation, resolution, error);
@@ -219,9 +230,28 @@ export function AuthorityLab() {
     setPhase("idle");
   }
 
+  function clearImportedState(): void {
+    setImportedSource(null);
+    setConfigurationCopied(false);
+    window.history.replaceState({}, "", "/lab");
+  }
+
   function applyPreset(preset: (typeof presets)[number]): void {
     setForm({ ...preset.request, amount: { ...preset.request.amount }, vendor: { ...preset.request.vendor } });
+    clearImportedState();
     clearDecision();
+  }
+
+  async function copyConfigurationLink(): Promise<void> {
+    const params = serializeLabHandoff(form, "shared");
+    const shareUrl = new URL(`/lab?${params.toString()}`, window.location.origin).toString();
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setConfigurationCopied(true);
+      window.setTimeout(() => setConfigurationCopied(false), 1_800);
+    } catch {
+      setConfigurationCopied(false);
+    }
   }
 
   async function evaluate(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -300,11 +330,26 @@ export function AuthorityLab() {
         </div>
         <div className="authority-lab__bar-actions">
           <span>No sign-in · No persistence · No real execution</span>
+          <button type="button" onClick={() => void copyConfigurationLink()} disabled={busy}>
+            <Link2 size={12} /> {configurationCopied ? "Link copied" : "Copy setup link"}
+          </button>
           <button type="button" onClick={() => applyPreset(presets[1])} disabled={busy}>
             <RotateCcw size={12} /> Reset
           </button>
+          <span className="sr-only" role="status" aria-live="polite">{configurationCopied ? "Configuration link copied" : ""}</span>
         </div>
       </div>
+
+      {importedSource && (
+        <div className="authority-lab__imported">
+          <div aria-live="polite">
+            <Link2 size={15} />
+            <span>{importedSource === "homepage" ? "Loaded from the homepage builder" : "Loaded from a shared setup"}</span>
+            <strong>{form.capability} · {form.vendor.name} · ${form.amount.value}</strong>
+          </div>
+          <button type="button" onClick={() => applyPreset(presets[1])} disabled={busy}>Clear import</button>
+        </div>
+      )}
 
       <div className="authority-lab__workbench">
         <form className="lab-intent" onSubmit={(event) => void evaluate(event)}>
@@ -352,7 +397,7 @@ export function AuthorityLab() {
                 }}
                 disabled={busy}
               >
-                {capabilities.map((capability) => (
+                {publicLabCapabilities.map((capability) => (
                   <option key={capability.id} value={capability.id}>
                     {capability.label} · {capability.status}
                   </option>
@@ -365,13 +410,13 @@ export function AuthorityLab() {
               <select
                 value={form.vendor.id}
                 onChange={(event) => {
-                  const vendor = vendors.find((item) => item.id === event.target.value) ?? vendors[0];
+                  const vendor = publicLabVendors.find((item) => item.id === event.target.value) ?? publicLabVendors[0];
                   setForm((current) => ({ ...current, vendor: { id: vendor.id, name: vendor.name } }));
                   clearDecision();
                 }}
                 disabled={busy}
               >
-                {vendors.map((vendor) => (
+                {publicLabVendors.map((vendor) => (
                   <option key={vendor.id} value={vendor.id}>
                     {vendor.name} · {vendor.status}
                   </option>
