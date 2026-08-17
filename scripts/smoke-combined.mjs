@@ -73,7 +73,10 @@ try {
 
   const home = await fetch(`${origin}/`);
   const homeHtml = await home.text();
-  assert(homeHtml.includes("Give agents authority"), "Combined public website is invalid");
+  assert(
+    homeHtml.includes("Not unlimited access") && homeHtml.includes("Live policy boundary"),
+    "Combined public website is invalid"
+  );
   assert(home.headers.get("content-security-policy")?.includes("frame-ancestors 'none'"), "Combined CSP is missing");
 
   const me = await fetch(`${origin}/v1/me`, { headers: { Authorization: `Bearer ${agentApiKey}` } });

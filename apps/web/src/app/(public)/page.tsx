@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Check, ChevronRight, CircleDollarSign, Fingerprint, Gauge, KeyRound, LockKeyhole, Network, ScrollText, ShieldCheck, UserCheck, X } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, CircleDollarSign, Fingerprint, KeyRound, LockKeyhole, Network, ShieldCheck, X } from "lucide-react";
 import { AuthorityConsole } from "@/components/public/authority-console";
-import { CodeWindow, Eyebrow, PublicCta, SectionHeading, SecuritySeal, TextLink } from "@/components/public/marketing-primitives";
+import { CodeWindow, Eyebrow, PublicCta, SectionHeading, TextLink } from "@/components/public/marketing-primitives";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -16,14 +16,6 @@ const decisions = [
   { amount: "$18.00", vendor: "OpenAI", capability: "spend.compute", decision: "ALLOW", reason: "All delegated limits pass", tone: "permission" },
   { amount: "$30.00", vendor: "UnknownVendor", capability: "spend.api", decision: "DENY", reason: "VENDOR_NOT_ALLOWED", tone: "denial" },
   { amount: "$120.00", vendor: "AWS", capability: "spend.compute", decision: "APPROVAL", reason: "Threshold exceeded", tone: "review" }
-] as const;
-
-const lifecycle = [
-  { icon: Fingerprint, label: "Identity", copy: "Which authenticated agent is asking?" },
-  { icon: KeyRound, label: "Mandate", copy: "What authority was delegated, and until when?" },
-  { icon: Gauge, label: "Policy", copy: "Do capability, vendor and spend constraints pass?" },
-  { icon: UserCheck, label: "Approval", copy: "Does this exact request require a human?" },
-  { icon: ScrollText, label: "Evidence", copy: "Can every decision and action be reconstructed?" }
 ] as const;
 
 const sdkExample = `import { Capyn } from "@capyn/sdk";
@@ -79,42 +71,38 @@ export default function HomePage() {
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
-      <section className="relative overflow-hidden border-b border-line">
-        <div className="authority-field pointer-events-none absolute inset-x-0 top-0 h-[760px] opacity-60" />
-        <div className="site-container relative grid gap-14 pb-20 pt-16 sm:pt-24 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:pb-28 lg:pt-28">
-          <div className="enter-control max-w-3xl">
-            <Eyebrow tone="authority">Programmable authority / v0.1</Eyebrow>
-            <h1 className="display-title mt-7 text-balance text-[clamp(3.7rem,7.3vw,7.6rem)] font-semibold leading-[.88] tracking-[-.078em]">
-              Give agents authority.
-              <span className="mt-2 block text-muted">Not unlimited access.</span>
-            </h1>
-            <p className="mt-8 max-w-2xl text-lg leading-8 text-muted sm:text-xl sm:leading-9">
-              CAPYN is the authorization control plane for autonomous agents—capabilities, hard limits, approvals and audit evidence before consequential actions execute.
+      <section className="home-hero">
+        <div className="home-hero__atmosphere" aria-hidden="true" />
+        <div className="site-container home-hero__shell">
+          <div className="home-hero__meta enter-control">
+            <Eyebrow tone="authority">Programmable authority / public alpha</Eyebrow>
+            <p>Open source · Mock execution · No customer funds</p>
+          </div>
+
+          <h1 className="home-hero__title display-title enter-control">
+            <span>Give agents <em>authority.</em></span>
+            <span className="home-hero__title-boundary">Not unlimited access.</span>
+          </h1>
+
+          <div className="home-hero__intro enter-control">
+            <p>
+              The authorization layer between what an autonomous agent wants to do and what your systems should permit—capabilities, hard limits, human approvals and evidence in one decision point.
             </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link href="/dashboard" className="public-primary-button min-h-12 justify-center px-6">Inspect the working demo <ArrowRight size={16} /></Link>
-              <Link href="/product" className="public-secondary-button min-h-12 justify-center px-6">Explore the authority model <ChevronRight size={16} /></Link>
-            </div>
-            <div className="mt-9 flex flex-wrap gap-2">
-              <SecuritySeal>Fail closed</SecuritySeal>
-              <SecuritySeal>Request-bound approval</SecuritySeal>
-              <SecuritySeal>Integer money accounting</SecuritySeal>
+            <div className="home-hero__actions">
+              <Link href="/dashboard" className="public-primary-button min-h-12 justify-center px-6">Try the live decision flow <ArrowRight size={16} /></Link>
+              <Link href="/product" className="public-secondary-button min-h-12 justify-center px-6">See how authority works <ChevronRight size={16} /></Link>
             </div>
           </div>
-          <div className="enter-control relative mx-auto w-full max-w-xl [animation-delay:100ms]">
-            <div className="absolute -left-7 top-14 hidden h-[72%] w-px bg-authority/30 lg:block" />
-            <div className="absolute -left-[31px] top-14 hidden h-2 w-2 rounded-full bg-authority lg:block" />
+
+          <div className="home-hero__boundary enter-control">
             <AuthorityConsole />
           </div>
-        </div>
-        <div className="site-container relative pb-8">
-          <div className="grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
-            {lifecycle.map(({ icon: Icon, label, copy }) => (
-              <div key={label} className="bg-panel p-5">
-                <div className="flex items-center gap-3"><Icon size={15} className="text-authority" /><p className="text-xs font-extrabold">{label}</p></div>
-                <p className="mt-3 text-[11px] leading-5 text-muted">{copy}</p>
-              </div>
-            ))}
+
+          <div className="home-hero__proof" aria-label="Core product guarantees">
+            <div><span>Fail closed</span><p>Ambiguity never becomes permission.</p></div>
+            <div><span>Request-bound</span><p>One approval unlocks one exact action.</p></div>
+            <div><span>Non-custodial</span><p>CAPYN decides; your chosen rail executes.</p></div>
+            <div><span>Explainable</span><p>Every outcome carries reasons and evidence.</p></div>
           </div>
         </div>
       </section>

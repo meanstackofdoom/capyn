@@ -22,7 +22,7 @@ export function PublicHeader() {
   useEffect(() => setOpen(false), [pathname]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line/80 bg-paper/90 backdrop-blur-xl">
+    <header className={`public-header sticky top-0 z-50 border-b border-line/80 bg-paper/90 backdrop-blur-xl ${pathname === "/" ? "public-header-home" : ""}`}>
       <div className="site-container flex h-[72px] items-center justify-between gap-5">
         <Brand />
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Public website">
@@ -41,7 +41,7 @@ export function PublicHeader() {
           })}
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="public-primary-button hidden sm:inline-flex">
+          <Link href="/dashboard" className="public-primary-button public-header__desktop-cta hidden sm:inline-flex">
             View live demo <ArrowRight size={14} />
           </Link>
           <button
