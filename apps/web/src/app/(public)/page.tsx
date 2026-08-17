@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, Check, ChevronRight, CircleDollarSign, Fingerprint, KeyRound, LockKeyhole, Network, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 import { AuthorityCampaign } from "@/components/public/authority-campaign";
 import { AuthorityConsole } from "@/components/public/authority-console";
-import { CodeWindow, Eyebrow, PublicCta, SectionHeading, TextLink } from "@/components/public/marketing-primitives";
+import { DelegatedEnvelope } from "@/components/public/delegated-envelope";
+import { CodeWindow, Eyebrow, PublicCta, TextLink } from "@/components/public/marketing-primitives";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -12,12 +13,6 @@ export const metadata = createPageMetadata({
   description: "Give AI agents permission to spend and act within explicit capabilities, limits, vendor policies and human approval thresholds.",
   keywords: ["AI agent authorization", "agent spending controls", "agent IAM", "agent payment policy"]
 });
-
-const decisions = [
-  { amount: "$18.00", vendor: "OpenAI", capability: "spend.compute", decision: "ALLOW", reason: "All delegated limits pass", tone: "permission" },
-  { amount: "$30.00", vendor: "UnknownVendor", capability: "spend.api", decision: "DENY", reason: "VENDOR_NOT_ALLOWED", tone: "denial" },
-  { amount: "$120.00", vendor: "AWS", capability: "spend.compute", decision: "APPROVAL", reason: "Threshold exceeded", tone: "review" }
-] as const;
 
 const sdkExample = `import { Capyn } from "@capyn/sdk";
 
@@ -108,62 +103,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="site-section bg-panel">
-        <div className="site-container grid gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-start">
-          <div className="lg:sticky lg:top-28">
-            <Eyebrow>Authority before execution</Eyebrow>
-            <h2 className="display-title mt-6 text-4xl font-semibold leading-[1.02] tracking-[-.055em] sm:text-6xl">Agents can already pay. The missing layer is authority.</h2>
-            <p className="mt-6 max-w-xl text-base leading-8 text-muted">CAPYN does not replace a wallet, payment protocol or settlement network. It answers the question each of them needs answered first: may this agent perform this exact action?</p>
-          </div>
-          <div className="border border-line bg-paper p-5 sm:p-8">
-            <div className="mx-auto max-w-xl">
-              <div className="border border-authority/30 bg-authority px-6 py-5 text-white shadow-[0_14px_40px_rgba(47,98,221,.18)]">
-                <div className="flex items-center justify-between gap-4"><span className="display-title text-xl font-semibold">CAPYN</span><span className="font-mono text-[9px] uppercase tracking-[.15em] text-white/60">Authority control plane</span></div>
-              </div>
-              <div className="mx-auto h-12 w-px bg-line" />
-              <div className="grid grid-cols-3 gap-2">
-                {[[Fingerprint, "Identity"], [KeyRound, "Mandate"], [ShieldCheck, "Policy"]].map(([Icon, label]) => {
-                  const RailIcon = Icon as typeof Fingerprint;
-                  return <div key={label as string} className="border border-line bg-panel p-4 text-center"><RailIcon className="mx-auto text-authority" size={16} /><p className="mt-2 font-mono text-[9px]">{label as string}</p></div>;
-                })}
-              </div>
-              <div className="mx-auto h-12 w-px bg-line" />
-              <div className="grid grid-cols-3 gap-2 font-mono text-[9px]">
-                <span className="border border-line bg-panel px-3 py-3 text-center">x402</span>
-                <span className="border border-line bg-panel px-3 py-3 text-center">SOLANA / USDC</span>
-                <span className="border border-line bg-panel px-3 py-3 text-center">STRIPE / AP2</span>
-              </div>
-            </div>
-            <div className="mt-8 flex items-start gap-3 border-t border-line pt-5 text-xs leading-6 text-muted"><Network size={16} className="mt-1 shrink-0 text-authority" /> The policy engine stays chain-agnostic. Execution adapters move value; they do not decide permission.</div>
-          </div>
-        </div>
-      </section>
+      <DelegatedEnvelope />
 
       <AuthorityCampaign />
-
-      <section className="site-section border-y border-line">
-        <div className="site-container">
-          <SectionHeading eyebrow="One request, one decision" title="A policy result an agent can act on—and a human can explain." copy="Each response carries a deterministic decision, machine-readable reasons and the authorization evidence needed to investigate it later." />
-          <div className="mt-12 grid gap-4 lg:grid-cols-3">
-            {decisions.map((item) => (
-              <article key={item.decision} className="panel flex min-h-[310px] flex-col p-6 sm:p-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div><p className="font-mono text-[9px] uppercase tracking-[.14em] text-muted">procurement-agent</p><h3 className="mt-3 text-xl font-extrabold">{item.amount} <span className="text-muted">→</span> {item.vendor}</h3></div>
-                  <CircleDollarSign size={19} className="text-muted" />
-                </div>
-                <p className="mt-7 border-y border-line py-4 font-mono text-[10px] text-muted">capability / {item.capability}</p>
-                <div className="mt-auto pt-8">
-                  <div className={`inline-flex items-center gap-2 border px-3 py-2 font-mono text-[10px] font-medium ${item.tone === "permission" ? "border-permission/30 bg-permission/10 text-permission" : item.tone === "denial" ? "border-denial/30 bg-denial/10 text-denial" : "border-review/30 bg-review/10 text-review"}`}>
-                    {item.tone === "permission" ? <Check size={13} /> : item.tone === "denial" ? <X size={13} /> : <LockKeyhole size={13} />}{item.decision}
-                  </div>
-                  <p className="mt-3 font-mono text-[9px] text-muted">{item.reason}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-          <div className="mt-8"><TextLink href="/product">See every policy gate</TextLink></div>
-        </div>
-      </section>
 
       <section className="site-section bg-code text-white">
         <div className="site-container grid gap-12 lg:grid-cols-[.85fr_1.15fr] lg:items-center">
