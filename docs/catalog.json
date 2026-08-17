@@ -110,16 +110,6 @@
     "order": 90
   },
   {
-    "slug": "project-status",
-    "file": "project-status.md",
-    "title": "Project status",
-    "description": "What is complete, what remains, the urgent launch plan and the real-money production gate.",
-    "category": "Direction",
-    "status": "Live",
-    "reviewedAt": "2026-08-17",
-    "order": 100
-  },
-  {
     "slug": "launch-checklist",
     "file": "launch-checklist.md",
     "title": "Public alpha launch checklist",

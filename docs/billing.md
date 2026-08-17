@@ -93,7 +93,7 @@ Plan language is a commercial entitlement, not permission to imply unfinished fu
 - dedicated infrastructure, private deployment, compliance commitments and SLAs exist only under an Enterprise agreement;
 - CAPYN has no production certification today.
 
-See [Project status](project-status.md) and [Security](security.md) for the authoritative production gate.
+See [Security](security.md) for the authoritative production gate. Commercial delivery progress is maintained in the private status record.
 
 ## Accounting guarantees
 

@@ -36,6 +36,7 @@ The API refuses to start in PostgreSQL mode without `DATABASE_URL`, with an `API
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3010` | Canonical origin for metadata, sitemap and social cards. |
 | `PROJECT_STATUS_PASSWORD` | unset | Server-only credential for the private project-status record. The route stays unavailable when omitted. |
 | `PROJECT_STATUS_SESSION_SECRET` | unset | High-entropy server-only key used to sign the private project-status session cookie. |
+| `PROJECT_STATUS_CONTENT_B64` | unset | Base64-encoded private Markdown stored in the deployment secret manager, never in the public repository or browser bundle. |
 | `PORT` | platform supplied in production | Next.js listen port for `pnpm --filter @capyn/web start`. Development stays on `3010`. |
 | `CAPYN_SERVICE` | unset locally | Set to `web` or `api` for the preferred split deployment, or `combined` only for the constrained synthetic demo. |
 | `CAPYN_INTERNAL_API_PORT` | `4100` | Private API port used only by the combined demo launcher. |
@@ -68,7 +69,7 @@ The seed is for local demonstrations only. Do not run it against a production or
 - rotate agent credentials through CAPYN rather than editing hashes;
 - redact authorization and bootstrap headers from every log sink;
 - redact Stripe signatures and never log Checkout payloads or billing secrets;
-- keep the project-status password and session secret server-side, rotate both together, and never prefix them with `NEXT_PUBLIC_`;
+- keep the project-status password, content and session secret server-side, rotate credentials together, and never prefix them with `NEXT_PUBLIC_`;
 - keep `TRUST_PROXY=false` unless the API is behind a controlled ingress proxy; Railway API services should set it to `true`;
 - disable demo human authentication for every real or customer-data environment. A deliberately public demo may enable it only with synthetic, disposable state, mock execution and `DEMO_HUMAN_USER_ID` pinned to a least-privilege approver.
 

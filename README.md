@@ -251,7 +251,6 @@ Read [docs/security.md](docs/security.md) before considering a non-demo deployme
 - [REST API](docs/api.md)
 - [Deployment](docs/deployment.md)
 - [Documentation policy](docs/documentation.md)
-- [Project status](docs/project-status.md)
 - [Public alpha launch checklist](docs/launch-checklist.md)
 - [Solana roadmap](docs/solana-roadmap.md)
 - [The Agent Authority Problem](docs/agent-authority-problem.md)
@@ -259,4 +258,4 @@ Read [docs/security.md](docs/security.md) before considering a non-demo deployme
 
 ## Status
 
-CAPYN v0.1 is a public, open-source developer MVP and public-alpha code package, tagged as [`v0.1.0`](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0). It demonstrates bounded financial authorization end-to-end; it does not move real money. Hosted-demo progress and founder launch actions are tracked in [docs/project-status.md](docs/project-status.md). Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).
+CAPYN v0.1 is a public, open-source developer MVP and public-alpha code package, tagged as [`v0.1.0`](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0). It demonstrates bounded financial authorization end-to-end; it does not move real money. Hosted-demo progress and founder launch actions are maintained in a server-protected record outside the public repository. Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).

@@ -32,7 +32,7 @@ The root `pnpm check` command runs documentation validation before code verifica
 | Identity, tenant, approval, execution or audit control | `security.md`, `architecture.md`, threat tests |
 | Environment variable or start command | `configuration.md`, `getting-started.md`, `deployment.md`, `.env.example` |
 | Public endpoint or response shape | `api.md`, SDK types/examples |
-| Deferred risk or completed milestone | `project-status.md`, relevant roadmap/security document |
+| Deferred risk or completed milestone | Private status record, relevant roadmap/security document |
 | Settlement adapter design | `solana-roadmap.md`, `security.md`, executor contract |
 
 ## Review metadata
@@ -60,4 +60,4 @@ Before merging a security-sensitive change:
 6. state any intentionally deferred risk in the pull request;
 7. never add secrets, live credentials or customer transaction data to examples.
 
-See the repository `CONTRIBUTING.md` for the contribution workflow and [Project status](project-status.md) for the live completion boundary.
+See the repository `CONTRIBUTING.md` for the contribution workflow. The live delivery boundary is maintained in the private deployment record.

@@ -109,4 +109,4 @@ Before real money:
 - dependency/SBOM/vulnerability pipeline;
 - legal and compliance review for supported jurisdictions and payment flow.
 
-The live completion boundary and owner-dependent launch actions are tracked in [Project status](project-status.md).
+The live completion boundary and owner-dependent launch actions are tracked in the private deployment record outside this repository.

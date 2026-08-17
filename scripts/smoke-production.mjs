@@ -288,7 +288,10 @@ try {
       NODE_ENV: "production",
       PORT: String(webPort),
       PROJECT_STATUS_PASSWORD: "capyn-private-status-smoke-password",
-      PROJECT_STATUS_SESSION_SECRET: "capyn-private-status-smoke-session-secret-with-entropy"
+      PROJECT_STATUS_SESSION_SECRET: "capyn-private-status-smoke-session-secret-with-entropy",
+      PROJECT_STATUS_CONTENT_B64: Buffer.from(
+        "# Project status\n\n## Required before real money\n\nPrivate smoke-test record."
+      ).toString("base64")
     }
   );
   await Promise.all([waitFor(`${apiOrigin}/health`), waitFor(`${webOrigin}/healthz`)]);

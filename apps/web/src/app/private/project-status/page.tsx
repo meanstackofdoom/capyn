@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CalendarDays, Clock3, FileLock2, KeyRound, LockKeyhole, LogOut, ShieldCheck } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { MarkdownDocument } from "@/components/public/markdown-document";
-import { getDoc, PROJECT_STATUS_SLUG } from "@/lib/docs";
+import { getPrivateProjectStatus, isPrivateProjectStatusConfigured } from "@/lib/docs";
 import {
   isProjectStatusAuthConfigured,
   PROJECT_STATUS_COOKIE,
@@ -122,10 +122,15 @@ export default async function PrivateProjectStatusPage({ searchParams }: PagePro
   const authorized = verifyProjectStatusSession(cookieStore.get(PROJECT_STATUS_COOKIE)?.value);
   if (!authorized) {
     const query = await searchParams;
-    return <AccessGate configured={isProjectStatusAuthConfigured()} invalid={query.error === "invalid"} />;
+    return (
+      <AccessGate
+        configured={isProjectStatusAuthConfigured() && isPrivateProjectStatusConfigured()}
+        invalid={query.error === "invalid"}
+      />
+    );
   }
 
-  const doc = await getDoc(PROJECT_STATUS_SLUG);
+  const doc = await getPrivateProjectStatus();
   if (!doc) notFound();
 
   return (

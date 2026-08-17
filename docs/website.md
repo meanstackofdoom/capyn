@@ -83,6 +83,6 @@ Before publishing a website release:
 4. exercise every authority-console tab and reduced-motion mode;
 5. verify canonical, description, Open Graph, JSON-LD, robots and sitemap output;
 6. verify keyboard navigation, visible focus, heading order and horizontal overflow;
-7. confirm pricing and roadmap copy matches [Billing](billing.md) and [Project status](project-status.md);
+7. confirm pricing and roadmap copy matches [Billing](billing.md), [Security](security.md) and the private status record;
 8. confirm the dashboard remains excluded from indexing and execution remains labelled as simulated.
 9. run `corepack pnpm smoke:production` against the built API and web artifacts; it verifies the four decisions, exact approval/execution, all public docs, dashboard noindex, metadata, sitemap, manifest and security headers on ports `4110` and `3110`.

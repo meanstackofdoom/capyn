@@ -36,6 +36,17 @@ export const docsCatalog = [...(catalogSource as DocMetadata[])].sort((left, rig
 export const PROJECT_STATUS_SLUG = "project-status";
 export const publicDocsCatalog = docsCatalog.filter((doc) => doc.slug !== PROJECT_STATUS_SLUG);
 
+const privateProjectStatusMetadata: DocMetadata = {
+  slug: PROJECT_STATUS_SLUG,
+  file: "private deployment secret",
+  title: "Project status",
+  description: "What is complete, what remains, the urgent launch plan and the real-money production gate.",
+  category: "Direction",
+  status: "Private",
+  reviewedAt: "2026-08-17",
+  order: 100
+};
+
 const docsDirectoryFromRepositoryRoot = path.resolve(process.cwd(), "docs");
 const docsDirectory = existsSync(docsDirectoryFromRepositoryRoot)
   ? docsDirectoryFromRepositoryRoot
@@ -79,14 +90,39 @@ export const getDoc = cache(async (slug: string): Promise<DocPage | null> => {
   };
 });
 
+function privateProjectStatusSource(): string | null {
+  const encoded = process.env.PROJECT_STATUS_CONTENT_B64;
+  if (!encoded) return null;
+  const rawSource = Buffer.from(encoded, "base64").toString("utf8");
+  if (!/^#\s+Project status\s*$/m.test(rawSource)) return null;
+  return rawSource;
+}
+
+export function isPrivateProjectStatusConfigured(): boolean {
+  return privateProjectStatusSource() !== null;
+}
+
+export const getPrivateProjectStatus = cache(async (): Promise<DocPage | null> => {
+  const rawSource = privateProjectStatusSource();
+  if (!rawSource) return null;
+  const source = rawSource.replace(/^#\s+.+\r?\n+/, "");
+  const words = source.trim().split(/\s+/).filter(Boolean).length;
+  return {
+    ...privateProjectStatusMetadata,
+    source,
+    readingMinutes: Math.max(1, Math.ceil(words / 220)),
+    tableOfContents: tableOfContents(source)
+  };
+});
+
 export function docRouteForMarkdown(href: string): string {
   const [target = "", hash] = href.split("#", 2);
   if (!target) return hash ? `#${hash}` : href;
   const file = target.split("/").at(-1);
-  const matchingDoc = docsCatalog.find((entry) => entry.file === file);
-  if (!matchingDoc) return href;
-  if (matchingDoc.slug === PROJECT_STATUS_SLUG) {
+  if (file === "project-status.md") {
     return `/private/project-status${hash ? `#${hash}` : ""}`;
   }
+  const matchingDoc = docsCatalog.find((entry) => entry.file === file);
+  if (!matchingDoc) return href;
   return `/docs/${matchingDoc.slug}${hash ? `#${hash}` : ""}`;
 }
