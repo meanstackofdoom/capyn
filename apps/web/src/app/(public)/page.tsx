@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Check, ChevronRight, CircleDollarSign, Fingerprint, KeyRound, LockKeyhole, Network, ShieldCheck, X } from "lucide-react";
+import { AuthorityCampaign } from "@/components/public/authority-campaign";
 import { AuthorityConsole } from "@/components/public/authority-console";
 import { CodeWindow, Eyebrow, PublicCta, SectionHeading, TextLink } from "@/components/public/marketing-primitives";
 import { createPageMetadata } from "@/lib/metadata";
@@ -137,6 +138,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <AuthorityCampaign />
 
       <section className="site-section border-y border-line">
         <div className="site-container">

@@ -1178,6 +1178,465 @@ a {
   }
 }
 
+/* CAPYN object study: intent, authority and evidence as one physical campaign. */
+.authority-campaign {
+  --campaign-ink: #eaf2ef;
+  --campaign-muted: #879aa3;
+  --campaign-line: rgba(206, 222, 229, 0.16);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-block: clamp(6rem, 10vw, 10rem);
+  background: #040d13;
+  color: var(--campaign-ink);
+}
+
+.authority-campaign::before {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 82% 9%, rgba(47, 98, 221, 0.12), transparent 30rem),
+    linear-gradient(90deg, transparent 0, transparent calc(50% - 0.5px), rgba(139, 161, 255, 0.08) calc(50% - 0.5px), rgba(139, 161, 255, 0.08) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  content: "";
+}
+
+.authority-campaign__field {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 6rem 6rem;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+  pointer-events: none;
+}
+
+.authority-campaign__shell {
+  position: relative;
+}
+
+.authority-campaign__header {
+  display: grid;
+  grid-template-columns: minmax(11rem, 0.28fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 7rem);
+  align-items: start;
+}
+
+.authority-campaign__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding-top: 0.6rem;
+  color: #a8b7bd;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.authority-campaign__eyebrow span {
+  width: 0.42rem;
+  height: 0.42rem;
+  background: #5fe0b0;
+  box-shadow: 0 0 0 0.28rem rgba(95, 224, 176, 0.08), 0 0 1.3rem rgba(95, 224, 176, 0.42);
+}
+
+.authority-campaign__title {
+  max-width: 68rem;
+  font-size: clamp(3.6rem, 7.6vw, 7.6rem);
+  font-variation-settings: "wght" 560, "CRSV" 0, "SHRP" 22;
+  font-weight: 560;
+  letter-spacing: -0.078em;
+  line-height: 0.88;
+  text-wrap: balance;
+}
+
+.authority-campaign__title em {
+  display: block;
+  margin-top: 0.09em;
+  color: var(--campaign-muted);
+  font-style: normal;
+}
+
+.authority-campaign__intro {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(19rem, 1.2fr);
+  gap: 2rem 4rem;
+  align-items: end;
+  margin-top: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+.authority-campaign__intro > p {
+  max-width: 32rem;
+  color: #9cabb2;
+  font-size: clamp(0.95rem, 1.4vw, 1.12rem);
+  line-height: 1.8;
+}
+
+.authority-campaign__formula {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
+  align-items: center;
+  gap: 0.8rem;
+  color: #bdc9cd;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.authority-campaign__formula i {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(139, 161, 255, 0.16), #8ba1ff);
+}
+
+.authority-campaign__formula i::after {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 0.3rem;
+  height: 0.3rem;
+  border-top: 1px solid #8ba1ff;
+  border-right: 1px solid #8ba1ff;
+  content: "";
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.authority-campaign__sequence {
+  margin-top: clamp(6rem, 11vw, 11rem);
+  list-style: none;
+}
+
+.authority-campaign__stage {
+  --stage-accent: #8ba1ff;
+  position: relative;
+  border-top: 1px solid var(--campaign-line);
+  padding-block: clamp(3rem, 6vw, 6rem);
+}
+
+.authority-campaign__stage--boundary {
+  --stage-accent: #e7a04b;
+}
+
+.authority-campaign__stage--evidence {
+  --stage-accent: #5fe0b0;
+  padding-bottom: clamp(4rem, 8vw, 8rem);
+}
+
+.authority-campaign__stage > figure {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: end;
+  gap: clamp(1rem, 2vw, 2rem);
+}
+
+.authority-campaign__visual {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  border: 1px solid rgba(209, 225, 232, 0.2);
+  background: #07141e;
+  box-shadow: 0 2.8rem 7rem rgba(0, 0, 0, 0.32);
+}
+
+.authority-campaign__visual::after {
+  position: absolute;
+  inset: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  content: "";
+  pointer-events: none;
+}
+
+.authority-campaign__stage--intent .authority-campaign__visual {
+  grid-column: 1 / 10;
+}
+
+.authority-campaign__stage--boundary .authority-campaign__visual {
+  grid-column: 4 / 13;
+  grid-row: 1;
+}
+
+.authority-campaign__stage--evidence .authority-campaign__visual {
+  grid-column: 3 / 13;
+  grid-row: 1;
+}
+
+.authority-campaign__image {
+  object-fit: cover;
+  transition: transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 500ms ease;
+}
+
+.authority-campaign__stage:hover .authority-campaign__image {
+  filter: saturate(1.05) contrast(1.02);
+  transform: scale(1.012);
+}
+
+.authority-campaign__image-number {
+  position: absolute;
+  top: clamp(1.2rem, 3vw, 2.5rem);
+  left: clamp(1.2rem, 3vw, 2.5rem);
+  color: rgba(242, 247, 246, 0.9);
+  font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(3.8rem, 9vw, 8.5rem);
+  font-variation-settings: "wght" 480, "SHRP" 28;
+  font-weight: 480;
+  letter-spacing: -0.08em;
+  line-height: 0.78;
+  mix-blend-mode: difference;
+}
+
+.authority-campaign__image-data {
+  position: absolute;
+  right: 1.4rem;
+  bottom: 1.4rem;
+  border-left: 1px solid var(--stage-accent);
+  background: rgba(3, 11, 16, 0.78);
+  padding: 0.6rem 0.8rem;
+  color: rgba(235, 243, 240, 0.62);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.11em;
+}
+
+.authority-campaign__caption {
+  position: relative;
+  z-index: 2;
+  grid-column: 10 / 13;
+  padding: 0 0 0.4rem clamp(0rem, 1.5vw, 1rem);
+}
+
+.authority-campaign__stage--boundary .authority-campaign__caption {
+  grid-column: 1 / 4;
+  grid-row: 1;
+  padding-right: clamp(0rem, 1.5vw, 1rem);
+  padding-left: 0;
+}
+
+.authority-campaign__stage--evidence .authority-campaign__caption {
+  grid-column: 1 / 5;
+  grid-row: 1;
+  align-self: center;
+  margin-right: -2rem;
+  border-top: 1px solid color-mix(in srgb, var(--stage-accent) 55%, transparent);
+  background: rgba(4, 13, 19, 0.9);
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  box-shadow: 1.5rem 1.5rem 4rem rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
+}
+
+.authority-campaign__caption-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--campaign-line);
+  padding-bottom: 0.85rem;
+  color: var(--stage-accent);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.authority-campaign__caption h3 {
+  margin-top: 1.6rem;
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  font-variation-settings: "wght" 560, "SHRP" 22;
+  font-weight: 560;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.authority-campaign__caption > p {
+  margin-top: 1.25rem;
+  color: #91a1a8;
+  font-size: 0.78rem;
+  line-height: 1.75;
+}
+
+.authority-campaign__caption code {
+  display: block;
+  margin-top: 1.8rem;
+  color: var(--stage-accent);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+}
+
+.authority-campaign__handoff {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  border-top: 1px solid var(--campaign-line);
+  padding-top: clamp(2rem, 4vw, 3.5rem);
+}
+
+.authority-campaign__handoff > p {
+  font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+  font-variation-settings: "wght" 560, "SHRP" 20;
+  font-weight: 560;
+  letter-spacing: -0.04em;
+}
+
+.authority-campaign__handoff > p span {
+  display: block;
+  margin-bottom: 0.8rem;
+  color: #748890;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.52rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.authority-campaign__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.authority-campaign__actions a {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(234, 242, 239, 0.3);
+  padding-inline: 1.15rem;
+  color: #eaf2ef;
+  font-size: 0.75rem;
+  font-weight: 800;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.authority-campaign__actions a:first-child {
+  border-color: #eaf2ef;
+  background: #eaf2ef;
+  color: #07141e;
+}
+
+.authority-campaign__actions a:hover {
+  border-color: #8ba1ff;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 900px) {
+  .authority-campaign__header {
+    grid-template-columns: 1fr;
+  }
+
+  .authority-campaign__eyebrow {
+    padding-top: 0;
+  }
+
+  .authority-campaign__intro {
+    grid-template-columns: 1fr;
+  }
+
+  .authority-campaign__formula {
+    max-width: 38rem;
+  }
+
+  .authority-campaign__stage--intent .authority-campaign__visual {
+    grid-column: 1 / 9;
+  }
+
+  .authority-campaign__caption {
+    grid-column: 9 / 13;
+  }
+
+  .authority-campaign__stage--boundary .authority-campaign__visual {
+    grid-column: 5 / 13;
+  }
+
+  .authority-campaign__stage--boundary .authority-campaign__caption {
+    grid-column: 1 / 5;
+  }
+}
+
+@media (max-width: 700px) {
+  .authority-campaign__title {
+    font-size: clamp(3.1rem, 14vw, 5.2rem);
+  }
+
+  .authority-campaign__sequence {
+    margin-top: 5rem;
+  }
+
+  .authority-campaign__stage > figure {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.75rem;
+  }
+
+  .authority-campaign__visual {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+  }
+
+  .authority-campaign__stage--evidence .authority-campaign__visual {
+    aspect-ratio: 3 / 2;
+  }
+
+  .authority-campaign__caption,
+  .authority-campaign__stage--boundary .authority-campaign__caption,
+  .authority-campaign__stage--evidence .authority-campaign__caption {
+    width: min(100%, 30rem);
+    margin: 0;
+    border-top: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .authority-campaign__handoff {
+    display: grid;
+  }
+
+  .authority-campaign__actions {
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .authority-campaign__formula {
+    gap: 0.45rem;
+    font-size: 0.48rem;
+  }
+
+  .authority-campaign__image-number {
+    font-size: 3.4rem;
+  }
+
+  .authority-campaign__image-data {
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  .authority-campaign__actions {
+    display: grid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .authority-campaign__image,
+  .authority-campaign__actions a {
+    transition: none;
+  }
+
+  .authority-campaign__stage:hover .authority-campaign__image,
+  .authority-campaign__actions a:hover {
+    transform: none;
+  }
+}
+
 /* Authority Lab: one live intent crosses a visible, inspectable decision rail. */
 .lab-page {
   background: var(--paper);
