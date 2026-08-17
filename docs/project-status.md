@@ -54,7 +54,7 @@ The repository, tagged release, CI evidence, launch assets and synthetic hosted 
 
 The exact release evidence and deployment handoff are maintained in the [Public alpha launch checklist](launch-checklist.md).
 
-The live demo is [capyn-production.up.railway.app](https://capyn-production.up.railway.app). The Railway project, service and generated public/private hostnames are aligned to CAPYN. The previous service's volume and custom-domain records remain intact solely for recovery; CAPYN does not read that volume or advertise the prior domain. Do not enter customer data or enable real settlement in this topology.
+The live demo is [capyn-production.up.railway.app](https://capyn-production.up.railway.app). The Railway project, service and generated public/private hostnames are aligned to CAPYN. The previous workload's volume remains intact solely for recovery and CAPYN does not read it. Its custom domain is detached, so it no longer routes to CAPYN and can be re-added when that workload is restored. Do not enter customer data or enable real settlement in this topology.
 
 ## Required before real money
 

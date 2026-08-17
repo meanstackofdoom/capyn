@@ -44,10 +44,10 @@ The synthetic public alpha is live at [capyn-production.up.railway.app](https://
 
 Hosted checks covered the four logical decisions, same-payload idempotency, conflicting-payload rejection, invalid credentials, agent-identity injection, denied execution, exact-request approval, approval replay, idempotent execution, least-privilege demo identity, Developer-plan metering and append-oriented audit output. They also covered all 22 public routes, all nine noindex dashboard routes, canonical and social metadata, JSON-LD, CSP, HSTS, robots, sitemap and the web manifest.
 
-Railway's free-plan resource ceiling prevented a new project or second service. The authorized fallback stopped only the prior workload's compute and reconnected that service to CAPYN. Its existing volume and custom-domain records were preserved for recovery; no project, service, domain or volume was deleted.
+Railway's free-plan resource ceiling prevented a new project or second service. The authorized fallback stopped only the prior workload's compute and reconnected that service to CAPYN. Its existing volume was preserved for recovery. Once the aligned CAPYN hostname was healthy, the prior custom-domain mapping was detached so it could not continue serving CAPYN; no project, service or volume was deleted.
 
 ## Hosting safety boundary
 
-The Railway cutover may stop the prior workload's running compute only after CAPYN's public revision is green. Its persistent volume and custom domain remain intact so the stop is recoverable. Resource deletion is outside this checklist.
+The Railway cutover may stop the prior workload's running compute only after CAPYN's public revision is green. Its persistent volume remains intact, while its custom domain is deliberately detached from CAPYN and may be re-added when that workload is restored. Project, service and volume deletion remain outside this checklist.
 
 The hosted alpha remains a mock-execution developer demonstration. Stripe collection is available only when real provider credentials and price identifiers are supplied. Real settlement, production human identity, distributed rate limiting, provider reconciliation and the remaining controls in [Security](security.md) stay outside the public-alpha claim.
