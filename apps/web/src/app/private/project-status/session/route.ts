@@ -9,7 +9,8 @@ import {
 export const runtime = "nodejs";
 
 function privateStatusUrl(request: Request, error?: string): URL {
-  const url = new URL("/private/project-status", request.url);
+  const publicOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+  const url = new URL("/private/project-status", publicOrigin);
   if (error) url.searchParams.set("error", error);
   return url;
 }
