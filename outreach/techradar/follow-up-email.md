@@ -12,7 +12,7 @@ One quick follow-up in case the CAPYN demo is relevant to your agentic-commerce 
 Since my first note, the public demo and verification results are here:
 
 - repository: https://github.com/meanstackofdoom/capyn
-- live synthetic demo: https://judgecat-production.up.railway.app
+- live synthetic demo: https://capyn-production.up.railway.app
 - 24-second decision demo: https://github.com/meanstackofdoom/capyn/releases/download/v0.1.0/capyn-public-alpha.mp4
 - tests/build status: https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml
 

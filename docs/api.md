@@ -2,7 +2,7 @@
 
 Local base URL: `http://localhost:4000`
 
-Synthetic public-demo base URL: `https://judgecat-production.up.railway.app`
+Synthetic public-demo base URL: `https://capyn-production.up.railway.app`
 
 Start with [Getting started](getting-started.md) for the database-free local flow and [Configuration](configuration.md) for environment variables.
 

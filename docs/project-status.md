@@ -11,7 +11,7 @@ Reviewed 17 August 2026. This page distinguishes code completion from hosting, a
 | Public repository | Complete | Source and evidence are public at `github.com/meanstackofdoom/capyn`. |
 | Tagged public alpha | Complete | `v0.1.0` was cut from a green clean-clone CI run with the video, cover and selected policy trace attached. |
 | Commercial control plane | Payment-ready base plans | Plan catalogue, quotas, usage ledger, pricing, Checkout/portal adapters and signed webhooks are implemented. Automated provider overage reporting remains explicit follow-up work. |
-| Hosted public alpha | Live synthetic demo | The one-service, memory-backed Railway demo is live and verified at `judgecat-production.up.railway.app`; it uses mock execution and disposable state only. |
+| Hosted public alpha | Live synthetic demo | The one-service, memory-backed Railway demo is live and verified at `capyn-production.up.railway.app`; it uses mock execution and disposable state only. |
 | Real-money production | Not complete | Requires the security, identity, accounting, executor, operational and compliance work below. |
 
 “Complete” in the repository means the developer/public-alpha artifact is coherent, testable and honest about its boundary. It does not mean CAPYN should control production funds today.
@@ -54,7 +54,7 @@ The repository, tagged release, CI evidence, launch assets and synthetic hosted 
 
 The exact release evidence and deployment handoff are maintained in the [Public alpha launch checklist](launch-checklist.md).
 
-The live demo is [judgecat-production.up.railway.app](https://judgecat-production.up.railway.app). Its temporary hostname comes from a recoverable Railway service reuse forced by the free-plan resource ceiling. The previous service's volume and custom-domain records remain intact; CAPYN does not read that volume. Do not enter customer data or enable real settlement in this topology.
+The live demo is [capyn-production.up.railway.app](https://capyn-production.up.railway.app). The Railway project, service and generated public/private hostnames are aligned to CAPYN. The previous service's volume and custom-domain records remain intact solely for recovery; CAPYN does not read that volume or advertise the prior domain. Do not enter customer data or enable real settlement in this topology.
 
 ## Required before real money
 

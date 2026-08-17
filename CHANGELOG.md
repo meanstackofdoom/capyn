@@ -29,6 +29,7 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 - Added a tested one-service proxy adapter for a synthetic public alpha when a hosting account cannot provision the preferred split topology.
 - Pinned Railway's native Railpack build/start/health contract so a reused service cannot inherit a Dockerfile builder.
 - Launched and remotely verified the synthetic Railway public alpha while preserving the replaced service's volume and domain records for rollback.
+- Aligned the Railway project, service, generated public hostname, private DNS name, canonical origins, documentation and outreach links to CAPYN.
 - Pinned production demo authentication to one explicit least-privilege approver and removed organisation-administration controls from the public control-plane build.
 
 ## v0.1.0 — 2026-08-16

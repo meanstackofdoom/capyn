@@ -74,7 +74,7 @@ The checked-in `railway.json` explicitly selects Railway's native Railpack build
 
 ### Current public-alpha instance
 
-The synthetic public alpha is live at [judgecat-production.up.railway.app](https://judgecat-production.up.railway.app). It runs `CAPYN_SERVICE=combined`, `CAPYN_STORAGE=memory`, a human adapter pinned to the seeded approver, hidden organisation-administration controls and `MockPaymentExecutor`. Deployments reset its state, and it must not receive customer data, real provider credentials or real settlement instructions.
+The synthetic public alpha is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). It runs `CAPYN_SERVICE=combined`, `CAPYN_STORAGE=memory`, a human adapter pinned to the seeded approver, hidden organisation-administration controls and `MockPaymentExecutor`. Deployments reset its state, and it must not receive customer data, real provider credentials or real settlement instructions.
 
 Railway's free-plan resource ceiling required a recoverable source swap onto an existing stopped service. The prior volume and domain records were preserved and CAPYN does not read the mounted volume. The intended customer-data topology remains separate web/API services with managed PostgreSQL.
 

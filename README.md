@@ -5,7 +5,7 @@
 [![CI](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml/badge.svg)](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ac39c.svg)](LICENSE)
 
-[Try the live CAPYN public alpha](https://judgecat-production.up.railway.app) or inspect the [v0.1.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0) with its generated video and dashboard evidence.
+[Try the live CAPYN public alpha](https://capyn-production.up.railway.app) or inspect the [v0.1.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.1.0) with its generated video and dashboard evidence.
 
 The hosted alpha is a synthetic, memory-backed demonstration with mock execution. Its state can reset during deployment, it contains no customer data, and it does not move real money.
 
@@ -120,7 +120,7 @@ corepack pnpm start
 
 For a resource-constrained synthetic public demo, `CAPYN_SERVICE=combined` runs those same built processes behind one first-party proxy. It is deliberately not the durable/customer-data topology. Run `corepack pnpm smoke:combined` to verify that adapter; no Docker configuration is used.
 
-The current synthetic public alpha is live at [judgecat-production.up.railway.app](https://judgecat-production.up.railway.app). The temporary hostname reflects the recoverable reuse of an existing Railway service; CAPYN's canonical product domain remains a launch follow-up.
+The current synthetic public alpha is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). Its Railway project, service and generated hostname all use the CAPYN name; a dedicated product domain remains a launch follow-up.
 
 The selected service binds to `0.0.0.0` and respects the platform `PORT`. Set `NEXT_PUBLIC_SITE_URL` to the final public origin and use `/healthz` for the web health check. The API uses `/health`. No Docker configuration is required.
 

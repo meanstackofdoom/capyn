@@ -23,7 +23,7 @@ This is CAPYN's 20-gate release register for the public alpha. A verified code g
 | 17 | Full verification | Lint, typecheck, unit/API/security tests and production builds | Verified |
 | 18 | Production smoke | Built web and API exercised on isolated non-default ports | Verified |
 | 19 | Public revision | Audited commits pushed and remote CI confirmed | Verified |
-| 20 | Hosting cutover | Recoverable JudgeCat compute stop, CAPYN deploy and hosted verification | Verified |
+| 20 | Hosting cutover | Recoverable prior-service compute stop, CAPYN deploy and hosted verification | Verified |
 
 ## Commands
 
@@ -40,14 +40,14 @@ git diff --check
 
 ## Hosted evidence
 
-The synthetic public alpha is live at [judgecat-production.up.railway.app](https://judgecat-production.up.railway.app). The 17 August 2026 cutover was verified against the deployed GitHub revision and a green remote CI run.
+The synthetic public alpha is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). The 17 August 2026 cutover was verified against the deployed GitHub revision and a green remote CI run; the Railway project, service and generated hostnames now consistently use CAPYN.
 
 Hosted checks covered the four logical decisions, same-payload idempotency, conflicting-payload rejection, invalid credentials, agent-identity injection, denied execution, exact-request approval, approval replay, idempotent execution, least-privilege demo identity, Developer-plan metering and append-oriented audit output. They also covered all 22 public routes, all nine noindex dashboard routes, canonical and social metadata, JSON-LD, CSP, HSTS, robots, sitemap and the web manifest.
 
-Railway's free-plan resource ceiling prevented a new project or second service. The authorized fallback stopped only JudgeCat's compute and reconnected that service to CAPYN. Its existing volume and domain records were preserved; no project, service, domain or volume was deleted.
+Railway's free-plan resource ceiling prevented a new project or second service. The authorized fallback stopped only the prior workload's compute and reconnected that service to CAPYN. Its existing volume and custom-domain records were preserved for recovery; no project, service, domain or volume was deleted.
 
 ## Hosting safety boundary
 
-The Railway cutover may stop JudgeCat's running compute only after CAPYN's public revision is green. Its persistent volume and custom domain remain intact so the stop is recoverable. Resource deletion is outside this checklist.
+The Railway cutover may stop the prior workload's running compute only after CAPYN's public revision is green. Its persistent volume and custom domain remain intact so the stop is recoverable. Resource deletion is outside this checklist.
 
 The hosted alpha remains a mock-execution developer demonstration. Stripe collection is available only when real provider credentials and price identifiers are supplied. Real settlement, production human identity, distributed rate limiting, provider reconciliation and the remaining controls in [Security](security.md) stay outside the public-alpha claim.
