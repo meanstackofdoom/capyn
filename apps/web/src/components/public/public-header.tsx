@@ -13,7 +13,7 @@ const navigation = [
   { href: "/developers", label: "Developers" },
   { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Docs" },
-  { href: "/about", label: "About" }
+  { href: "/design-partners", label: "Design partners" }
 ] as const;
 
 export function PublicHeader() {

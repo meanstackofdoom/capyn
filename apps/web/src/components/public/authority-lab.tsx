@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { CSSProperties, FormEvent } from "react";
 import { useMemo, useState } from "react";
 import {
@@ -539,6 +540,19 @@ export function AuthorityLab() {
               )}
             </ol>
           </div>
+
+          {evaluation && !error && (
+            <div className="lab-next-boundary">
+              <div>
+                <span>05 / Next boundary</span>
+                <strong>This decision was synthetic. Bring the action that is actually consequential.</strong>
+                <p>Shape one real mandate, human line and evidence path with CAPYN.</p>
+              </div>
+              <Link href="/design-partners">
+                Bring a real boundary <ArrowRight size={13} />
+              </Link>
+            </div>
+          )}
         </section>
       </div>
     </div>

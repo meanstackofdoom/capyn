@@ -83,12 +83,12 @@ export default function LabPage() {
       <section className="lab-handoff">
         <div className="site-container lab-handoff__inner">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[.17em] text-white/50">Take the boundary with you</p>
-            <h2 className="display-title">One typed call before your agent acts.</h2>
+            <p className="font-mono text-[10px] uppercase tracking-[.17em] text-white/50">From synthetic to specific</p>
+            <h2 className="display-title">Now bring the boundary that matters.</h2>
           </div>
           <div className="lab-handoff__actions">
-            <Link href="/developers" className="public-primary-button">Build with CAPYN <ArrowRight size={15} /></Link>
-            <a href="https://github.com/meanstackofdoom/capyn" className="public-secondary-button">Inspect the source <ArrowRight size={15} /></a>
+            <Link href="/design-partners" className="public-primary-button">Bring a real boundary <ArrowRight size={15} /></Link>
+            <Link href="/developers" className="public-secondary-button">Build with CAPYN <ArrowRight size={15} /></Link>
           </div>
         </div>
       </section>

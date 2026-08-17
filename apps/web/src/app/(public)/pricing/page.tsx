@@ -152,7 +152,7 @@ export default function PricingPage() {
             <p className="mt-8 font-mono text-[9px] uppercase tracking-[.15em] text-authority">Early design partner</p>
             <h2 className="display-title mt-4 text-3xl font-semibold tracking-[-.045em]">$250–$1,000 / month.</h2>
             <p className="mt-5 text-sm leading-7 text-muted">Founder-led integration, authority-model reviews and a tight feedback loop for teams shaping the first production adapters. Scope and fees are agreed manually.</p>
-            <Link href="https://github.com/meanstackofdoom/capyn/issues/new" className="mt-8 inline-flex items-center gap-2 text-sm font-bold">Start a design-partner conversation <ArrowRight size={14} /></Link>
+            <Link href="/design-partners" className="mt-8 inline-flex items-center gap-2 text-sm font-bold">See the design-partner brief <ArrowRight size={14} /></Link>
           </article>
         </div>
       </section>
@@ -160,7 +160,7 @@ export default function PricingPage() {
       <section className="border-y border-line bg-panel py-14">
         <div className="site-container flex flex-col justify-between gap-7 lg:flex-row lg:items-center">
           <div><p className="font-mono text-[9px] uppercase tracking-[.15em] text-muted">Enterprise</p><h2 className="display-title mt-3 text-3xl font-semibold tracking-[-.045em]">Dedicated infrastructure, SLAs, compliance and private deployment.</h2></div>
-          <Link href="https://github.com/meanstackofdoom/capyn/issues/new" className="public-primary-button min-h-12 shrink-0 justify-center px-6">Discuss a scoped agreement <ArrowRight size={15} /></Link>
+          <Link href="/design-partners" className="public-primary-button min-h-12 shrink-0 justify-center px-6">Discuss a scoped agreement <ArrowRight size={15} /></Link>
         </div>
       </section>
 

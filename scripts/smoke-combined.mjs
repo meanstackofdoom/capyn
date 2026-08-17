@@ -87,6 +87,9 @@ try {
   const labPage = await fetch(`${origin}/lab`);
   const labHtml = await labPage.text();
   assert(labPage.ok && labHtml.includes("Try to cross") && labHtml.includes("Run the decision"), "Combined Authority Lab page is invalid");
+  const partnerPage = await fetch(`${origin}/design-partners`);
+  const partnerHtml = await partnerPage.text();
+  assert(partnerPage.ok && partnerHtml.includes("Bring one real") && partnerHtml.includes("design-partner.yml"), "Combined design partner page is invalid");
   const labEvaluation = await fetch(`${origin}/v1/lab/evaluate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

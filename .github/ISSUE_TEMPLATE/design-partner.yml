@@ -1,0 +1,89 @@
+name: Design partner boundary brief
+description: Start a public, non-confidential conversation around one consequential agent action.
+title: "[Boundary brief]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bring one real boundary
+
+        This issue is public. Do not include secrets, customer data, internal architecture, credentials, financial account details, or anything covered by an NDA. A short non-confidential outline is enough to establish whether there is a fit.
+
+  - type: input
+    id: organisation
+    attributes:
+      label: Organisation or project
+      description: A public name, repository, or website. Leave blank if the work is not public yet.
+      placeholder: Example Labs · https://example.com
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Current stage
+      description: Where does this agent workflow run today?
+      options:
+        - Prototype using synthetic data
+        - Internal or sandbox workflow
+        - Limited production workflow
+        - Production workload
+        - Not built yet
+    validations:
+      required: true
+
+  - type: textarea
+    id: exact-action
+    attributes:
+      label: The one exact action
+      description: What consequential action should the agent be able to request? Keep the example non-confidential and concrete.
+      placeholder: Allow our procurement agent to provision up to $120 of approved compute for a nightly evaluation run.
+    validations:
+      required: true
+
+  - type: textarea
+    id: consequence
+    attributes:
+      label: The consequence and hard stop
+      description: What can go wrong, and what must an approval never be able to override?
+      placeholder: It must never use an unapproved vendor or exceed the per-action ceiling, even after human review.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: human-line
+    attributes:
+      label: Current human checkpoint
+      description: How is this action reviewed today?
+      options:
+        - No human checkpoint yet
+        - Manual approval outside the product
+        - Approval exists but is not request-bound
+        - Request-bound approval already exists
+        - The action should never require approval
+    validations:
+      required: true
+
+  - type: textarea
+    id: execution-context
+    attributes:
+      label: Execution context
+      description: Which system or rail performs the action after authorization? Public technology names are enough.
+      placeholder: AWS API, Stripe, x402, Solana, internal tool, or another execution rail.
+
+  - type: textarea
+    id: useful-outcome
+    attributes:
+      label: What would make the engagement useful?
+      description: Describe the smallest useful boundary or integration result.
+      placeholder: A reviewed authority model and a working synthetic decision path we can test against our agent.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Public brief acknowledgement
+      options:
+        - label: I have not included secrets, customer data, private architecture, credentials, or confidential commercial information.
+          required: true
+        - label: I understand this is an application for a scoped design-partner conversation, not a production-readiness or delivery commitment.
+          required: true

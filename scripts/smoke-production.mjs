@@ -192,6 +192,7 @@ async function smokeWeb() {
   const publicRoutes = [
     "/",
     "/lab",
+    "/design-partners",
     "/product",
     "/security",
     "/developers",
@@ -244,10 +245,17 @@ async function smokeWeb() {
   const labHtml = await lab.text();
   assert(labHtml.includes("Try to cross") && labHtml.includes("Run the decision"), "Authority Lab instrument is missing");
 
+  const designPartners = await request(`${webOrigin}/design-partners`);
+  const designPartnersHtml = await designPartners.text();
+  assert(
+    designPartnersHtml.includes("Bring one real") && designPartnersHtml.includes("design-partner.yml") && designPartnersHtml.includes("public GitHub issue"),
+    "Design partner conversion path is missing"
+  );
+
   const robots = await (await request(`${webOrigin}/robots.txt`)).text();
   assert(robots.includes("Disallow: /dashboard/"), "robots.txt does not exclude the control plane");
   const sitemap = await (await request(`${webOrigin}/sitemap.xml`)).text();
-  assert(sitemap.includes(`${canonicalOrigin}/pricing`) && sitemap.includes(`${canonicalOrigin}/docs/billing`), "sitemap is incomplete");
+  assert(sitemap.includes(`${canonicalOrigin}/pricing`) && sitemap.includes(`${canonicalOrigin}/design-partners`) && sitemap.includes(`${canonicalOrigin}/docs/billing`), "sitemap is incomplete");
   assert(!sitemap.includes("/dashboard"), "sitemap exposes noindex dashboard routes");
   assert(!sitemap.includes("project-status"), "sitemap exposes the private project status");
   assert(robots.includes("Disallow: /private/"), "robots.txt does not exclude private routes");
