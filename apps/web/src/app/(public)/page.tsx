@@ -56,7 +56,7 @@ export default function HomePage() {
         "Versioned authority mandates",
         "Deterministic spending policy evaluation",
         "Request-bound human approvals",
-        "Append-oriented audit evidence"
+        "Client-verifiable decision receipts"
       ],
       offers: [
         { "@type": "Offer", name: "Developer", price: "0", priceCurrency: "USD" },
@@ -133,8 +133,8 @@ export default function HomePage() {
           <div className="border border-line bg-panel p-7 sm:p-10">
             <Eyebrow tone="authority">Complete evidence</Eyebrow>
             <h2 className="display-title mt-6 text-3xl font-semibold tracking-[-.045em]">Every consequential transition becomes an audit event.</h2>
-            <p className="mt-5 text-sm leading-7 text-muted">Requests, denials, approvals, revocations and executions are recorded in an append-oriented event stream with organisation and actor context.</p>
-            <div className="mt-8"><TextLink href="/dashboard/audit">View the demo audit log</TextLink></div>
+            <p className="mt-5 text-sm leading-7 text-muted">Requests, denials, approvals and executions become an ordered receipt you can replay, export and verify locally against its SHA-256 digest.</p>
+            <div className="mt-8"><TextLink href="/lab">Generate a verifiable receipt</TextLink></div>
           </div>
         </div>
       </section>

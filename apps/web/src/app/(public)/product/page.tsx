@@ -15,7 +15,7 @@ const flow = [
   { icon: ShieldCheck, title: "Evaluate every gate", copy: "Capability, vendor, per-action limit, daily and monthly budgets, agent state and expiry are evaluated deterministically." },
   { icon: UserCheck, title: "Pause exact requests", copy: "Threshold crossings create one request-specific approval. A human decision does not create blanket future permission." },
   { icon: Play, title: "Execute once", copy: "Only valid allowed or approved authorizations reach an executor. Replay resolves to the original result rather than moving value twice." },
-  { icon: ScrollText, title: "Retain the evidence", copy: "Each transition is written to an append-oriented audit stream with the actor, entity, timestamp and safe metadata." }
+  { icon: ScrollText, title: "Retain the evidence", copy: "Each transition becomes an ordered receipt with actors, timestamps and a digest that can be recomputed outside the decision path." }
 ] as const;
 
 const policies = [

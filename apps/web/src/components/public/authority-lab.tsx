@@ -6,9 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Check,
-  Clipboard,
   Fingerprint,
-  Gauge,
   Link2,
   LoaderCircle,
   LockKeyhole,
@@ -20,10 +18,10 @@ import type {
   ApiErrorBody,
   LabEvaluationResult,
   LabEvaluateRequest,
-  LabEvidence,
   LabResolutionResult,
   RuleTrace
 } from "@capyn/types";
+import { EvidenceFlightRecorder } from "@/components/public/evidence-flight-recorder";
 import {
   parseLabHandoff,
   publicLabCapabilities,
@@ -31,6 +29,7 @@ import {
   serializeLabHandoff,
   type LabHandoff
 } from "@/lib/demo-authority";
+import { createLabProofBundle } from "@/lib/lab-proof";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -188,7 +187,6 @@ export function AuthorityLab() {
   const [evaluation, setEvaluation] = useState<LabEvaluationResult | null>(null);
   const [resolution, setResolution] = useState<LabResolutionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [configurationCopied, setConfigurationCopied] = useState(false);
   const [importedSource, setImportedSource] = useState<LabHandoff["source"] | null>(null);
 
@@ -210,7 +208,11 @@ export function AuthorityLab() {
   const tone = decisionTone(evaluation, resolution, error);
   const decision = decisionCopy(evaluation, resolution, error);
   const trace = useMemo(() => resolution?.trace ?? evaluation?.trace ?? [], [evaluation, resolution]);
-  const evidence: LabEvidence | null = resolution?.evidence ?? evaluation?.evidence ?? null;
+  const evidenceResult = resolution ?? evaluation;
+  const evidenceBundle = useMemo(
+    () => evidenceResult ? createLabProofBundle(evidenceResult.authorizationId, evidenceResult.request, evidenceResult.evidence) : null,
+    [evidenceResult]
+  );
   const activePreset = presets.find((preset) => JSON.stringify(preset.request) === JSON.stringify(form))?.id;
   const busy = phase === "evaluating" || phase === "resolving";
 
@@ -226,7 +228,6 @@ export function AuthorityLab() {
     setEvaluation(null);
     setResolution(null);
     setError(null);
-    setCopied(false);
     setPhase("idle");
   }
 
@@ -260,7 +261,6 @@ export function AuthorityLab() {
     setEvaluation(null);
     setResolution(null);
     setError(null);
-    setCopied(false);
     try {
       const request: LabEvaluateRequest = {
         ...form,
@@ -296,25 +296,6 @@ export function AuthorityLab() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The approval could not be recorded");
       setPhase("error");
-    }
-  }
-
-  async function copyReceipt(): Promise<void> {
-    if (!evidence) return;
-    const payload = {
-      mode: "SYNTHETIC",
-      authorizationId: resolution?.authorizationId ?? evaluation?.authorizationId,
-      decision: resolution?.resolution ?? evaluation?.decision,
-      request: resolution?.request ?? evaluation?.request,
-      trace,
-      evidence
-    };
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1_800);
-    } catch {
-      setCopied(false);
     }
   }
 
@@ -557,34 +538,7 @@ export function AuthorityLab() {
             </div>
           )}
 
-          <div className="lab-evidence">
-            <div className="lab-evidence__head">
-              <div>
-                <span>04 / Evidence receipt</span>
-                <strong>{evidence ? evidence.receiptId : "Created after a decision"}</strong>
-              </div>
-              <button type="button" onClick={() => void copyReceipt()} disabled={!evidence}>
-                <Clipboard size={12} /> {copied ? "Copied" : "Copy JSON"}
-              </button>
-            </div>
-            <div className="lab-evidence__digest">
-              <span>SHA-256 evidence digest</span>
-              <code>{evidence?.digest ?? "—".repeat(64)}</code>
-            </div>
-            <ol className="lab-evidence__events">
-              {(evidence?.events ?? []).map((event) => (
-                <li key={`${event.sequence}-${event.type}`}>
-                  <span>{String(event.sequence).padStart(2, "0")}</span>
-                  <div><strong>{event.type.replaceAll("_", " ")}</strong><small>{event.actor}</small></div>
-                </li>
-              ))}
-              {!evidence && (
-                <li className="lab-evidence__empty">
-                  <Gauge size={14} /> The decision sequence will land here.
-                </li>
-              )}
-            </ol>
-          </div>
+          <EvidenceFlightRecorder bundle={evidenceBundle} />
 
           {evaluation && !error && (
             <div className="lab-next-boundary">

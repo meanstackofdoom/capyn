@@ -26,8 +26,8 @@ const proof = [
   },
   {
     number: "03",
-    title: "The result is machine-readable.",
-    copy: "Every run returns the decision, reason codes, full rule trace, and a SHA-256 digest over the synthetic evidence sequence.",
+    title: "The receipt leaves the lab.",
+    copy: "Replay every actor and transition, recompute the SHA-256 digest locally, download the JSON, print it, or share a client-side proof link.",
     icon: Braces
   }
 ] as const;
