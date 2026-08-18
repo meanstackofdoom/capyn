@@ -63,4 +63,4 @@ The interesting failures are not the happy-path API call:
 - an external provider succeeding before the local process crashes;
 - a vendor label that resolves to a different destination account.
 
-A credible authority product makes these invariants visible in code, tests and documentation. CAPYN v0.1 starts there.
+A credible authority product makes these invariants visible in code, tests and documentation. CAPYN v0.2 continues from that foundation with portable, locally verifiable draft authority and decision evidence.

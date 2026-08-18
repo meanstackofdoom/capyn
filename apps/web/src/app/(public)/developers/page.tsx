@@ -112,7 +112,8 @@ export default function DevelopersPage() {
             <div className="mt-8 flex flex-wrap gap-2">
               {["Node.js 22+", "Corepack", "pnpm 11"].map((item) => <span key={item} className="border border-white/15 px-3 py-2 font-mono text-[9px] text-white/60">{item}</span>)}
             </div>
-            <p className="mt-5 max-w-md font-mono text-[9px] leading-5 text-white/40">V0.1 ships the SDK and policy engine as workspace packages in the public monorepo. They are not published to npm yet.</p>
+            <p className="mt-5 max-w-md font-mono text-[9px] leading-5 text-white/40">V0.2 prepares independently installable SDK, policy-engine and types packages. Registry publication still awaits an owner-controlled @capyn npm scope.</p>
+            <Link href="/docs/package-publishing" className="mt-4 inline-flex items-center gap-2 font-mono text-[9px] font-bold text-permission hover:text-white">Inspect the publication gate <ArrowRight size={12} /></Link>
           </div>
           <div>
             <CodeWindow label="terminal" code={quickStart} />

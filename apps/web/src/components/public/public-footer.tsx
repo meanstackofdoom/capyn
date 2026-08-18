@@ -4,7 +4,7 @@ import { Brand } from "@/components/brand";
 
 const columns = [
   { title: "Explore", links: [["Mandate Studio", "/start"], ["Authority Passport", "/passport"], ["Authority Lab", "/lab"], ["Proof viewer", "/proof"], ["Product", "/product"], ["Security", "/security"], ["Pricing", "/pricing"], ["Developers", "/developers"], ["Documentation", "/docs"]] },
-  { title: "CAPYN", links: [["Boundary File 001", "/case-studies/procurement-agent"], ["Design partners", "/design-partners"], ["About", "/about"], ["Control plane", "/dashboard"], ["Audit log", "/dashboard/audit"]] },
+  { title: "CAPYN", links: [["Boundary File 001", "/case-studies/procurement-agent"], ["Design partners", "/design-partners"], ["Private boundary brief", "/design-partners/brief"], ["About", "/about"], ["Control plane", "/dashboard"], ["Audit log", "/dashboard/audit"]] },
   { title: "Read", links: [["Getting started", "/docs/getting-started"], ["Architecture", "/docs/architecture"], ["Security model", "/docs/security"], ["API reference", "/docs/api"], ["GitHub repository", "https://github.com/meanstackofdoom/capyn"]] }
 ] as const;
 
@@ -18,7 +18,7 @@ export function PublicFooter() {
             Authority infrastructure for autonomous agents. Delegate capabilities with enforceable limits, approvals and evidence.
           </p>
           <div className="mt-8 inline-flex items-center gap-2 border border-line bg-paper px-3 py-2 font-mono text-[9px] uppercase tracking-[.14em] text-muted">
-            <span className="status-dot text-permission" /> Developer MVP · v0.1
+            <span className="status-dot text-permission" /> Developer alpha · v0.2
           </div>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">

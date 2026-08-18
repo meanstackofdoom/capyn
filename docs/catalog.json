@@ -40,6 +40,16 @@
     "order": 40
   },
   {
+    "slug": "package-publishing",
+    "file": "package-publishing.md",
+    "title": "Package publishing",
+    "description": "Public npm package boundaries, archive inspection, release order and trusted publishing handoff.",
+    "category": "Build",
+    "status": "Release gate",
+    "reviewedAt": "2026-08-18",
+    "order": 45
+  },
+  {
     "slug": "domain-model",
     "file": "domain-model.md",
     "title": "Domain model",

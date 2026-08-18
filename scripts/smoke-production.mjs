@@ -192,7 +192,12 @@ async function smokeWeb() {
   const publicRoutes = [
     "/",
     "/lab",
+    "/proof",
+    "/start",
+    "/passport",
     "/design-partners",
+    "/design-partners/brief",
+    "/case-studies/procurement-agent",
     "/product",
     "/security",
     "/developers",
@@ -248,14 +253,41 @@ async function smokeWeb() {
   const designPartners = await request(`${webOrigin}/design-partners`);
   const designPartnersHtml = await designPartners.text();
   assert(
-    designPartnersHtml.includes("Bring one real") && designPartnersHtml.includes("design-partner.yml") && designPartnersHtml.includes("public GitHub issue"),
+    designPartnersHtml.includes("Bring one real") && designPartnersHtml.includes("Draft a private brief") && designPartnersHtml.includes("GitHub route remains public"),
     "Design partner conversion path is missing"
   );
+
+  const privateBrief = await request(`${webOrigin}/design-partners/brief`);
+  const privateBriefHtml = await privateBrief.text();
+  assert(
+    privateBriefHtml.includes("Make the first conversation useful") &&
+      privateBriefHtml.includes("Nothing here is uploaded") &&
+      privateBriefHtml.includes("CAPYN / BOUNDARY BRIEF") &&
+      privateBriefHtml.includes("OWNER ADDRESS / NOT PUBLISHED"),
+    "Browser-local boundary brief is incomplete or overclaims its transfer state"
+  );
+
+  const passport = await request(`${webOrigin}/passport`);
+  const passportHtml = await passport.text();
+  assert(
+    passportHtml.includes("Authority that can travel") && passportHtml.includes("payload stays in the URL fragment"),
+    "Authority Passport verifier boundary is missing"
+  );
+
+  const proof = await request(`${webOrigin}/proof`);
+  const proofHtml = await proof.text();
+  assert(proofHtml.includes("One decision") && proofHtml.includes("proof travels in the URL fragment"), "Decision Proof Viewer boundary is missing");
 
   const robots = await (await request(`${webOrigin}/robots.txt`)).text();
   assert(robots.includes("Disallow: /dashboard/"), "robots.txt does not exclude the control plane");
   const sitemap = await (await request(`${webOrigin}/sitemap.xml`)).text();
-  assert(sitemap.includes(`${canonicalOrigin}/pricing`) && sitemap.includes(`${canonicalOrigin}/design-partners`) && sitemap.includes(`${canonicalOrigin}/docs/billing`), "sitemap is incomplete");
+  assert(
+    sitemap.includes(`${canonicalOrigin}/pricing`) &&
+      sitemap.includes(`${canonicalOrigin}/passport`) &&
+      sitemap.includes(`${canonicalOrigin}/design-partners/brief`) &&
+      sitemap.includes(`${canonicalOrigin}/docs/package-publishing`),
+    "sitemap is incomplete"
+  );
   assert(!sitemap.includes("/dashboard"), "sitemap exposes noindex dashboard routes");
   assert(!sitemap.includes("project-status"), "sitemap exposes the private project status");
   assert(robots.includes("Disallow: /private/"), "robots.txt does not exclude private routes");

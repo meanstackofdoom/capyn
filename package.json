@@ -1,6 +1,6 @@
 {
   "name": "capyn",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.8.0",
@@ -12,6 +12,7 @@
     "start": "node scripts/start-service.mjs",
     "dev": "turbo run dev --parallel",
     "lint": "pnpm db:generate && eslint . --max-warnings=0",
+    "security:audit": "pnpm audit --prod --audit-level high",
     "docs:check": "node scripts/check-docs.mjs",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",

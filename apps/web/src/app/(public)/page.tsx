@@ -45,7 +45,7 @@ export default function HomePage() {
       name: "CAPYN",
       applicationCategory: "SecurityApplication",
       operatingSystem: "Web, Node.js",
-      softwareVersion: "0.1.0",
+      softwareVersion: "0.2.0",
       description: "A programmable authorization control plane for autonomous agents with capabilities, limits, approvals and audit evidence.",
       url: siteUrl,
       codeRepository: "https://github.com/meanstackofdoom/capyn",

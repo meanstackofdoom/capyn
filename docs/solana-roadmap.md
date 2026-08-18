@@ -1,6 +1,6 @@
 # Solana / USDC roadmap
 
-CAPYN v0.1 deliberately stops before blockchain settlement. The authority engine is chain-agnostic and should be proven before adding custody and transaction complexity.
+CAPYN v0.2 deliberately stops before blockchain settlement. The authority engine is chain-agnostic and should be proven before adding custody and transaction complexity.
 
 ## Target sequence
 

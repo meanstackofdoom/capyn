@@ -106,7 +106,7 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
   );
   const lab = new LabService(clock);
 
-  app.get("/health", async () => ({ status: "ok", service: "capyn-api", version: "0.1.0" }));
+  app.get("/health", async () => ({ status: "ok", service: "capyn-api", version: "0.2.0" }));
   await registerLabRoutes(app, lab);
   await registerAgentRoutes(app, { auth, authorizations, executions });
   await registerManagementRoutes(app, { auth, approvals, management });

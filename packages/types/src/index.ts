@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CAPYN_VERSION = "0.1.0";
+export const CAPYN_VERSION = "0.2.0";
 
 export const CORE_CAPABILITIES = [
   "spend.compute",

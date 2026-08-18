@@ -16,13 +16,12 @@ const navigation = [
 export function PublicHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const primaryAction = pathname === "/start"
-    ? { href: "/lab", label: "Run live policy" }
-    : pathname === "/passport"
-      ? { href: "/start", label: "Build a passport" }
-    : pathname === "/proof"
-      ? { href: "/lab", label: "Generate a receipt" }
-      : { href: "/start", label: "Start building" };
+  let primaryAction = { href: "/start", label: "Start building" };
+  if (pathname === "/start") primaryAction = { href: "/lab", label: "Run live policy" };
+  if (pathname === "/passport") primaryAction = { href: "/start", label: "Build a passport" };
+  if (pathname === "/proof") primaryAction = { href: "/lab", label: "Generate a receipt" };
+  if (pathname === "/design-partners") primaryAction = { href: "/design-partners/brief", label: "Draft a brief" };
+  if (pathname === "/design-partners/brief") primaryAction = { href: "/lab", label: "Rehearse live" };
 
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {

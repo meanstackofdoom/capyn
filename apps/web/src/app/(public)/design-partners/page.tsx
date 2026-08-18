@@ -66,15 +66,15 @@ export default function DesignPartnersPage() {
                 Choose the consequential action your agent must earn the right to take. We will map the identity, mandate, hard stops, human intervention and evidence around it.
               </p>
               <div className="partner-hero__actions">
-                <a href={applicationUrl} target="_blank" rel="noreferrer" className="partner-button partner-button--primary">
-                  Start a boundary brief <ExternalLink size={15} />
-                </a>
-                <Link href="/lab" className="partner-button partner-button--secondary">
-                  Rehearse in the Lab <ArrowRight size={15} />
+                <Link href="/design-partners/brief" className="partner-button partner-button--primary">
+                  Draft a private brief <ArrowRight size={15} />
                 </Link>
+                <a href={applicationUrl} target="_blank" rel="noreferrer" className="partner-button partner-button--secondary">
+                  Use the public brief <ExternalLink size={15} />
+                </a>
               </div>
               <p className="partner-public-note">
-                <ShieldCheck size={14} /> The opening brief is a public GitHub issue. Keep it non-confidential; detailed architecture moves to a private channel only if there is a fit.
+                <ShieldCheck size={14} /> The private builder uploads nothing and creates a portable draft. The GitHub route remains public and must contain no confidential information.
               </p>
             </div>
 
@@ -177,10 +177,10 @@ export default function DesignPartnersPage() {
           </div>
           <div className="partner-close__action">
             <p>Not a generic sales call. A structured, non-confidential architecture brief around one real boundary.</p>
-            <a href={applicationUrl} target="_blank" rel="noreferrer" className="partner-button partner-button--light">
-              Open the boundary brief <ExternalLink size={15} />
-            </a>
-            <span>GitHub account required · public issue · no secrets or customer data</span>
+            <Link href="/design-partners/brief" className="partner-button partner-button--light">
+              Draft the private brief <ArrowRight size={15} />
+            </Link>
+            <span>Browser-local · no account · no upload · review before sending</span>
           </div>
         </div>
       </section>

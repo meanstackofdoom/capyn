@@ -4,6 +4,29 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 ## Unreleased
 
+No unreleased changes.
+
+## v0.2.0 — 2026-08-18
+
+### Portable authority
+
+- Added Mandate Studio, a browser-local guided builder that turns one consequential action into an explicit authority draft and typed integration code.
+- Added versioned Authority Passports that travel in URL fragments, validate locally and recompute a canonical SHA-256 integrity digest without activating authority.
+- Added strict malformed, oversized, unsafe and tampered Passport failure modes plus a Studio issue/edit round trip.
+- Added the live Authority Lab, delegated-envelope rehearsal, evidence flight recorder and a client-side proof viewer backed by the real deterministic evaluator.
+- Added Boundary File 001, a replayable synthetic procurement case study that preserves the mock-execution boundary.
+
+### Developer distribution
+
+- Prepared `@capyn/types`, `@capyn/policy-engine` and `@capyn/sdk` as narrow MIT-licensed public npm packages with package-level documentation and archive controls.
+- Added a package-publishing runbook that separates the owner-controlled npm scope/2FA step from the reproducible repository checks.
+- Added copyable developer examples, a real repository quickstart and direct source discovery across the website.
+
+### Supply-chain security
+
+- Resolved `GHSA-ggr8-5vv4-36mx` by pinning Prisma's transitive `deepmerge-ts` dependency to the patched 8.0.0 release.
+- Added a production-dependency audit to remote CI and weekly Dependabot groups for pnpm and GitHub Actions.
+
 ### Hosted authority economics
 
 - Added Developer, Team, Business, Enterprise and design-partner plan definitions.
@@ -29,7 +52,7 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 - Added public pricing, billing dashboard, accessible GSAP authority console and page-specific search/social metadata.
 - Added billing and website documentation to the public documentation register.
-- Added a repeatable production smoke harness covering the four seeded decisions, approval/execution, 22 public routes, nine dashboard routes, SEO boundaries and response headers.
+- Expanded the repeatable production smoke harness to cover the four seeded decisions, approval/execution, 29 public routes, nine dashboard routes, portable artifacts, the private brief, SEO boundaries and response headers.
 - Added a tested one-service proxy adapter for a synthetic public alpha when a hosting account cannot provision the preferred split topology.
 - Pinned Railway's native Railpack build/start/health contract so a reused service cannot inherit a Dockerfile builder.
 - Launched and remotely verified the synthetic Railway public alpha while preserving the replaced service's volume and initially preserving its domain mapping for rollback.

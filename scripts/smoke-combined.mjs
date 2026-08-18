@@ -79,7 +79,7 @@ try {
   const home = await fetch(`${origin}/`);
   const homeHtml = await home.text();
   assert(
-    homeHtml.includes("Not unlimited access") && homeHtml.includes("Live policy boundary"),
+    homeHtml.includes("Not unlimited access") && homeHtml.includes("Build your mandate") && homeHtml.includes("Test an action"),
     "Combined public website is invalid"
   );
   assert(home.headers.get("content-security-policy")?.includes("frame-ancestors 'none'"), "Combined CSP is missing");
@@ -89,7 +89,13 @@ try {
   assert(labPage.ok && labHtml.includes("Try to cross") && labHtml.includes("Run the decision"), "Combined Authority Lab page is invalid");
   const partnerPage = await fetch(`${origin}/design-partners`);
   const partnerHtml = await partnerPage.text();
-  assert(partnerPage.ok && partnerHtml.includes("Bring one real") && partnerHtml.includes("design-partner.yml"), "Combined design partner page is invalid");
+  assert(partnerPage.ok && partnerHtml.includes("Bring one real") && partnerHtml.includes("Draft a private brief"), "Combined design partner page is invalid");
+  const briefPage = await fetch(`${origin}/design-partners/brief`);
+  const briefHtml = await briefPage.text();
+  assert(
+    briefPage.ok && briefHtml.includes("Nothing here is uploaded") && briefHtml.includes("CAPYN / BOUNDARY BRIEF"),
+    "Combined browser-local boundary brief is invalid"
+  );
   const labEvaluation = await fetch(`${origin}/v1/lab/evaluate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

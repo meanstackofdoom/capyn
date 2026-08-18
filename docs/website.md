@@ -29,6 +29,8 @@ The signature component is the interactive authority console. Its three seeded r
 
 Mandate Studio also issues a browser-local Authority Passport. Its versioned payload travels in the URL fragment, is bounded by a strict parser and is covered by a canonical SHA-256 digest recomputed in the viewer. It is deliberately labelled as a draft-only integrity artifact rather than a signature, credential, active mandate or execution receipt.
 
+The private boundary brief is browser-local too. It collects one exact action, hard stop, human checkpoint and smallest useful outcome without posting or persisting the fields. Visitors can copy or download Markdown; an owner-approved `CAPYN_CONTACT_EMAIL` adds a prefilled mail handoff without turning CAPYN into a form processor.
+
 ## Motion contract
 
 The authority console uses GSAP core for scoped, reversible interface motion:

@@ -34,6 +34,7 @@ The API refuses to start in PostgreSQL mode without `DATABASE_URL`, with an `API
 | `NEXT_PUBLIC_DEMO_USER_ROLE` | `Owner` | Synthetic identity role label displayed in the control plane. |
 | `NEXT_PUBLIC_DEMO_MANAGEMENT_ENABLED` | `true` | Hides administrative controls when `false`; server-side role checks remain the security boundary. |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3010` | Canonical origin for metadata, sitemap and social cards. |
+| `CAPYN_CONTACT_EMAIL` | unset | Optional owner-approved public address used to open a prefilled private boundary brief in the visitor's mail client. The draft is never posted to CAPYN. |
 | `PROJECT_STATUS_PASSWORD` | unset | Server-only credential for the private project-status record. The route stays unavailable when omitted. |
 | `PROJECT_STATUS_SESSION_SECRET` | unset | High-entropy server-only key used to sign the private project-status session cookie. |
 | `PROJECT_STATUS_CONTENT_B64` | unset | Base64-encoded private Markdown stored in the deployment secret manager, never in the public repository or browser bundle. |

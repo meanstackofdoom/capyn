@@ -117,7 +117,7 @@ export default function ProductPage() {
           <div className="panel p-7 sm:p-10">
             <Database size={21} className="text-authority" />
             <h2 className="display-title mt-8 text-3xl font-semibold tracking-[-.045em]">Settlement is an adapter, not a policy decision.</h2>
-            <p className="mt-5 text-sm leading-7 text-muted">The v0.1 executor simulates payment. Solana/USDC, x402, Stripe or another rail can be added behind the same one-time execution contract.</p>
+            <p className="mt-5 text-sm leading-7 text-muted">The v0.2 executor simulates payment. Solana/USDC, x402, Stripe or another rail can be added behind the same one-time execution contract.</p>
             <div className="mt-8"><TextLink href="/about#roadmap">See the roadmap boundary</TextLink></div>
           </div>
         </div>

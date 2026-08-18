@@ -12,7 +12,7 @@ The maintainer will acknowledge a complete report as soon as practical, coordina
 
 ## Supported versions
 
-Only the latest tagged v0.1 release is supported during the MVP phase.
+Only the latest tagged v0.2 release is supported during the developer-alpha phase.
 
 ## Current boundary
 

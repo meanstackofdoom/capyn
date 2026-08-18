@@ -1,8 +1,20 @@
 {
   "name": "@capyn/policy-engine",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.2.0",
+  "description": "Deterministic, fail-closed authority policy evaluation for autonomous agents.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meanstackofdoom/capyn.git",
+    "directory": "packages/policy-engine"
+  },
+  "homepage": "https://capyn-production.up.railway.app/developers",
+  "bugs": {
+    "url": "https://github.com/meanstackofdoom/capyn/issues"
+  },
+  "keywords": ["ai-agents", "authorization", "policy-engine", "security", "capyn"],
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -11,8 +23,16 @@
       "import": "./dist/index.js"
     }
   },
+  "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
+    "prepack": "pnpm build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
