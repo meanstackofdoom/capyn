@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowDown, ArrowRight } from "lucide-react";
 import { AuthorityCampaign } from "@/components/public/authority-campaign";
 import { AuthorityConsole } from "@/components/public/authority-console";
-import { DelegatedEnvelope } from "@/components/public/delegated-envelope";
 import { MandateResume } from "@/components/public/mandate-resume";
 import { CodeWindow, Eyebrow, PublicCta, TextLink } from "@/components/public/marketing-primitives";
 import { createPageMetadata } from "@/lib/metadata";
@@ -83,11 +82,11 @@ export default function HomePage() {
 
           <div className="home-hero__intro enter-control">
             <p>
-              The authorization layer between what an autonomous agent wants to do and what your systems should permit—capabilities, hard limits, human approvals and evidence in one decision point.
+              Write one exact action below. CAPYN evaluates the live mandate, stops or advances it, then issues proof you can verify without trusting us.
             </p>
             <div className="home-hero__actions">
-              <Link href="/start" className="public-primary-button min-h-12 justify-center px-6">Start your mandate <ArrowRight size={16} /></Link>
-              <Link href="#delegated-envelope" className="public-secondary-button min-h-12 justify-center px-6">Move a live request <ChevronRight size={16} /></Link>
+              <Link href="/start" className="public-primary-button min-h-12 justify-center px-6">Build your mandate <ArrowRight size={16} /></Link>
+              <Link href="#authority-check" className="public-secondary-button min-h-12 justify-center px-6">Test an action <ArrowDown size={16} /></Link>
             </div>
           </div>
 
@@ -95,18 +94,10 @@ export default function HomePage() {
             <AuthorityConsole />
           </div>
 
-          <div className="home-hero__proof" aria-label="Core product guarantees">
-            <div><span>Fail closed</span><p>Ambiguity never becomes permission.</p></div>
-            <div><span>Request-bound</span><p>One approval unlocks one exact action.</p></div>
-            <div><span>Non-custodial</span><p>CAPYN decides; your chosen rail executes.</p></div>
-            <div><span>Explainable</span><p>Every outcome carries reasons and evidence.</p></div>
-          </div>
         </div>
       </section>
 
       <MandateResume />
-
-      <DelegatedEnvelope />
 
       <AuthorityCampaign />
 
@@ -119,23 +110,6 @@ export default function HomePage() {
             <div className="mt-8"><TextLink href="/developers" inverse>Read the developer guide</TextLink></div>
           </div>
           <CodeWindow label="agent.ts" code={sdkExample} />
-        </div>
-      </section>
-
-      <section className="site-section">
-        <div className="site-container grid gap-8 lg:grid-cols-2">
-          <div className="border border-line bg-panel p-7 sm:p-10">
-            <Eyebrow tone="permission">Security boundary</Eyebrow>
-            <h2 className="display-title mt-6 text-3xl font-semibold tracking-[-.045em]">Deny what the system cannot prove.</h2>
-            <p className="mt-5 text-sm leading-7 text-muted">Unknown agent, expired mandate, missing capability, unapproved vendor, exceeded hard limit or malformed policy: CAPYN fails closed with an explicit reason.</p>
-            <div className="mt-8"><TextLink href="/security">Inspect the security model</TextLink></div>
-          </div>
-          <div className="border border-line bg-panel p-7 sm:p-10">
-            <Eyebrow tone="authority">Complete evidence</Eyebrow>
-            <h2 className="display-title mt-6 text-3xl font-semibold tracking-[-.045em]">Every consequential transition becomes an audit event.</h2>
-            <p className="mt-5 text-sm leading-7 text-muted">Requests, denials, approvals and executions become an ordered receipt you can replay, export and verify locally against its SHA-256 digest.</p>
-            <div className="mt-8"><TextLink href="/lab">Generate a verifiable receipt</TextLink></div>
-          </div>
         </div>
       </section>
 

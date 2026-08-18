@@ -534,74 +534,51 @@ a {
   animation-delay: 120ms;
 }
 
-.home-hero__proof {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  border-inline: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.1);
-  gap: 1px;
-}
-
-.home-hero__proof > div {
-  min-width: 0;
-  background: #07151d;
-  padding: 1.25rem 1.35rem;
-}
-
-.home-hero__proof span {
-  color: #eaf2ef;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 0.625rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.home-hero__proof p {
-  margin-top: 0.5rem;
-  color: #7f939c;
-  font-size: 0.6875rem;
-  line-height: 1.55;
-}
-
 .authority-boundary {
-  --boundary-signal: var(--review);
+  --boundary-signal: #b9784e;
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid rgba(179, 201, 213, 0.22);
-  background: #06131b;
-  box-shadow: 0 2rem 6rem rgba(0, 0, 0, 0.3);
-  color: #edf5f2;
+  scroll-margin-top: 6rem;
+  border: 1px solid rgba(237, 238, 233, 0.18);
+  background: #11191c;
+  box-shadow: 0 2.2rem 5rem rgba(8, 12, 13, 0.28);
+  color: #edeee9;
+}
+
+.authority-boundary--neutral {
+  --boundary-signal: #b9784e;
 }
 
 .authority-boundary--permission {
-  --boundary-signal: var(--permission);
+  --boundary-signal: #819c8e;
 }
 
 .authority-boundary--denial {
-  --boundary-signal: var(--denial);
+  --boundary-signal: #af6258;
 }
 
 .authority-boundary--review {
-  --boundary-signal: var(--review);
+  --boundary-signal: #be955b;
 }
 
 .authority-boundary::before {
   position: absolute;
   inset: 0 0 auto;
   z-index: 2;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--boundary-signal) 55%, transparent), transparent);
+  width: 32%;
+  height: 2px;
+  background: var(--boundary-signal);
   content: "";
   pointer-events: none;
 }
 
 .authority-boundary__toolbar {
   display: grid;
-  min-height: 4.5rem;
+  min-height: 4.75rem;
   grid-template-columns: minmax(18rem, 1fr) auto;
-  border-bottom: 1px solid rgba(204, 220, 227, 0.14);
-  background: #081720;
+  border-bottom: 1px solid rgba(237, 238, 233, 0.13);
+  background: #151f22;
 }
 
 .authority-boundary__identity {
@@ -624,7 +601,7 @@ a {
 }
 
 .authority-boundary__identity p {
-  color: rgba(237, 245, 242, 0.78);
+  color: rgba(237, 238, 233, 0.78);
   font-size: 0.58rem;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -632,7 +609,7 @@ a {
 
 .authority-boundary__identity code {
   overflow: hidden;
-  color: rgba(237, 245, 242, 0.34);
+  color: rgba(237, 238, 233, 0.36);
   font-size: 0.52rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -643,16 +620,16 @@ a {
   width: 0.42rem;
   height: 0.42rem;
   border-radius: 999px;
-  background: var(--permission);
-  box-shadow: 0 0 0 0.22rem rgba(129, 156, 142, 0.12);
+  background: #819c8e;
+  box-shadow: 0 0 0 0.22rem rgba(129, 156, 142, 0.11);
   animation: boundary-live 2.4s ease-in-out infinite;
 }
 
 .authority-boundary__mode {
   margin-left: 0.35rem;
-  border: 1px solid rgba(204, 220, 227, 0.14);
+  border: 1px solid rgba(237, 238, 233, 0.13);
   padding: 0.35rem 0.48rem;
-  color: rgba(237, 245, 242, 0.38);
+  color: rgba(237, 238, 233, 0.4);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.45rem;
   letter-spacing: 0.1em;
@@ -662,7 +639,7 @@ a {
 .authority-boundary__scenarios {
   display: grid;
   grid-template-columns: repeat(3, minmax(7.75rem, 1fr));
-  border-left: 1px solid rgba(204, 220, 227, 0.14);
+  border-left: 1px solid rgba(237, 238, 233, 0.13);
 }
 
 .authority-boundary__scenario {
@@ -671,10 +648,10 @@ a {
   align-items: center;
   gap: 0.65rem;
   border: 0;
-  border-right: 1px solid rgba(204, 220, 227, 0.14);
+  border-right: 1px solid rgba(237, 238, 233, 0.13);
   background: transparent;
   padding: 0.8rem 0.9rem;
-  color: rgba(237, 245, 242, 0.42);
+  color: rgba(237, 238, 233, 0.48);
   cursor: pointer;
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   text-align: left;
@@ -686,7 +663,7 @@ a {
 }
 
 .authority-boundary__scenario-index {
-  color: rgba(237, 245, 242, 0.22);
+  color: rgba(237, 238, 233, 0.24);
   font-size: 0.48rem;
 }
 
@@ -702,46 +679,218 @@ a {
 }
 
 .authority-boundary__scenario-copy small {
-  color: rgba(237, 245, 242, 0.26);
+  color: rgba(237, 238, 233, 0.28);
   font-size: 0.43rem;
   font-weight: 400;
 }
 
-.authority-boundary__scenario[aria-selected="true"] {
-  background: color-mix(in srgb, var(--boundary-signal) 8%, #081720);
+.authority-boundary__scenario[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--boundary-signal) 9%, #151f22);
   box-shadow: inset 0 -2px var(--boundary-signal);
   color: var(--boundary-signal);
 }
 
-.authority-boundary__scenario[aria-selected="true"] .authority-boundary__scenario-copy small {
-  color: color-mix(in srgb, var(--boundary-signal) 58%, rgba(237, 245, 242, 0.35));
+.authority-boundary__scenario[aria-pressed="true"] .authority-boundary__scenario-copy small {
+  color: color-mix(in srgb, var(--boundary-signal) 62%, rgba(237, 238, 233, 0.36));
 }
 
 .authority-boundary__scenario:hover {
-  color: #edf5f2;
+  color: #edeee9;
+}
+
+.authority-boundary__scenario:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.authority-boundary__composer {
+  padding: clamp(1.4rem, 2.8vw, 2.4rem);
+  background: #101719;
+}
+
+.authority-boundary__composer-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: rgba(237, 238, 233, 0.38);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.authority-boundary__composer-label > span:first-child {
+  color: color-mix(in srgb, var(--boundary-signal) 72%, #edeee9);
+}
+
+.authority-boundary__sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem 0.72rem;
+  margin-top: 1.25rem;
+  color: rgba(237, 238, 233, 0.48);
+  font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.25rem, 2.3vw, 1.85rem);
+  font-variation-settings: "wght" 520, "SHRP" 20;
+  letter-spacing: -0.045em;
+  line-height: 1.25;
+}
+
+.authority-boundary__sentence strong {
+  color: #edeee9;
+  font-weight: 590;
+}
+
+.authority-boundary__sentence label {
+  min-width: 0;
+}
+
+.authority-boundary__sentence select,
+.authority-boundary__sentence input,
+.authority-boundary__intent input {
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--boundary-signal) 70%, transparent);
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--boundary-signal);
+  font: inherit;
+}
+
+.authority-boundary__sentence select {
+  max-width: min(18rem, 46vw);
+  padding: 0.1rem 1.45rem 0.16rem 0.12rem;
+  color-scheme: dark;
+}
+
+.authority-boundary__sentence select option {
+  background: #172226;
+  color: #edeee9;
+}
+
+.authority-boundary__amount {
+  display: inline-flex;
+  align-items: baseline;
+  width: 7.4rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--boundary-signal) 70%, transparent);
+  color: var(--boundary-signal);
+}
+
+.authority-boundary__amount input {
+  min-width: 0;
+  width: 100%;
+  border-bottom: 0;
+  padding: 0.1rem 0.12rem 0.16rem 0;
+}
+
+.authority-boundary__intent {
+  display: grid;
+  grid-template-columns: auto minmax(10rem, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+  margin-top: 1.15rem;
+}
+
+.authority-boundary__intent > span {
+  padding-bottom: 0.65rem;
+  color: rgba(237, 238, 233, 0.48);
+  font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.05rem, 1.8vw, 1.4rem);
+  letter-spacing: -0.035em;
+}
+
+.authority-boundary__intent label,
+.authority-boundary__intent input {
+  min-width: 0;
+  width: 100%;
+}
+
+.authority-boundary__intent input {
+  padding: 0.55rem 0.15rem 0.62rem;
+  color: #edeee9;
+  font-family: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.8rem, 1.3vw, 1rem);
+}
+
+.authority-boundary__intent button {
+  display: inline-flex;
+  min-height: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 1px solid var(--boundary-signal);
+  background: var(--boundary-signal);
+  padding-inline: 1.1rem;
+  color: #101719;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.authority-boundary__intent button:hover:not(:disabled) {
+  background: transparent;
+  color: var(--boundary-signal);
+  transform: translateY(-1px);
+}
+
+.authority-boundary__intent button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.authority-boundary__sentence select:focus-visible,
+.authority-boundary__sentence input:focus-visible,
+.authority-boundary__intent input:focus-visible {
+  border-bottom-color: #edeee9;
+  box-shadow: 0 2px 0 rgba(237, 238, 233, 0.16);
+}
+
+.authority-boundary__scenario:focus-visible,
+.authority-boundary__intent button:focus-visible,
+.authority-boundary__receipt-actions a:focus-visible {
+  outline: 2px solid #edeee9;
+  outline-offset: -3px;
+}
+
+.authority-boundary__crossing {
+  position: relative;
+  height: 2px;
+  overflow: hidden;
+  background: rgba(237, 238, 233, 0.12);
+}
+
+.authority-boundary__crossing > span {
+  position: absolute;
+  inset: 0;
+  background: var(--boundary-signal);
+  transform: scaleX(0);
+  transform-origin: left center;
 }
 
 .authority-boundary__workspace {
   display: grid;
   grid-template-columns: minmax(15rem, 0.86fr) minmax(22rem, 1.32fr) minmax(15rem, 0.82fr);
   gap: 1px;
-  background: rgba(204, 220, 227, 0.14);
+  background: rgba(237, 238, 233, 0.13);
 }
 
 .authority-boundary__request,
 .authority-boundary__evaluation,
 .authority-boundary__result {
   min-width: 0;
-  background: #07151d;
+  background: #11191c;
   padding: clamp(1.4rem, 2.3vw, 2.2rem);
 }
 
 .authority-boundary__request {
-  background: #081720;
+  background: #151f22;
 }
 
 .authority-boundary__result {
-  background: color-mix(in srgb, var(--boundary-signal) 6%, #07151d);
+  background: color-mix(in srgb, var(--boundary-signal) 6%, #11191c);
   box-shadow: inset 3px 0 var(--boundary-signal);
 }
 
@@ -750,7 +899,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  color: rgba(237, 245, 242, 0.34);
+  color: rgba(237, 238, 233, 0.35);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.49rem;
   letter-spacing: 0.11em;
@@ -758,13 +907,13 @@ a {
 }
 
 .authority-boundary__section-label > span:first-child {
-  color: color-mix(in srgb, var(--boundary-signal) 68%, #edf5f2);
+  color: color-mix(in srgb, var(--boundary-signal) 70%, #edeee9);
 }
 
 .authority-boundary__request-kicker,
 .authority-boundary__result-kicker {
   margin-top: clamp(2rem, 4vw, 3.25rem);
-  color: rgba(237, 245, 242, 0.42);
+  color: rgba(237, 238, 233, 0.44);
   font-size: 0.65rem;
   line-height: 1.5;
 }
@@ -775,7 +924,7 @@ a {
   align-items: center;
   gap: 0.85rem;
   margin-top: 0.8rem;
-  border-block: 1px solid rgba(204, 220, 227, 0.12);
+  border-block: 1px solid rgba(237, 238, 233, 0.11);
   padding-block: 1.35rem;
 }
 
@@ -789,7 +938,7 @@ a {
 }
 
 .authority-boundary__transaction > svg {
-  color: rgba(237, 245, 242, 0.28);
+  color: rgba(237, 238, 233, 0.28);
 }
 
 .authority-boundary__transaction > div {
@@ -799,7 +948,7 @@ a {
 }
 
 .authority-boundary__transaction span {
-  color: rgba(237, 245, 242, 0.3);
+  color: rgba(237, 238, 233, 0.3);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.47rem;
   letter-spacing: 0.1em;
@@ -808,7 +957,7 @@ a {
 
 .authority-boundary__transaction b {
   overflow: hidden;
-  color: #dfe8e6;
+  color: #edeee9;
   font-size: 0.9rem;
   font-weight: 750;
   text-overflow: ellipsis;
@@ -825,18 +974,18 @@ a {
   display: grid;
   grid-template-columns: minmax(5.5rem, 0.72fr) minmax(0, 1fr);
   gap: 1rem;
-  border-bottom: 1px solid rgba(204, 220, 227, 0.09);
+  border-bottom: 1px solid rgba(237, 238, 233, 0.09);
   padding-block: 0.8rem;
   font-size: 0.63rem;
 }
 
 .authority-boundary__request-details dt {
-  color: rgba(237, 245, 242, 0.34);
+  color: rgba(237, 238, 233, 0.34);
 }
 
 .authority-boundary__request-details dd {
   overflow: hidden;
-  color: rgba(237, 245, 242, 0.72);
+  color: rgba(237, 238, 233, 0.72);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.52rem;
   text-overflow: ellipsis;
@@ -862,7 +1011,7 @@ a {
 }
 
 .authority-boundary__evaluation-header > div > span {
-  color: color-mix(in srgb, var(--boundary-signal) 68%, #edf5f2);
+  color: color-mix(in srgb, var(--boundary-signal) 70%, #edeee9);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.49rem;
   letter-spacing: 0.11em;
@@ -881,7 +1030,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: rgba(237, 245, 242, 0.4);
+  color: rgba(237, 238, 233, 0.4);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.48rem;
   text-transform: uppercase;
@@ -891,12 +1040,12 @@ a {
   display: grid;
   gap: 1px;
   overflow: hidden;
-  border: 1px solid rgba(204, 220, 227, 0.11);
-  background: rgba(204, 220, 227, 0.11);
+  border: 1px solid rgba(237, 238, 233, 0.11);
+  background: rgba(237, 238, 233, 0.11);
 }
 
 .authority-boundary__rule {
-  --rule-color: rgba(237, 245, 242, 0.3);
+  --rule-color: rgba(237, 238, 233, 0.3);
   position: relative;
   display: grid;
   min-width: 0;
@@ -904,7 +1053,7 @@ a {
   grid-template-columns: 1.5rem minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.75rem;
-  background: #091820;
+  background: #151f22;
   padding: 0.62rem 0.75rem;
 }
 
@@ -928,8 +1077,12 @@ a {
   --rule-color: var(--review);
 }
 
+.authority-boundary__rule--pending {
+  --rule-color: rgba(237, 238, 233, 0.28);
+}
+
 .authority-boundary__rule-index {
-  color: rgba(237, 245, 242, 0.24);
+  color: rgba(237, 238, 233, 0.24);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.45rem;
 }
@@ -943,14 +1096,14 @@ a {
 }
 
 .authority-boundary__rule-copy p {
-  color: rgba(237, 245, 242, 0.84);
+  color: rgba(237, 238, 233, 0.84);
   font-size: 0.64rem;
   font-weight: 750;
 }
 
 .authority-boundary__rule-copy code {
   overflow: hidden;
-  color: rgba(237, 245, 242, 0.38);
+  color: rgba(237, 238, 233, 0.4);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.47rem;
   text-overflow: ellipsis;
@@ -1008,7 +1161,7 @@ a {
   display: block;
   overflow-wrap: anywhere;
   margin-top: 1rem;
-  color: color-mix(in srgb, var(--boundary-signal) 68%, #edf5f2);
+  color: color-mix(in srgb, var(--boundary-signal) 70%, #edeee9);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.47rem;
   line-height: 1.55;
@@ -1016,12 +1169,12 @@ a {
 
 .authority-boundary__next-step {
   margin-top: clamp(2rem, 4vw, 3.2rem);
-  border-top: 1px solid color-mix(in srgb, var(--boundary-signal) 25%, rgba(204, 220, 227, 0.1));
+  border-top: 1px solid color-mix(in srgb, var(--boundary-signal) 25%, rgba(237, 238, 233, 0.1));
   padding-top: 1rem;
 }
 
 .authority-boundary__next-step span {
-  color: rgba(237, 245, 242, 0.3);
+  color: rgba(237, 238, 233, 0.3);
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.46rem;
   letter-spacing: 0.1em;
@@ -1030,25 +1183,25 @@ a {
 
 .authority-boundary__next-step p {
   margin-top: 0.6rem;
-  color: rgba(237, 245, 242, 0.66);
+  color: rgba(237, 238, 233, 0.68);
   font-size: 0.66rem;
   line-height: 1.65;
 }
 
 .authority-boundary__receipt {
   display: grid;
-  grid-template-columns: minmax(10rem, 0.72fr) minmax(0, 3fr);
-  border-top: 1px solid rgba(204, 220, 227, 0.14);
-  background: #081720;
+  grid-template-columns: minmax(10rem, 0.72fr) minmax(0, 3fr) minmax(10rem, auto);
+  border-top: 1px solid rgba(237, 238, 233, 0.13);
+  background: #151f22;
 }
 
 .authority-boundary__receipt-title {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  border-right: 1px solid rgba(204, 220, 227, 0.12);
+  border-right: 1px solid rgba(237, 238, 233, 0.11);
   padding: 1rem 1.25rem;
-  color: rgba(237, 245, 242, 0.72);
+  color: rgba(237, 238, 233, 0.72);
   font-size: 0.6rem;
   font-weight: 750;
 }
@@ -1064,7 +1217,7 @@ a {
 
 .authority-boundary__receipt dl > div {
   min-width: 0;
-  border-right: 1px solid rgba(204, 220, 227, 0.1);
+  border-right: 1px solid rgba(237, 238, 233, 0.09);
   padding: 0.85rem 1rem;
 }
 
@@ -1081,7 +1234,7 @@ a {
 }
 
 .authority-boundary__receipt dt {
-  color: rgba(237, 245, 242, 0.28);
+  color: rgba(237, 238, 233, 0.28);
   font-size: 0.43rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -1089,8 +1242,44 @@ a {
 
 .authority-boundary__receipt dd {
   margin-top: 0.35rem;
-  color: rgba(237, 245, 242, 0.62);
+  color: rgba(237, 238, 233, 0.64);
   font-size: 0.48rem;
+}
+
+.authority-boundary__receipt-actions {
+  display: grid;
+  min-width: 11rem;
+  border-left: 1px solid rgba(237, 238, 233, 0.11);
+}
+
+.authority-boundary__receipt-actions a,
+.authority-boundary__receipt-actions > span {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.48rem;
+}
+
+.authority-boundary__receipt-actions a {
+  color: rgba(237, 238, 233, 0.72);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.authority-boundary__receipt-actions a + a {
+  border-top: 1px solid rgba(237, 238, 233, 0.09);
+}
+
+.authority-boundary__receipt-actions a:hover {
+  background: color-mix(in srgb, var(--boundary-signal) 9%, transparent);
+  color: var(--boundary-signal);
+}
+
+.authority-boundary__receipt-actions > span {
+  color: rgba(237, 238, 233, 0.32);
 }
 
 @keyframes boundary-live {
@@ -1129,10 +1318,6 @@ a {
     line-height: 0.9;
   }
 
-  .home-hero__proof {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .authority-boundary__toolbar {
     display: block;
   }
@@ -1143,8 +1328,16 @@ a {
 
   .authority-boundary__scenarios {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    border-top: 1px solid rgba(204, 220, 227, 0.14);
+    border-top: 1px solid rgba(237, 238, 233, 0.13);
     border-left: 0;
+  }
+
+  .authority-boundary__composer {
+    padding: 1.25rem;
+  }
+
+  .authority-boundary__composer-label > span:last-child {
+    display: none;
   }
 
   .authority-boundary__workspace {
@@ -1176,11 +1369,22 @@ a {
 
   .authority-boundary__receipt-title {
     border-right: 0;
-    border-bottom: 1px solid rgba(204, 220, 227, 0.12);
+    border-bottom: 1px solid rgba(237, 238, 233, 0.11);
   }
 
   .authority-boundary__receipt dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .authority-boundary__receipt-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid rgba(237, 238, 233, 0.11);
+    border-left: 0;
+  }
+
+  .authority-boundary__receipt-actions a + a {
+    border-top: 0;
+    border-left: 1px solid rgba(237, 238, 233, 0.09);
   }
 }
 
@@ -1195,12 +1399,12 @@ a {
     display: grid;
   }
 
-  .home-hero__proof {
-    grid-template-columns: 1fr;
-  }
-
   .authority-boundary__mode {
     display: none;
+  }
+
+  .authority-boundary__identity {
+    padding-inline: 1rem;
   }
 
   .authority-boundary__scenario {
@@ -1212,6 +1416,33 @@ a {
   .authority-boundary__scenario-index,
   .authority-boundary__scenario-copy small {
     display: none;
+  }
+
+  .authority-boundary__sentence {
+    gap: 0.55rem;
+    font-size: 1.15rem;
+  }
+
+  .authority-boundary__sentence select {
+    max-width: 11.5rem;
+  }
+
+  .authority-boundary__amount {
+    width: 6rem;
+  }
+
+  .authority-boundary__intent {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+
+  .authority-boundary__intent > span {
+    padding-bottom: 0;
+  }
+
+  .authority-boundary__intent button {
+    width: 100%;
+    margin-top: 0.35rem;
   }
 
   .authority-boundary__rule-copy {
@@ -1226,6 +1457,18 @@ a {
 
   .authority-boundary__rule-status i {
     font-size: 0.48rem;
+  }
+
+  .authority-boundary__receipt dl,
+  .authority-boundary__receipt-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .authority-boundary__receipt dl > div,
+  .authority-boundary__receipt-actions a + a {
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 1px solid rgba(237, 238, 233, 0.09);
   }
 }
 

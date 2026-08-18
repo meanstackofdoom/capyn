@@ -9,11 +9,7 @@ import { Brand } from "@/components/brand";
 const navigation = [
   { href: "/start", label: "Mandate Studio" },
   { href: "/lab", label: "Authority Lab" },
-  { href: "/product", label: "Product" },
-  { href: "/security", label: "Security" },
   { href: "/developers", label: "Developers" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/docs", label: "Docs" },
   { href: "/design-partners", label: "Design partners" }
 ] as const;
 
