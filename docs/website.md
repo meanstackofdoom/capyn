@@ -27,6 +27,8 @@ The interface uses a restrained security-infrastructure system:
 
 The signature component is the interactive authority console. Its three seeded requests expose the same memorable story as the API demo: OpenAI `$18` allows, an unknown vendor denies, and AWS `$120` pauses for approval.
 
+Mandate Studio also issues a browser-local Authority Passport. Its versioned payload travels in the URL fragment, is bounded by a strict parser and is covered by a canonical SHA-256 digest recomputed in the viewer. It is deliberately labelled as a draft-only integrity artifact rather than a signature, credential, active mandate or execution receipt.
+
 ## Motion contract
 
 The authority console uses GSAP core for scoped, reversible interface motion:

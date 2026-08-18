@@ -21,6 +21,7 @@ import {
   Plus,
   RotateCcw,
   Save,
+  ScanLine,
   ShieldCheck,
   Trash2,
   X
@@ -58,8 +59,13 @@ import {
   type StudioValidityDays
 } from "@/lib/mandate-studio";
 import { parseLabHandoff } from "@/lib/demo-authority";
+import {
+  createAuthorityPassportEnvelope,
+  createAuthorityPassportHref,
+  type AuthorityPassportEnvelope
+} from "@/lib/authority-passport";
 
-type CopyTarget = "json" | "typescript" | null;
+type CopyTarget = "json" | "typescript" | "passport" | null;
 type CodeView = "json" | "typescript";
 
 const stageDescriptions: Record<StudioStage, string> = {
@@ -280,6 +286,44 @@ export function MandateStudio() {
     URL.revokeObjectURL(objectUrl);
   }
 
+  async function issuePassport(): Promise<AuthorityPassportEnvelope | null> {
+    if (passport.status !== "TESTABLE") {
+      setResumeNotice("Complete the identity, scope and limits before issuing an Authority Passport.");
+      return null;
+    }
+    try {
+      return await createAuthorityPassportEnvelope(draft);
+    } catch {
+      setResumeNotice("The passport could not be issued from this draft. Review the boundary and try again.");
+      return null;
+    }
+  }
+
+  async function openPassport(): Promise<void> {
+    const envelope = await issuePassport();
+    if (envelope) window.location.assign(createAuthorityPassportHref(envelope));
+  }
+
+  async function copyPassportLink(): Promise<void> {
+    const envelope = await issuePassport();
+    if (!envelope) return;
+    const url = new URL(createAuthorityPassportHref(envelope), window.location.origin).toString();
+    await copyCode("passport", url);
+  }
+
+  async function downloadPassport(): Promise<void> {
+    const envelope = await issuePassport();
+    if (!envelope) return;
+    const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = `${draft.agentName || "capyn-agent"}-authority-passport.json`;
+    anchor.click();
+    URL.revokeObjectURL(objectUrl);
+    setResumeNotice("Verifiable Authority Passport downloaded. It remains a draft artifact, not active policy.");
+  }
+
   function resetDraft(): void {
     const fresh = createMandateStudioDraft();
     window.localStorage.removeItem(MANDATE_STUDIO_STORAGE_KEY);
@@ -483,6 +527,15 @@ export function MandateStudio() {
                       <pre><code>{codeView === "json" ? configJson : typescript}</code></pre>
                     </div>
 
+                    <div className="studio-passport-issue">
+                      <div><ScanLine size={16} /><p><strong>Issue a Verifiable Authority Passport.</strong><span>Package this complete draft with a canonical SHA-256 digest. The share link stays client-side and does not activate authority.</span></p></div>
+                      <div>
+                        <button type="button" className="is-primary" onClick={() => void openPassport()}><ShieldCheck size={14} /> Open passport</button>
+                        <button type="button" onClick={() => void copyPassportLink()}><Link2 size={14} /> {copyTarget === "passport" ? "Link copied" : "Copy share link"}</button>
+                        <button type="button" onClick={() => void downloadPassport()}><Download size={14} /> Download passport</button>
+                      </div>
+                    </div>
+
                     <div className="studio-ship-actions">
                       <button type="button" onClick={downloadConfig}><Download size={14} /> Download draft JSON</button>
                       {labHref ? <Link href={labHref}><Link2 size={14} /> Rehearse request in the Lab</Link> : <span><CircleAlert size={14} /> Add OpenAI, Anthropic, AWS or GitHub to rehearse in the public Lab.</span>}
@@ -558,7 +611,7 @@ export function MandateStudio() {
       </div>
 
       <span className="sr-only" role="status" aria-live="polite">
-        {copyTarget === "json" ? "Mandate JSON copied" : copyTarget === "typescript" ? "TypeScript integration copied" : ""}
+        {copyTarget === "json" ? "Mandate JSON copied" : copyTarget === "typescript" ? "TypeScript integration copied" : copyTarget === "passport" ? "Authority Passport link copied" : ""}
       </span>
     </main>
   );

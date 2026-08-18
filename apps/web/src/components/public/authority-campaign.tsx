@@ -90,7 +90,7 @@ export function AuthorityCampaign() {
           <p><span>Next / inspect the file</span>Replay the $120 request that reaches a human line.</p>
           <div className="authority-campaign__actions">
             <Link href="/case-studies/procurement-agent">Open Boundary File 001 <ArrowRight size={15} /></Link>
-            <Link href="/lab">Open the full Lab</Link>
+            <Link href="/passport">Verify an Authority Passport</Link>
           </div>
         </div>
       </div>

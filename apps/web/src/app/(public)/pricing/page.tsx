@@ -37,8 +37,8 @@ const offers = [
     tone: "authority",
     copy: "Managed mandates, approvals and retained evidence with a predictable allowance and an explicit best-effort service boundary.",
     features: ["10 active agents", "100,000 decisions / month", "90-day hosted evidence access", "Request-bound approval operations", "No percentage of agent spend"],
-    cta: "Build the mandate first",
-    href: "/start"
+    cta: "Request Hosted Alpha",
+    href: "/design-partners"
   },
   {
     signal: "CO-DESIGN",

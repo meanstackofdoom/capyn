@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Braces, Check, LockKeyhole, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
+import { CopyCodeButton } from "@/components/public/copy-code-button";
 
 export function Eyebrow({ children, tone = "default" }: { children: ReactNode; tone?: "default" | "authority" | "permission" }) {
   return (
@@ -33,7 +34,10 @@ export function CodeWindow({ label, code, children }: { label: string; code?: st
     <div className="overflow-hidden border border-slate-700 bg-code text-slate-100 shadow-[0_24px_70px_rgba(3,12,20,.18)]">
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
         <span className="font-mono text-[9px] uppercase tracking-[.16em] text-white/50">{label}</span>
-        <span className="inline-flex items-center gap-1.5 font-mono text-[9px] text-white/45"><Braces size={11} /> typed contract</span>
+        <div className="flex items-center gap-2">
+          <span className="hidden items-center gap-1.5 font-mono text-[9px] text-white/45 sm:inline-flex"><Braces size={11} /> typed contract</span>
+          {code && <CopyCodeButton value={code} />}
+        </div>
       </div>
       {children ?? <pre className="overflow-x-auto p-5 font-mono text-[11px] leading-6 sm:p-6"><code>{code}</code></pre>}
     </div>

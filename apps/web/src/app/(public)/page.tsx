@@ -55,7 +55,8 @@ export default function HomePage() {
         "Versioned authority mandates",
         "Deterministic spending policy evaluation",
         "Request-bound human approvals",
-        "Client-verifiable decision receipts"
+        "Client-verifiable decision receipts",
+        "Shareable draft Authority Passports"
       ],
       offers: [
         { "@type": "Offer", name: "Developer", price: "0", priceCurrency: "USD" },

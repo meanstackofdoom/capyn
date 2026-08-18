@@ -40,6 +40,8 @@ The [public-alpha video](outreach/video/capyn-public-alpha.mp4) is generated fro
 Requirements: Node.js 22+ and Corepack.
 
 ```bash
+git clone https://github.com/meanstackofdoom/capyn.git
+cd capyn
 corepack pnpm install
 corepack pnpm demo
 ```
@@ -71,6 +73,7 @@ The public surface is a complete, responsive Next.js site:
 
 - `/` — positioning, authority rail and the core demo story
 - `/lab` — a public, ephemeral instrument backed by the real policy evaluator
+- `/passport` — a client-side verifier for shareable, digest-covered draft authority passports
 - `/product` — lifecycle, policy model and execution boundary
 - `/security` — implemented controls, concurrency and explicit limitations
 - `/developers` — SDK, curl, REST surface and response contracts
@@ -79,6 +82,8 @@ The public surface is a complete, responsive Next.js site:
 - `/about` — the agent authority thesis and roadmap
 - `/dashboard` — the working CAPYN control plane
 - `/dashboard/billing` — plan allowances, live usage, projected fees and hosted checkout controls
+
+The Mandate Studio can issue a versioned Authority Passport into a URL fragment. The browser validates its schema and recomputes its canonical SHA-256 digest locally; the fragment is not submitted with the HTTP request. A digest match proves bundle integrity only—it is not a signature, credential, activated mandate or execution record.
 
 ![CAPYN authorization evidence with a selected policy trace](outreach/screenshots/capyn-authorization-trace.png)
 

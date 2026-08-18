@@ -1,4 +1,7 @@
 import type { LabEvidence, LabEvidenceEvent, LabEvaluateRequest } from "@capyn/types";
+import { canonicalJson } from "./canonical-json";
+
+export { canonicalJson } from "./canonical-json";
 
 export const LAB_PROOF_SCHEMA_VERSION = 1 as const;
 
@@ -33,22 +36,6 @@ const capabilityPattern = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/;
 const vendorIdPattern = /^[a-z0-9][a-z0-9_-]*$/i;
 const digestPattern = /^[a-f0-9]{64}$/;
 const tokenPattern = /^[A-Za-z0-9_-]+$/;
-
-function canonicalize(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(canonicalize);
-  if (value !== null && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-        .map(([key, entry]) => [key, canonicalize(entry)])
-    );
-  }
-  return value;
-}
-
-export function canonicalJson(value: unknown): string {
-  return JSON.stringify(canonicalize(value));
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

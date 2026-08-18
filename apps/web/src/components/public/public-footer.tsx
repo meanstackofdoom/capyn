@@ -3,9 +3,9 @@ import { ArrowUpRight } from "lucide-react";
 import { Brand } from "@/components/brand";
 
 const columns = [
-  { title: "Explore", links: [["Mandate Studio", "/start"], ["Authority Lab", "/lab"], ["Proof viewer", "/proof"], ["Product", "/product"], ["Security", "/security"], ["Pricing", "/pricing"], ["Developers", "/developers"], ["Documentation", "/docs"]] },
+  { title: "Explore", links: [["Mandate Studio", "/start"], ["Authority Passport", "/passport"], ["Authority Lab", "/lab"], ["Proof viewer", "/proof"], ["Product", "/product"], ["Security", "/security"], ["Pricing", "/pricing"], ["Developers", "/developers"], ["Documentation", "/docs"]] },
   { title: "CAPYN", links: [["Boundary File 001", "/case-studies/procurement-agent"], ["Design partners", "/design-partners"], ["About", "/about"], ["Control plane", "/dashboard"], ["Audit log", "/dashboard/audit"]] },
-  { title: "Read", links: [["Getting started", "/docs/getting-started"], ["Architecture", "/docs/architecture"], ["Security model", "/docs/security"], ["API reference", "/docs/api"]] }
+  { title: "Read", links: [["Getting started", "/docs/getting-started"], ["Architecture", "/docs/architecture"], ["Security model", "/docs/security"], ["API reference", "/docs/api"], ["GitHub repository", "https://github.com/meanstackofdoom/capyn"]] }
 ] as const;
 
 export function PublicFooter() {
@@ -27,9 +27,15 @@ export function PublicFooter() {
               <p className="font-mono text-[9px] uppercase tracking-[.16em] text-muted">{column.title}</p>
               <div className="mt-5 grid gap-3">
                 {column.links.map(([label, href]) => (
-                  <Link key={href} href={href} className="inline-flex items-center gap-1.5 text-sm font-semibold hover:text-authority">
-                    {label}{(label === "Mandate Studio" || label === "Authority Lab" || label === "Proof viewer") && <ArrowUpRight size={12} />}
-                  </Link>
+                  href.startsWith("http") ? (
+                    <a key={href} href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold hover:text-authority">
+                      {label}<ArrowUpRight size={12} />
+                    </a>
+                  ) : (
+                    <Link key={href} href={href} className="inline-flex items-center gap-1.5 text-sm font-semibold hover:text-authority">
+                      {label}{(["Mandate Studio", "Authority Passport", "Authority Lab", "Proof viewer"] as string[]).includes(label) && <ArrowUpRight size={12} />}
+                    </Link>
+                  )
                 ))}
               </div>
             </div>

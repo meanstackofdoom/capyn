@@ -18,6 +18,8 @@ export function PublicHeader() {
   const [open, setOpen] = useState(false);
   const primaryAction = pathname === "/start"
     ? { href: "/lab", label: "Run live policy" }
+    : pathname === "/passport"
+      ? { href: "/start", label: "Build a passport" }
     : pathname === "/proof"
       ? { href: "/lab", label: "Generate a receipt" }
       : { href: "/start", label: "Start building" };
@@ -33,7 +35,7 @@ export function PublicHeader() {
   }, [open]);
 
   return (
-    <header className={`public-header sticky top-0 z-50 border-b border-line/80 bg-paper/90 backdrop-blur-xl ${pathname === "/" || pathname === "/lab" || pathname === "/start" || pathname === "/proof" ? "public-header-home" : ""} ${pathname === "/proof" ? "public-header-proof" : ""}`}>
+    <header className={`public-header sticky top-0 z-50 border-b border-line/80 bg-paper/90 backdrop-blur-xl ${pathname === "/" || pathname === "/lab" || pathname === "/start" || pathname === "/proof" || pathname === "/passport" ? "public-header-home" : ""} ${pathname === "/proof" || pathname === "/passport" ? "public-header-proof" : ""}`}>
       <div className="site-container flex h-[72px] items-center justify-between gap-5">
         <Brand />
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Public website">

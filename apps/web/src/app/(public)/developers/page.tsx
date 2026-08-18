@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Braces, Clock3, KeyRound, LockKeyhole, Play, TerminalSquare } from "lucide-react";
+import { ArrowRight, Braces, Clock3, Github, KeyRound, LockKeyhole, Play, TerminalSquare } from "lucide-react";
 import { CodeWindow, Eyebrow, PublicCta, SectionHeading, TextLink } from "@/components/public/marketing-primitives";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -30,6 +30,12 @@ const result = await capyn.authorize({
 if (result.decision === "ALLOW") {
   // Continue with this exact action.
 }`;
+
+const repositoryUrl = "https://github.com/meanstackofdoom/capyn";
+const quickStart = `git clone https://github.com/meanstackofdoom/capyn.git
+cd capyn
+corepack pnpm install
+corepack pnpm demo`;
 
 const curlExample = `curl -X POST http://localhost:4000/v1/authorize \\
   -H "Authorization: Bearer $CAPYN_API_KEY" \\
@@ -91,6 +97,7 @@ export default function DevelopersPage() {
               <Link href="/start" className="public-primary-button min-h-12 justify-center px-6">Generate your integration <ArrowRight size={15} /></Link>
               <a href="#quickstart" className="public-secondary-button min-h-12 justify-center px-6">Run the local demo</a>
             </div>
+            <a href={repositoryUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 text-xs font-extrabold text-muted hover:text-ink"><Github size={14} /> Inspect the MIT-licensed source <ArrowRight size={13} /></a>
           </div>
           <CodeWindow label="agent.ts" code={sdkExample} />
         </div>
@@ -105,10 +112,10 @@ export default function DevelopersPage() {
             <div className="mt-8 flex flex-wrap gap-2">
               {["Node.js 22+", "Corepack", "pnpm 11"].map((item) => <span key={item} className="border border-white/15 px-3 py-2 font-mono text-[9px] text-white/60">{item}</span>)}
             </div>
+            <p className="mt-5 max-w-md font-mono text-[9px] leading-5 text-white/40">V0.1 ships the SDK and policy engine as workspace packages in the public monorepo. They are not published to npm yet.</p>
           </div>
           <div>
-            <CodeWindow label="terminal" code={`corepack pnpm install
-corepack pnpm demo`} />
+            <CodeWindow label="terminal" code={quickStart} />
             <div className="mt-4 grid gap-px border border-white/15 bg-white/15 sm:grid-cols-2">
               {[["$18 → OpenAI", "ALLOW", "permission"], ["$30 → Unknown", "DENY", "denial"], ["$120 → AWS", "REQUIRE_APPROVAL", "review"], ["transfer.wallet", "DENY", "denial"]].map(([request, decision, tone]) => <div key={request} className="flex items-center justify-between bg-code px-4 py-4"><span className="font-mono text-[9px] text-white/55">{request}</span><span className={`font-mono text-[8px] ${tone === "permission" ? "text-permission" : tone === "review" ? "text-review" : "text-denial"}`}>{decision}</span></div>)}
             </div>
