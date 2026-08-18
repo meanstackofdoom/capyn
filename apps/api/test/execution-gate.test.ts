@@ -5,11 +5,14 @@ import type { AuthorizationResult, ExecutionResultView } from "@capyn/types";
 import {
   Es256ExecutionClaimIssuer,
   Es256ExecutionClaimVerifier,
+  ExecutionClaimError,
   ExecutionGate,
-  InMemoryExecutionClaimReplayStore
+  InMemoryExecutionClaimReplayStore,
+  LocalExecutionGateway,
+  createEphemeralExecutionAuthority,
+  type ExecutionGateway
 } from "@capyn/gate";
 import {
-  ExecutionService,
   type ExecutionAuthority,
   type ExecutionRequest,
   type PaymentExecutionResult,
@@ -31,7 +34,11 @@ function keyPair() {
   });
 }
 
-function authority(signingPair = keyPair(), verificationPair = signingPair): ExecutionAuthority {
+function authority(
+  executor: PaymentExecutor,
+  signingPair = keyPair(),
+  verificationPair = signingPair
+): ExecutionAuthority {
   const issuer = new Es256ExecutionClaimIssuer({
     privateKey: signingPair.privateKey,
     keyId: "capyn-test-key",
@@ -47,7 +54,12 @@ function authority(signingPair = keyPair(), verificationPair = signingPair): Exe
   });
   return {
     issuer,
-    gate: new ExecutionGate(verifier, new InMemoryExecutionClaimReplayStore(() => TEST_NOW))
+    gateway: new LocalExecutionGateway({
+      gateId: "capyn-recording-test-gate",
+      gate: new ExecutionGate(verifier, new InMemoryExecutionClaimReplayStore(() => TEST_NOW)),
+      executor,
+      clock: () => TEST_NOW
+    })
   };
 }
 
@@ -84,18 +96,9 @@ async function authorizeAndExecute(app: FastifyInstance, suffix: string) {
 }
 
 describe("execution Gate integration", () => {
-  it("refuses to attach a non-mock provider without an explicit authority and Gate", async () => {
-    const context = await createTestContext();
-    openApps.push(context.app);
-
-    expect(
-      () => new ExecutionService(context.repository, new RecordingExecutor(), () => TEST_NOW)
-    ).toThrow("A non-mock executor requires an explicitly configured execution authority and Gate");
-  });
-
   it("calls the provider only after a request-bound execution claim is verified", async () => {
     const provider = new RecordingExecutor();
-    const context = await createTestContext({ executor: provider, executionAuthority: authority() });
+    const context = await createTestContext({ executionAuthority: authority(provider) });
     openApps.push(context.app);
 
     const response = await authorizeAndExecute(context.app, "valid-0001");
@@ -116,8 +119,7 @@ describe("execution Gate integration", () => {
   it("fails closed before the provider when the Gate cannot verify the signing key", async () => {
     const provider = new RecordingExecutor();
     const context = await createTestContext({
-      executor: provider,
-      executionAuthority: authority(keyPair(), keyPair())
+      executionAuthority: authority(provider, keyPair(), keyPair())
     });
     openApps.push(context.app);
 
@@ -133,6 +135,55 @@ describe("execution Gate integration", () => {
     expect(state.auditEvents.find((event) => event.eventType === "EXECUTION_RECORDED")?.metadata).toMatchObject({
       status: "FAILED",
       errorCode: "GATE_INVALID_SIGNATURE"
+    });
+  });
+
+  it("keeps a remote transport failure ambiguous because the Gate may already have invoked", async () => {
+    const signing = createEphemeralExecutionAuthority({
+      issuer: "urn:capyn:control:transport-test",
+      audience: "urn:capyn:gate:transport-test",
+      clock: () => TEST_NOW
+    });
+    const unavailableGateway: ExecutionGateway = {
+      name: "remote-transport-test",
+      invoke: async () => { throw new Error("response lost after dispatch"); }
+    };
+    const context = await createTestContext({
+      executionAuthority: { issuer: signing.issuer, gateway: unavailableGateway }
+    });
+    openApps.push(context.app);
+
+    const response = await authorizeAndExecute(context.app, "transport-loss-0001");
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: { code: string } }>().error.code).toBe("EXECUTION_OUTCOME_UNKNOWN");
+    expect(context.repository.inspect().executions[0]).toMatchObject({
+      status: "PENDING",
+      errorCode: "GATEWAY_OUTCOME_UNKNOWN"
+    });
+  });
+
+  it("treats replay rejection as ambiguous because an earlier consume may have invoked", async () => {
+    const signing = createEphemeralExecutionAuthority({
+      issuer: "urn:capyn:control:replay-test",
+      audience: "urn:capyn:gate:replay-test",
+      clock: () => TEST_NOW
+    });
+    const replayingGateway: ExecutionGateway = {
+      name: "remote-replay-test",
+      invoke: async () => {
+        throw new ExecutionClaimError("CLAIM_REPLAYED", "claim already consumed");
+      }
+    };
+    const context = await createTestContext({
+      executionAuthority: { issuer: signing.issuer, gateway: replayingGateway }
+    });
+    openApps.push(context.app);
+
+    const response = await authorizeAndExecute(context.app, "replayed-claim-0001");
+    expect(response.statusCode).toBe(409);
+    expect(context.repository.inspect().executions[0]).toMatchObject({
+      status: "PENDING",
+      errorCode: "GATE_CLAIM_REPLAYED"
     });
   });
 });

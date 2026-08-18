@@ -2,8 +2,8 @@ import { spawn } from "node:child_process";
 import process from "node:process";
 
 const service = process.env.CAPYN_SERVICE;
-if (service !== "api" && service !== "web" && service !== "combined") {
-  process.stderr.write("CAPYN_SERVICE must be set to api, web or combined\n");
+if (service !== "api" && service !== "web" && service !== "gate" && service !== "combined") {
+  process.stderr.write("CAPYN_SERVICE must be set to api, web, gate or combined\n");
   process.exit(1);
 }
 
@@ -34,10 +34,15 @@ function run(command, args, { forwardSignals = false } = {}) {
   });
 }
 
-if ((service === "api" || service === "combined") && process.env.CAPYN_STORAGE === "postgres") {
+const needsMigrations =
+  ((service === "api" || service === "combined") &&
+    process.env.CAPYN_STORAGE !== "memory" &&
+    process.env.CAPYN_STORAGE !== "volume") ||
+  (service === "gate" && process.env.GATE_REPLAY_STORAGE !== "memory");
+if (needsMigrations) {
   const migrationCode = await run(pnpm, ["db:migrate"]);
   if (migrationCode !== 0) process.exit(migrationCode);
-  if (process.env.CAPYN_SEED_DEMO === "true") {
+  if ((service === "api" || service === "combined") && process.env.CAPYN_SEED_DEMO === "true") {
     const seedCode = await run(pnpm, ["db:seed"]);
     if (seedCode !== 0) process.exit(seedCode);
   }
@@ -45,5 +50,9 @@ if ((service === "api" || service === "combined") && process.env.CAPYN_STORAGE =
 
 const exitCode = service === "combined"
   ? await run(process.execPath, ["scripts/start-combined.mjs"], { forwardSignals: true })
-  : await run(pnpm, ["--filter", service === "api" ? "@capyn/api" : "@capyn/web", "start"], { forwardSignals: true });
+  : await run(
+      pnpm,
+      ["--filter", service === "api" ? "@capyn/api" : service === "gate" ? "@capyn/gate-service" : "@capyn/web", "start"],
+      { forwardSignals: true }
+    );
 process.exit(exitCode);

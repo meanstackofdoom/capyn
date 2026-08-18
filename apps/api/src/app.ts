@@ -10,9 +10,7 @@ import { BillingService } from "./domain/billing-service";
 import { BootstrapService } from "./domain/bootstrap-service";
 import {
   ExecutionService,
-  MockPaymentExecutor,
-  type ExecutionAuthority,
-  type PaymentExecutor
+  type ExecutionAuthority
 } from "./domain/execution-service";
 import { LabService } from "./domain/lab-service";
 import { ManagementService } from "./domain/management-service";
@@ -36,7 +34,6 @@ export interface AppDependencies {
   bootstrapToken?: string;
   webOrigin?: string;
   clock?: () => Date;
-  executor?: PaymentExecutor;
   executionAuthority?: ExecutionAuthority;
   billingProvider?: BillingProvider;
   logger?: boolean;
@@ -104,9 +101,8 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
   const approvals = new ApprovalService(dependencies.repository, clock);
   const executions = new ExecutionService(
     dependencies.repository,
-    dependencies.executor ?? new MockPaymentExecutor(),
-    clock,
-    dependencies.executionAuthority
+    dependencies.executionAuthority,
+    clock
   );
   const management = new ManagementService(dependencies.repository, dependencies.apiKeyPepper, clock);
   const bootstrap = new BootstrapService(dependencies.repository, dependencies.bootstrapToken, clock);

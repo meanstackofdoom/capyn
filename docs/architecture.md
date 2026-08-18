@@ -24,10 +24,10 @@ Human / organisation
    @capyn/gate
         │
         ▼
- PaymentExecutor execute + reconcile interface
+ ExecutionGateway invoke interface
         │
-        ├── MockPaymentExecutor (v0.4)
-        └── future adapters: Solana / x402 / Stripe / AP2
+        ├── local ephemeral Gate ─► MockPaymentExecutor (hosted alpha)
+        └── HTTP Gate service ─► AWS EC2 dry-run blueprint
 ```
 
 ## Workspace boundaries
@@ -40,6 +40,7 @@ Human / organisation
 | `@capyn/billing` | Pure plan catalogue, entitlements and overage calculation | Change policy decisions or call a payment provider |
 | `@capyn/gate` | Sign, verify and atomically consume exact-action execution claims | Evaluate policy or expose provider credentials to an agent |
 | `apps/api` | Authentication, orchestration, lifecycle, safe HTTP errors | Trust client agent identity |
+| `apps/gate` | Authenticate control transport, consume durable replay state and own provider invocation | Hold the control-plane private signing key or evaluate policy |
 | `@capyn/sdk` | Typed agent-facing client | Contain policy rules |
 | `apps/web` | Public website, canonical docs renderer and human control plane | Enforce authority in the browser |
 
@@ -75,11 +76,14 @@ audience, time window and complete request context, then atomically consumes
 the claim ID before the provider can run. `EXECUTE` and `RECONCILE` are separate
 operations with separate attempt-bound claim IDs.
 
-The current alpha exercises this boundary in process around the mock executor
-with an ephemeral signing key and in-memory replay store. A non-mock executor
-cannot attach without an explicitly supplied authority and Gate. Production
-requires the Gate to run at the credential boundary with durable replay state,
-persistent KMS/HSM-managed keys and exclusive control of the provider role. See
+The hosted alpha exercises this boundary in process around the mock executor
+with an ephemeral signing key and in-memory replay store. The repository also
+implements a separately deployable authenticated HTTP Gate. Its PostgreSQL
+primary key is the multi-replica replay barrier, and it returns a digest-covered
+receipt that the API binds into audit metadata. Its only provider is a strict,
+no-network AWS EC2 dry-run blueprint, so it proves the service separation
+without holding AWS authority or creating resources. Production still requires
+KMS/HSM signing and a reviewed adapter behind an exclusive provider role. See
 [Execution Gate](execution-gate.md).
 
 ## Sandbox-to-workspace sequence
@@ -133,6 +137,7 @@ PostgreSQL is the production persistence target. Prisma supplies typed access, w
 - one credential-rotation idempotency record per agent and source-bound replacement lineage;
 - one user credential digest per owner key and one one-way sandbox claim per durable launch;
 - leased execution attempts with a recovery index over pending lease expiry;
+- namespaced execution-claim consumption with a composite primary-key replay barrier;
 - an update/delete prevention trigger on audit events.
 
 The in-memory repository implements the same interface for deterministic API/security tests and the one-command demo. It is not a production store.
@@ -147,9 +152,18 @@ For an initial managed deployment:
 Browser ──► Next.js web
                 │
                 ▼
-Agent ─────► Fastify API ─────► PostgreSQL
-                │
-                └─ signed claim ─► Gate ─► executor adapter
+ Agent ─────► Fastify API ─────► authority PostgreSQL
+                 │
+                 └─ signed claim ─► HTTP Gate ─► replay PostgreSQL
+                                         │
+                                         └─► provider adapter
 ```
 
-The API should be the only component with control-plane database write access. A real human identity provider replaces the demo header adapter. The production Gate should be the only workload able to use the provider credential or role; otherwise an agent can bypass CAPYN. CAPYN now supports request-driven reconciliation of leased ambiguous executions, but persistent signing keys, durable Gate replay state, distributed rate limiting, database backups, audit export, a durable executor worker/outbox and provider-specific reconciliation operations remain required before production money movement. See [Deployment](deployment.md) for the platform-neutral service handoff.
+The API should be the only component with authority-state write access. A real
+human identity provider replaces the demo header adapter. The production Gate
+should be the only workload able to use the provider credential or role;
+otherwise an agent or compromised API can bypass CAPYN. Durable replay and the
+remote invocation contract are implemented. KMS/HSM signing, distributed rate
+limiting, database recovery, audit export, a durable outbox/worker and
+provider-native execution/reconciliation evidence remain required before real
+money. See [Deployment](deployment.md) for the platform-neutral handoff.

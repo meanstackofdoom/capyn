@@ -68,4 +68,4 @@ The interesting failures are not the happy-path API call:
 - an external provider succeeding before the local process crashes;
 - a vendor label that resolves to a different destination account.
 
-A credible authority product makes these invariants visible in code, tests and documentation. CAPYN's current public alpha continues from that foundation with authenticated sandbox commissioning, portable proof, a one-way claim into durable tenant records and an in-process cryptographic Gate around mock execution. A production credential boundary remains deliberately unfinished.
+A credible authority product makes these invariants visible in code, tests and documentation. CAPYN's public alpha continues from that foundation with authenticated sandbox commissioning, portable proof, a one-way claim into durable tenant records and an in-process cryptographic Gate around mock execution. The repository now also proves a separately deployable Gate, durable replay and an AWS-shaped dry-run boundary. Exclusive live provider authority, KMS/HSM signing and provider-native evidence remain deliberately unfinished.

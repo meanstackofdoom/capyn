@@ -1,53 +1,32 @@
 import type { CapynRepository, StoredAuthorization, StoredExecution } from "@capyn/database";
 import {
   ExecutionClaimError,
+  ExecutionGatewayRejectedError,
+  LocalExecutionGateway,
   createEphemeralExecutionAuthority,
-  executionActionHash,
+  executionClaimContextFromRequest,
   executionClaimId,
-  type ExecutionClaimContext,
+  type ExecutionGateReceipt,
+  type ExecutionGateway,
   type ExecutionClaimIssuer,
-  type ExecutionGate
+  type ExecutionRequest,
+  type PaymentExecutionResult,
+  type PaymentExecutor
 } from "@capyn/gate";
 import { evaluatePolicy } from "@capyn/policy-engine";
 import type {
   AgentPrincipal,
   ExecutionResultView,
-  JsonValue,
   NormalizedAuthorizationRequest
 } from "@capyn/types";
 import { AuthenticationError, ConflictError, GoneError, NotFoundError } from "../http/errors";
 import { createId } from "./ids";
 
-export interface ExecutionRequest {
-  executionId: string;
-  authorizationId: string;
-  organisationId: string;
-  agentId: string;
-  capability: string;
-  amountMinor: string;
-  currency: "USD";
-  vendor: { id: string; name: string | null };
-  metadata: Record<string, JsonValue>;
-  mandateId: string;
-  requestHash: string;
-  attemptCount: number;
-}
-
-export interface PaymentExecutionResult {
-  status: "EXECUTED" | "FAILED" | "UNKNOWN";
-  reference: string | null;
-  errorCode: string | null;
-}
-
-export interface PaymentExecutor {
-  readonly name: string;
-  execute(request: ExecutionRequest): Promise<PaymentExecutionResult>;
-  reconcile(request: ExecutionRequest): Promise<PaymentExecutionResult>;
-}
+export type { ExecutionRequest, PaymentExecutionResult, PaymentExecutor } from "@capyn/gate";
 
 export interface ExecutionAuthority {
   issuer: ExecutionClaimIssuer;
-  gate: ExecutionGate;
+  gateway: ExecutionGateway;
 }
 
 export class MockPaymentExecutor implements PaymentExecutor {
@@ -115,30 +94,15 @@ function executionRequest(execution: StoredExecution, authorization: StoredAutho
   };
 }
 
-function executionClaimContext(
-  request: ExecutionRequest,
-  operation: "EXECUTE" | "RECONCILE"
-): ExecutionClaimContext {
-  return {
-    operation,
-    organisationId: request.organisationId,
-    agentId: request.agentId,
-    mandateId: request.mandateId,
-    authorizationId: request.authorizationId,
-    executionId: request.executionId,
-    attempt: request.attemptCount,
-    action: {
-      capability: request.capability,
-      amountMinor: request.amountMinor,
-      currency: request.currency,
-      vendor: request.vendor,
-      metadata: request.metadata
-    }
-  };
+function gateFailureCode(error: unknown): string {
+  if (error instanceof ExecutionClaimError) return `GATE_${error.code}`;
+  if (error instanceof ExecutionGatewayRejectedError) return `GATE_${error.code}`;
+  return "GATE_INTERNAL_ERROR";
 }
 
-function gateFailureCode(error: unknown): string {
-  return error instanceof ExecutionClaimError ? `GATE_${error.code}` : "GATE_INTERNAL_ERROR";
+function isDefinitiveGatewayRejection(error: unknown): boolean {
+  return error instanceof ExecutionGatewayRejectedError ||
+    (error instanceof ExecutionClaimError && error.code !== "CLAIM_REPLAYED");
 }
 
 export class ExecutionService {
@@ -146,20 +110,30 @@ export class ExecutionService {
 
   constructor(
     private readonly repository: CapynRepository,
-    private readonly executor: PaymentExecutor = new MockPaymentExecutor(),
-    private readonly clock: () => Date = () => new Date(),
     authority?: ExecutionAuthority,
+    private readonly clock: () => Date = () => new Date(),
     private readonly leaseMs: number = DEFAULT_EXECUTION_LEASE_MS
   ) {
     if (!Number.isInteger(leaseMs) || leaseMs <= 0) throw new Error("Execution lease must be a positive integer");
-    if (!authority && !(executor instanceof MockPaymentExecutor)) {
-      throw new Error("A non-mock executor requires an explicitly configured execution authority and Gate");
+    if (authority) {
+      this.authority = authority;
+      return;
     }
-    this.authority = authority ?? createEphemeralExecutionAuthority({
+    const executor = new MockPaymentExecutor();
+    const ephemeral = createEphemeralExecutionAuthority({
       issuer: "urn:capyn:control:ephemeral-mock",
       audience: `urn:capyn:gate:${executor.name}`,
       clock
     });
+    this.authority = {
+      issuer: ephemeral.issuer,
+      gateway: new LocalExecutionGateway({
+        gateId: "capyn-ephemeral-mock-gate",
+        gate: ephemeral.gate,
+        executor,
+        clock
+      })
+    };
   }
 
   async execute(principal: AgentPrincipal, authorizationId: string): Promise<ExecutionResultView> {
@@ -189,7 +163,7 @@ export class ExecutionService {
       const existing = await tx.findExecutionByAuthorization(authorization.id);
       if (existing) {
         if (existing.status !== "PENDING") return { kind: "existing", execution: existing };
-        if (existing.provider !== this.executor.name) {
+        if (existing.provider !== this.authority.gateway.name) {
           throw new ConflictError(
             "EXECUTION_PROVIDER_UNAVAILABLE",
             "The executor that owns this pending execution is not available"
@@ -227,7 +201,7 @@ export class ExecutionService {
             authorityAudience: this.authority.issuer.audience,
             authorityKeyId: this.authority.issuer.keyId,
             authorityClaimId: executionClaimId(
-              executionClaimContext(executionRequest(recovering, authorization), "RECONCILE")
+              executionClaimContextFromRequest(executionRequest(recovering, authorization), "RECONCILE")
             )
           }
         });
@@ -298,7 +272,7 @@ export class ExecutionService {
         id: createId("exe"),
         organisationId: principal.organisationId,
         authorizationId: authorization.id,
-        provider: this.executor.name,
+        provider: this.authority.gateway.name,
         attemptedAt: now,
         leaseExpiresAt: new Date(now.getTime() + this.leaseMs)
       });
@@ -314,14 +288,14 @@ export class ExecutionService {
         timestamp: now,
         metadata: {
           authorizationId: authorization.id,
-          provider: this.executor.name,
+          provider: this.authority.gateway.name,
           attemptCount: execution.attemptCount,
           requestHash: authorization.requestHash,
           mandateId: authorization.mandateId,
           authorityAudience: this.authority.issuer.audience,
           authorityKeyId: this.authority.issuer.keyId,
           authorityClaimId: executionClaimId(
-            executionClaimContext(executionRequest(execution, authorization), "EXECUTE")
+            executionClaimContextFromRequest(executionRequest(execution, authorization), "EXECUTE")
           )
         }
       });
@@ -344,34 +318,37 @@ export class ExecutionService {
 
     const request = executionRequest(claim.execution, claim.authorization);
     const operation = claim.kind === "recovering" ? "RECONCILE" : "EXECUTE";
-    const authorityContext = executionClaimContext(request, operation);
-    let authorityClaimId = executionClaimId(authorityContext);
+    let authorityClaimId = "unissued";
+    let gateReceipt: ExecutionGateReceipt | null = null;
     let result: PaymentExecutionResult | null = null;
+    let issuedClaim: string | null = null;
     try {
-      if (executionActionHash(authorityContext.action) !== request.requestHash) {
-        throw new ExecutionClaimError(
-          "CLAIM_CONTEXT_MISMATCH",
-          "The stored authorization fingerprint does not match the execution action"
-        );
-      }
+      const authorityContext = executionClaimContextFromRequest(request, operation);
       const issued = this.authority.issuer.issue(authorityContext);
       authorityClaimId = issued.payload.jti;
-      await this.authority.gate.consume(issued.token, authorityContext);
+      issuedClaim = issued.token;
     } catch (error) {
       result = { status: "FAILED", reference: null, errorCode: gateFailureCode(error) };
     }
-    if (result === null) {
+    if (result === null && issuedClaim !== null) {
       try {
-        result = claim.kind === "recovering"
-          ? await this.executor.reconcile(request)
-          : await this.executor.execute(request);
-      } catch {
-        result = {
-          status: "UNKNOWN",
-          reference: claim.execution.externalReference,
-          errorCode: "PROVIDER_OUTCOME_UNKNOWN"
-        };
+        const invocation = await this.authority.gateway.invoke({ claim: issuedClaim, operation, request });
+        result = invocation.result;
+        gateReceipt = invocation.receipt;
+      } catch (error) {
+        result = isDefinitiveGatewayRejection(error)
+          ? { status: "FAILED", reference: null, errorCode: gateFailureCode(error) }
+          : {
+              status: "UNKNOWN",
+              reference: claim.execution.externalReference,
+              errorCode: error instanceof ExecutionClaimError
+                ? gateFailureCode(error)
+                : "GATEWAY_OUTCOME_UNKNOWN"
+            };
       }
+    }
+    if (result === null) {
+      result = { status: "FAILED", reference: null, errorCode: "GATE_INTERNAL_ERROR" };
     }
 
     const completedAt = this.clock();
@@ -399,12 +376,17 @@ export class ExecutionService {
           timestamp: completedAt,
           metadata: {
             authorizationId: claim.authorization.id,
-            provider: this.executor.name,
+            provider: this.authority.gateway.name,
             attemptCount: uncertain.attemptCount,
             errorCode: uncertain.errorCode,
             authorityClaimId,
             authorityOperation: operation,
-            requestHash: request.requestHash
+            requestHash: request.requestHash,
+            ...(gateReceipt ? {
+              gateId: gateReceipt.gateId,
+              gateReceiptHash: gateReceipt.receiptHash,
+              gateConsumedAt: gateReceipt.consumedAt
+            } : {})
           }
         });
         return uncertain;
@@ -448,14 +430,20 @@ export class ExecutionService {
         timestamp: completedAt,
         metadata: {
           authorizationId: claim.authorization.id,
-          provider: this.executor.name,
+          provider: this.authority.gateway.name,
           status: finalResult.status,
           reference: finalResult.reference,
           attemptCount: execution.attemptCount,
           errorCode: finalResult.errorCode,
           authorityClaimId,
           authorityOperation: operation,
-          requestHash: request.requestHash
+          requestHash: request.requestHash,
+          ...(gateReceipt ? {
+            gateId: gateReceipt.gateId,
+            gateReceiptHash: gateReceipt.receiptHash,
+            gateConsumedAt: gateReceipt.consumedAt,
+            gateCompletedAt: gateReceipt.completedAt
+          } : {})
         }
       });
       return toView(execution);

@@ -7,7 +7,7 @@
 
 [Commission an agent, prove its first decision and claim a durable workspace](https://capyn-production.up.railway.app/activate), or inspect the [v0.4.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.4.0).
 
-The hosted alpha now persists tenant-scoped identities, mandates, credential digests, subscriptions and audit evidence in an atomic journal on its attached Railway volume. The PostgreSQL schema and migrations remain the scale-out target. Execution remains mock: it does not custody or move real money and it must not receive real provider credentials or settlement instructions.
+The hosted alpha persists tenant-scoped identities, mandates, credential digests, subscriptions and audit evidence in an atomic journal on its attached Railway volume. Its execution path remains mock and moves no value. The repository now also contains a separately deployable, authenticated Gate with PostgreSQL replay protection and a strict no-network AWS EC2 dry-run blueprint; that boundary is test-backed but is not the public alpha and does not provision AWS resources.
 
 CAPYN allows organisations to delegate constrained financial authority to AI agents using capabilities, spending limits, vendor policies, approvals and complete audit trails.
 
@@ -29,7 +29,7 @@ CAPYN POLICY ENGINE
       └── REQUIRE_APPROVAL
 ```
 
-CAPYN is not a wallet, token, DAO or payment rail. It is the decision point before consequential execution. The executor still simulates payment, but every provider operation now crosses a short-lived ES256 claim bound to the exact stored action and a one-use Gate before the mock adapter can run. Future adapters can settle through Solana/USDC, x402, Stripe, AP2 or another rail without moving policy enforcement into the adapter.
+CAPYN is not a wallet, token, DAO or payment rail. It is the programmable authority layer between an autonomous agent and consequence. Every provider operation crosses a short-lived ES256 claim bound to the exact stored action and a one-use Gate. In remote mode the Gate owns provider invocation, so verification cannot be separated from the credential boundary. Future adapters can settle through Solana/USDC, x402, Stripe, AP2 or another rail without moving policy enforcement into the adapter.
 
 ## See it in 24 seconds
 
@@ -123,7 +123,7 @@ The fixed demo key is documented in [docs/api.md](docs/api.md). It is valid only
 
 ## Hosting handoff
 
-The monorepo includes a platform-neutral root launcher for separate Railway-style web and API services. Set `CAPYN_SERVICE=web` or `CAPYN_SERVICE=api`, then run:
+The monorepo includes a platform-neutral root launcher for separate Railway-style web, API and Gate services. Set `CAPYN_SERVICE=web`, `CAPYN_SERVICE=api` or `CAPYN_SERVICE=gate`, then run:
 
 ```bash
 corepack pnpm build
@@ -134,7 +134,7 @@ For a resource-constrained hosted alpha, `CAPYN_SERVICE=combined` runs those sam
 
 The current volume-backed public alpha is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). Its Railway project, service and generated hostname all use the CAPYN name; a dedicated product domain and managed-PostgreSQL upgrade remain launch follow-ups.
 
-The selected service binds to `0.0.0.0` and respects the platform `PORT`. Set `NEXT_PUBLIC_SITE_URL` to the final public origin and use `/healthz` for the web health check. The API uses `/health`. No Docker configuration is required.
+The selected service binds to `0.0.0.0` and respects the platform `PORT`. Set `NEXT_PUBLIC_SITE_URL` to the final public origin and use `/healthz` for web or Gate liveness. Gate readiness is `/ready`; the API uses `/health`. No Docker configuration is required.
 
 After a production build, run the self-contained deployment smoke gate on unused ports `3110` and `4110`:
 
@@ -187,6 +187,7 @@ if (result.decision === "ALLOW") {
 ```text
 apps/
   api/                 Fastify REST API and domain services
+  gate/                Deployable credential boundary and AWS dry-run blueprint
   video/               Reproducible Remotion launch video
   web/                 Next.js public website and App Router control plane
 packages/
@@ -215,6 +216,7 @@ The policy engine does not know how PostgreSQL or Solana works. The executor doe
 ```bash
 pnpm demo          # four launch scenarios, no database required
 pnpm dev           # API + web development servers
+pnpm dev:gate      # configured remote Gate service
 pnpm docs:check    # validate the canonical documentation catalog and links
 pnpm test          # policy, SDK, API and security tests
 pnpm typecheck     # all workspaces and examples
@@ -240,7 +242,8 @@ pnpm db:seed       # seed Acme AI and procurement-agent
 - Approval rechecks every hard rule under the same lock and applies only to one authorization.
 - Execution is claimed once with a unique database record after rechecking the agent and exact mandate binding.
 - Each execute/reconcile attempt receives a short-lived ES256 claim bound to the exact request, Gate audience and leased attempt; the Gate consumes its claim ID once before invoking the provider.
-- Non-mock executors refuse to attach without an explicitly configured authority and Gate.
+- Remote execution is one gateway call: the API cannot verify remotely and then invoke the provider locally. The deployable Gate authenticates the control channel, uses a namespaced PostgreSQL uniqueness barrier and returns a request-matched receipt.
+- Replay or network ambiguity remains `EXECUTING`; only explicit pre-consumption Gate rejection is finalized as failure.
 - Ambiguous provider outcomes remain `EXECUTING`; a leased exact retry calls `reconcile()` with the original execution ID instead of issuing payment again.
 - Audit events are append-only through the application and protected by a database trigger.
 - Structured logs redact authorization and bootstrap headers.
@@ -252,7 +255,7 @@ The MIT-licensed policy engine and exact-action Gate/verifier remain free. The h
 
 CAPYN meters decisions, active agents, approval operations, audit evidence and integration connections. It never charges a percentage of money moved, and approvals carry no per-request fee. Stripe Checkout, customer portal and signed subscription webhooks are implemented when configured. Automated Stripe overage invoicing remains explicitly deferred; current overage values are durable, test-backed projections. See [Billing](docs/billing.md).
 
-Read [docs/security.md](docs/security.md) before considering live execution. v0.4 adds durable owner-key authentication while retaining an isolated public-demo adapter and a mock executor; SSO/MFA and a reviewed real executor remain production gates.
+Read [docs/security.md](docs/security.md) before considering live execution. The public alpha retains an isolated demo adapter and mock executor. The shipped AWS path is a no-network dry run, while SSO/MFA, KMS/HSM claim signing, an exclusive provider role and a reviewed live adapter remain production gates.
 
 ## Documentation
 
@@ -278,4 +281,4 @@ Read [docs/security.md](docs/security.md) before considering live execution. v0.
 
 ## Status
 
-CAPYN v0.4 is a public, open-source hosted alpha, tagged as [`v0.4.0`](https://github.com/meanstackofdoom/capyn/releases/tag/v0.4.0). It adds a one-way sandbox-to-durable-repository launch, separate owner and agent credentials, persistent tenant dashboards and self-serve plan intent without claiming live execution. Founder launch actions remain in a server-protected record outside the public repository. Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).
+CAPYN v0.4 is a public, open-source hosted alpha, tagged as [`v0.4.0`](https://github.com/meanstackofdoom/capyn/releases/tag/v0.4.0). The unreleased tree adds the remote Gate service, durable replay boundary and AWS-shaped no-mutation gauntlet without claiming live execution. Founder launch actions remain in a server-protected record outside the public repository. Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).

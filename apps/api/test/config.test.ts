@@ -28,6 +28,29 @@ describe("CAPYN deployment configuration", () => {
     );
   });
 
+  it("requires remote Gate configuration as one fail-closed deployment unit", () => {
+    expect(() => loadConfig({ ...base, CAPYN_EXECUTION_MODE: "remote-gate" })).toThrow(
+      "Remote Gate mode requires the complete execution Gate configuration"
+    );
+    expect(() => loadConfig({ ...base, CAPYN_EXECUTION_GATE_URL: "https://gate.capyn.test" })).toThrow(
+      "Set CAPYN_EXECUTION_MODE=remote-gate"
+    );
+
+    const configured = loadConfig({
+      ...base,
+      CAPYN_EXECUTION_MODE: "remote-gate",
+      CAPYN_EXECUTION_GATE_URL: "https://gate.capyn.test",
+      CAPYN_EXECUTION_GATE_CONTROL_TOKEN: "capyn-gate-control-token-at-least-32-characters",
+      CAPYN_EXECUTION_GATE_ID: "gate-test",
+      CAPYN_EXECUTION_PROVIDER_NAME: "aws-ec2-dry-run",
+      CAPYN_EXECUTION_ISSUER: "urn:capyn:control:test",
+      CAPYN_EXECUTION_AUDIENCE: "urn:capyn:gate:test",
+      CAPYN_EXECUTION_KEY_ID: "test-key-1",
+      CAPYN_EXECUTION_PRIVATE_KEY_B64: Buffer.from("not-a-real-private-key-but-config-schema-only").toString("base64")
+    });
+    expect(configured.CAPYN_EXECUTION_MODE).toBe("remote-gate");
+  });
+
   it("pins production demo authentication to one explicit human identity", () => {
     expect(() => loadConfig({
       ...base,

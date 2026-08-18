@@ -22,6 +22,7 @@
     "db:seed": "tsx src/seed.ts"
   },
   "dependencies": {
+    "@capyn/gate": "workspace:*",
     "@capyn/types": "workspace:*",
     "@prisma/client": "^6.16.1",
     "zod": "^3.25.76"

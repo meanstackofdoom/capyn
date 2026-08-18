@@ -5,6 +5,8 @@ const booleanString = z
   .default("false")
   .transform((value) => value === "true");
 
+const base64Schema = z.string().regex(/^[A-Za-z0-9+/]+={0,2}$/).min(4);
+
 const configSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -19,6 +21,17 @@ const configSchema = z
     DEMO_HUMAN_AUTH: booleanString,
     DEMO_HUMAN_USER_ID: z.string().trim().min(1).optional(),
     BOOTSTRAP_TOKEN: z.string().min(24).optional(),
+    CAPYN_EXECUTION_MODE: z.enum(["local-mock", "remote-gate"]).default("local-mock"),
+    CAPYN_EXECUTION_GATE_URL: z.string().url().optional(),
+    CAPYN_EXECUTION_GATE_CONTROL_TOKEN: z.string().min(32).optional(),
+    CAPYN_EXECUTION_GATE_ID: z.string().trim().min(1).max(240).optional(),
+    CAPYN_EXECUTION_PROVIDER_NAME: z.string().trim().min(1).max(240).optional(),
+    CAPYN_EXECUTION_ISSUER: z.string().trim().min(1).max(240).optional(),
+    CAPYN_EXECUTION_AUDIENCE: z.string().trim().min(1).max(240).optional(),
+    CAPYN_EXECUTION_KEY_ID: z.string().trim().min(1).max(240).optional(),
+    CAPYN_EXECUTION_PRIVATE_KEY_B64: base64Schema.optional(),
+    CAPYN_EXECUTION_CLAIM_TTL_SECONDS: z.coerce.number().int().min(1).max(300).default(30),
+    CAPYN_EXECUTION_GATE_TIMEOUT_MS: z.coerce.number().int().min(100).max(120_000).default(10_000),
     STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
     STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
     STRIPE_PRICE_TEAM_MONTHLY: z.string().startsWith("price_").optional(),
@@ -43,6 +56,30 @@ const configSchema = z
         code: "custom",
         path: ["DEMO_HUMAN_USER_ID"],
         message: "A production demo must pin the human adapter to one explicit user"
+      });
+    }
+    const remoteGateValues = [
+      value.CAPYN_EXECUTION_GATE_URL,
+      value.CAPYN_EXECUTION_GATE_CONTROL_TOKEN,
+      value.CAPYN_EXECUTION_GATE_ID,
+      value.CAPYN_EXECUTION_PROVIDER_NAME,
+      value.CAPYN_EXECUTION_ISSUER,
+      value.CAPYN_EXECUTION_AUDIENCE,
+      value.CAPYN_EXECUTION_KEY_ID,
+      value.CAPYN_EXECUTION_PRIVATE_KEY_B64
+    ];
+    if (value.CAPYN_EXECUTION_MODE === "remote-gate" && !remoteGateValues.every(Boolean)) {
+      context.addIssue({
+        code: "custom",
+        path: ["CAPYN_EXECUTION_MODE"],
+        message: "Remote Gate mode requires the complete execution Gate configuration"
+      });
+    }
+    if (value.CAPYN_EXECUTION_MODE === "local-mock" && remoteGateValues.some(Boolean)) {
+      context.addIssue({
+        code: "custom",
+        path: ["CAPYN_EXECUTION_MODE"],
+        message: "Set CAPYN_EXECUTION_MODE=remote-gate when execution Gate variables are configured"
       });
     }
     const stripeValues = [

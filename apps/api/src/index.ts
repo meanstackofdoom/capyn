@@ -1,8 +1,10 @@
 import { createDemoMemoryRepository, createVolumeCapynRepository, hashApiKey, PrismaCapynRepository } from "@capyn/database";
 import { fileURLToPath } from "node:url";
+import { Es256ExecutionClaimIssuer, HttpExecutionGateway } from "@capyn/gate";
 import { buildApp } from "./app";
 import { loadConfig } from "./config";
 import { StripeBillingProvider } from "./domain/billing-provider";
+import type { ExecutionAuthority } from "./domain/execution-service";
 
 try {
   process.loadEnvFile?.(fileURLToPath(new URL("../../../.env", import.meta.url)));
@@ -31,6 +33,29 @@ const billingProvider = config.STRIPE_SECRET_KEY
       businessPriceId: config.STRIPE_PRICE_BUSINESS_MONTHLY!
     })
   : undefined;
+let executionAuthority: ExecutionAuthority | undefined;
+if (config.CAPYN_EXECUTION_MODE === "remote-gate") {
+  const privateKey = Buffer.from(config.CAPYN_EXECUTION_PRIVATE_KEY_B64!, "base64").toString("utf8");
+  if (!privateKey.includes("BEGIN PRIVATE KEY")) {
+    throw new Error("CAPYN_EXECUTION_PRIVATE_KEY_B64 must decode to a PKCS#8 PEM private key");
+  }
+  executionAuthority = {
+    issuer: new Es256ExecutionClaimIssuer({
+      privateKey,
+      keyId: config.CAPYN_EXECUTION_KEY_ID!,
+      issuer: config.CAPYN_EXECUTION_ISSUER!,
+      audience: config.CAPYN_EXECUTION_AUDIENCE!,
+      ttlSeconds: config.CAPYN_EXECUTION_CLAIM_TTL_SECONDS
+    }),
+    gateway: new HttpExecutionGateway({
+      baseUrl: config.CAPYN_EXECUTION_GATE_URL!,
+      controlToken: config.CAPYN_EXECUTION_GATE_CONTROL_TOKEN!,
+      providerName: config.CAPYN_EXECUTION_PROVIDER_NAME!,
+      expectedGateId: config.CAPYN_EXECUTION_GATE_ID!,
+      timeoutMs: config.CAPYN_EXECUTION_GATE_TIMEOUT_MS
+    })
+  };
+}
 const app = await buildApp({
   repository,
   apiKeyPepper: config.API_KEY_PEPPER,
@@ -38,6 +63,7 @@ const app = await buildApp({
   ...(config.DEMO_HUMAN_USER_ID ? { demoHumanUserId: config.DEMO_HUMAN_USER_ID } : {}),
   ...(config.BOOTSTRAP_TOKEN ? { bootstrapToken: config.BOOTSTRAP_TOKEN } : {}),
   ...(billingProvider ? { billingProvider } : {}),
+  ...(executionAuthority ? { executionAuthority } : {}),
   webOrigin: config.WEB_ORIGIN,
   trustProxy: config.TRUST_PROXY,
   onboardingPersistence: config.CAPYN_STORAGE === "postgres"

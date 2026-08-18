@@ -1,18 +1,20 @@
 # Execution Gate
 
-CAPYN Gate is the cryptographic boundary between an authority decision and a
-consequential provider call. It turns an internal `ALLOW` or approved request
-into one short-lived, request-bound execution claim and requires that claim to
-be consumed before the executor can run.
+CAPYN Gate is the enforcement point immediately before consequence. The
+control plane can decide and approve authority, but it cannot call a configured
+remote provider directly. It signs one exact execution request and sends it to
+the Gate; the Gate verifies and consumes that authority before its own provider
+adapter can run.
 
-The current repository implements and tests the claim protocol and an
-in-process Gate around `MockPaymentExecutor`. It does not yet deploy a remote
-Gate, hold real provider credentials or make the hosted alpha safe for real
-money.
+The repository now contains both the reusable `@capyn/gate` protocol package
+and a separately deployable Fastify service in `apps/gate`. The hosted public
+alpha still selects the local mock path. The deployable service currently ships
+only an AWS EC2 **dry-run blueprint validator**: it never loads AWS credentials,
+never calls AWS and cannot create an instance or incur a charge.
 
 ## Claim contract
 
-`@capyn/gate` issues compact ES256 JWS claims with the protected type
+`@capyn/gate` issues compact ES256 JWS claims with protected type
 `capyn-execution+jwt`. Each claim contains:
 
 - schema version, key ID, issuer and exact Gate audience;
@@ -31,11 +33,10 @@ excessive lifetimes, issuer/audience mismatch and any drift in the bound
 context.
 
 The action hash must also equal the request fingerprint stored when CAPYN made
-the original authorization decision. This closes a second substitution path:
-the control plane cannot sign a reconstructed action that differs from the
-durable request without failing before provider execution.
+the original authorization decision. The API therefore cannot reconstruct and
+sign an action that differs from the durable request.
 
-## Execution sequence
+## Remote execution sequence
 
 ```text
 Agent             CAPYN control             Gate                 Provider
@@ -43,88 +44,127 @@ Agent             CAPYN control             Gate                 Provider
   ├─ execute auth ID ───►│                     │                      │
   │                      ├─ lock + recheck     │                      │
   │                      ├─ claim execution    │                      │
-  │                      ├─ sign exact action ─►                     │
+  │                      ├─ sign exact action  │                      │
+  │                      ├─ authenticated HTTP►│                      │
   │                      │                     ├─ verify signature    │
-  │                      │                     ├─ verify context      │
+  │                      │                     ├─ verify exact request│
   │                      │                     ├─ consume claim once  │
   │                      │                     ├─ provider request ──►│
   │                      │                     │◄─ provider result ───┤
-  │                      ├─ finalize + audit ◄─┤                      │
+  │                      │◄─ result + receipt ─┤                      │
+  │                      ├─ finalize + audit   │                      │
   │◄─ stored outcome ────┤                     │                      │
 ```
 
-The Gate consumes the claim before calling the provider. If the provider then
-returns an unknown outcome, CAPYN does not issue another `EXECUTE` claim. Once
-the execution lease expires it issues a separately bound `RECONCILE` claim for
-the next attempt and calls the provider's read-only reconciliation operation
-with the original execution ID.
+The Gate owns the provider invocation. The control plane does not call the
+provider after a remote verification response, because doing so would leave
+the credential and bypass path in the control-plane trust zone.
 
-Gate verification failures are definitive failures because no provider call
-has occurred. Exceptions after successful Gate consumption remain unknown
-outcomes until reconciliation proves otherwise.
+Pre-consumption signature, context or control-channel rejection is a
+definitive failure: the Gate did not invoke the provider. Replay rejection is
+different—it proves the claim was consumed earlier, so a provider call may
+already exist. Replay, timeout, connection loss, HTTP 5xx or malformed response
+is therefore ambiguous. CAPYN keeps that execution
+`EXECUTING`, waits for the lease, then issues a separately bound `RECONCILE`
+claim for the next attempt. It never converts transport ambiguity into a fresh
+`EXECUTE`.
 
-## Replay boundary
+## Durable replay boundary
 
 `ExecutionGate` uses an injected `ExecutionClaimReplayStore`. Its `consume`
-operation must atomically create one record for a claim ID and return false if
-that ID already exists. Replay entries must outlive the claim plus the accepted
-clock-skew window.
+operation must atomically create one record and return false when the key
+already exists.
 
-The included in-memory implementation provides atomic single-process behavior
-for tests and the mock alpha. It deliberately retains consumed IDs beyond
-expiry so a token accepted within verifier clock skew cannot be replayed after
-the nominal expiry time.
+The deployable service uses `PrismaExecutionClaimReplayStore`. PostgreSQL's
+composite primary key over `(namespace, claim_id)` is the atomic insert-if-absent
+barrier shared by every Gate replica. The namespace binds issuer, audience and
+Gate identity, so two independent Gates can consume claims without sharing an
+accidental global key space. Storage failure propagates and stops execution.
 
-A production multi-replica Gate requires a durable shared store with an atomic
-insert-if-absent primitive. A process-local map is not sufficient.
+Consumed records are retained; the current service does not run automated
+cleanup. An operator may add bounded cleanup only after the claim expiry,
+accepted skew and incident-retention window. Deleting active replay evidence
+early would reopen a claim.
+
+The in-memory store remains available for tests and the local mock only.
+Production configuration explicitly refuses it.
+
+## Control channel and key configuration
+
+The API and Gate use a separate high-entropy bearer secret for workload
+authentication in addition to the signed claim. Both services redact the
+authorization header. Run the channel over authenticated private networking or
+TLS; the bearer secret is not a replacement for transport security or mTLS.
+
+The control plane reads one base64-encoded PKCS#8 P-256 private PEM, stable key
+ID, issuer and audience. The Gate receives only a base64-encoded JSON map of key
+IDs to SPKI public PEMs, allowing overlapping verification keys during
+rotation. Partial remote configuration fails startup.
+
+This is persistent secret-manager-compatible PEM configuration, not a KMS/HSM
+signing implementation. Before live authority, replace application-loaded
+private key material with a reviewed KMS/HSM signer and exercise rotation,
+recovery and revocation procedures.
+
+## Gate receipts
+
+Every consumed invocation returns a strict receipt containing the Gate ID,
+claim ID, request hash, operation, provider, outcome, provider reference,
+timestamps and a canonical SHA-256 receipt digest. The HTTP client checks every
+field against the dispatched request before the API records the digest and Gate
+timestamps in audit metadata.
+
+The digest detects accidental drift in the returned structure. It is **not a
+signature** and does not independently prove that AWS or another provider
+executed an action. Provider-native evidence, independently signed Gate
+receipts and externally anchored audit export remain production work.
+
+## AWS dry-run blueprint
+
+The shipped adapter accepts only capability
+`aws.ec2.run-instances.dry-run`, vendor `aws`, `mode=DRY_RUN`, environment
+`sandbox`, one configured blueprint, its exact region and one instance. The
+approved amount cannot exceed the blueprint's configured projected monthly
+cost. Strict metadata rejects arbitrary AWS operation names, extra fields,
+unknown blueprints, region drift and instance-count drift.
+
+An accepted call returns an `aws_dry_run_*` reference. That means the CAPYN
+boundary and fixed blueprint were exercised; it does **not** mean the AWS API
+was contacted. Live `RunInstances` is deliberately unsupported.
 
 ## Provider isolation requirement
 
-Cryptographic claims are useful only if the agent cannot bypass the Gate. A
-production adapter must therefore satisfy all of the following:
+A real adapter must satisfy all of the following:
 
-1. the provider credential, signer or assumed role is unavailable to the
-   agent and model context;
+1. the provider credential, signer or assumed role is unavailable to the agent,
+   model context and control-plane API;
 2. only the Gate workload can use or assume that authority;
 3. the Gate validates a CAPYN claim before every consequential call;
-4. the provider request is constructed from the exact bound action;
+4. the provider request is constructed from the exact bound action and fixed
+   adapter schema;
 5. provider idempotency and reconciliation use the CAPYN execution ID;
-6. provider evidence is returned and bound to the CAPYN execution record.
+6. provider-native evidence is returned and bound to the CAPYN execution
+   record.
 
-If an agent retains a separate provider credential with equivalent authority,
-CAPYN remains advisory no matter how strong the claim signature is.
-
-## Key operations
-
-The ephemeral P-256 helper exists only for local tests and the mock executor.
-Attaching any non-mock executor without an explicitly configured authority and
-Gate fails at service construction.
-
-Production requires:
-
-- persistent KMS/HSM-backed P-256 signing keys outside application storage;
-- explicit key IDs and overlapping public-key rotation;
-- workload-authenticated control-to-Gate transport;
-- a stable issuer and per-Gate audience;
-- clock monitoring and bounded skew;
-- durable replay storage shared by every Gate replica;
-- audit export for claim issuance, consumption and provider outcome.
-
-The signing key proves that the CAPYN control plane issued a claim. It does not
-by itself prove that a provider executed the action. Portable signed execution
-receipts and externally anchored audit evidence remain separate production
-work.
+If the agent or API retains equivalent direct provider authority, CAPYN remains
+advisory no matter how strong the claim signature is.
 
 ## Test evidence
 
-Package tests cover exact-action binding, token tampering, expiry, audience
-isolation, concurrent replay and separately bound reconciliation attempts. API
-integration tests prove that a valid claim reaches the provider and a claim
-signed by an untrusted key finalizes as failed without invoking it.
+Tests cover exact-action binding, token tampering, expiry, audience isolation,
+concurrent replay, PostgreSQL uniqueness handling, separately bound
+reconciliation, conservative replay classification, HTTP control
+authentication, receipt matching, remote replay,
+AWS blueprint drift and the complete control-plane-to-remote-Gate path.
 
 Run the focused checks:
 
 ```bash
 corepack pnpm --filter @capyn/gate test
+corepack pnpm --filter @capyn/database test
+corepack pnpm --filter @capyn/gate-service test
 corepack pnpm --filter @capyn/api test
 ```
+
+See [Configuration](configuration.md), [Deployment](deployment.md) and
+[Security](security.md) before deploying this boundary.

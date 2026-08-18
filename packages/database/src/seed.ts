@@ -110,6 +110,7 @@ async function seed(): Promise<void> {
     await tx.mandateCapability.createMany({
       data: [
         { mandateId, capability: "spend.compute" },
+        { mandateId, capability: "aws.ec2.run-instances.dry-run" },
         { mandateId, capability: "spend.api" }
       ],
       skipDuplicates: true

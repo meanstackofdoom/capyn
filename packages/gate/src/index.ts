@@ -520,3 +520,373 @@ export function createEphemeralExecutionAuthority(
     publicKeyPem: pair.publicKey
   };
 }
+
+export const executionRequestSchema = z
+  .object({
+    executionId: identifierSchema,
+    authorizationId: identifierSchema,
+    organisationId: identifierSchema,
+    agentId: identifierSchema,
+    capability: z.string().trim().min(3).max(100),
+    amountMinor: z.string().regex(/^[1-9]\d{0,13}$/),
+    currency: z.literal("USD"),
+    vendor: z
+      .object({
+        id: z.string().trim().min(1).max(100),
+        name: z.string().trim().min(1).max(160).nullable()
+      })
+      .strict(),
+    metadata: z.record(jsonValueSchema),
+    mandateId: identifierSchema,
+    requestHash: sha256Schema,
+    attemptCount: z.number().int().positive()
+  })
+  .strict();
+
+export type ExecutionRequest = z.infer<typeof executionRequestSchema>;
+
+export const paymentExecutionResultSchema = z
+  .object({
+    status: z.enum(["EXECUTED", "FAILED", "UNKNOWN"]),
+    reference: z.string().trim().min(1).max(200).nullable(),
+    errorCode: z.string().trim().min(1).max(100).nullable()
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.status === "EXECUTED" && (value.reference === null || value.errorCode !== null)) {
+      context.addIssue({
+        code: "custom",
+        message: "An executed provider result requires a reference and no error code"
+      });
+    }
+    if (value.status !== "EXECUTED" && value.errorCode === null) {
+      context.addIssue({ code: "custom", message: "A non-executed provider result requires an error code" });
+    }
+  });
+
+export type PaymentExecutionResult = z.infer<typeof paymentExecutionResultSchema>;
+
+export interface PaymentExecutor {
+  readonly name: string;
+  execute(request: ExecutionRequest): Promise<PaymentExecutionResult>;
+  reconcile(request: ExecutionRequest): Promise<PaymentExecutionResult>;
+}
+
+export function executionClaimContextFromRequest(
+  request: ExecutionRequest,
+  operation: ExecutionClaimOperation
+): ExecutionClaimContext {
+  const result = executionRequestSchema.safeParse(request);
+  if (!result.success) {
+    throw new ExecutionClaimError("CLAIM_CONTEXT_MISMATCH", "The execution request is malformed");
+  }
+  const parsed = result.data;
+  const context: ExecutionClaimContext = {
+    operation,
+    organisationId: parsed.organisationId,
+    agentId: parsed.agentId,
+    mandateId: parsed.mandateId,
+    authorizationId: parsed.authorizationId,
+    executionId: parsed.executionId,
+    attempt: parsed.attemptCount,
+    action: {
+      capability: parsed.capability,
+      amountMinor: parsed.amountMinor,
+      currency: parsed.currency,
+      vendor: parsed.vendor,
+      metadata: parsed.metadata
+    }
+  };
+  if (executionActionHash(context.action) !== parsed.requestHash) {
+    throw new ExecutionClaimError(
+      "CLAIM_CONTEXT_MISMATCH",
+      "The stored authorization fingerprint does not match the execution action"
+    );
+  }
+  return context;
+}
+
+export const executionGatewayRequestSchema = z
+  .object({
+    claim: z.string().min(1).max(16_384),
+    operation: z.enum(EXECUTION_CLAIM_OPERATIONS),
+    request: executionRequestSchema
+  })
+  .strict();
+
+export type ExecutionGatewayRequest = z.infer<typeof executionGatewayRequestSchema>;
+
+const gateReceiptBaseSchema = z
+  .object({
+    version: z.literal(1),
+    gateId: identifierSchema,
+    claimId: sha256Schema,
+    operation: z.enum(EXECUTION_CLAIM_OPERATIONS),
+    provider: identifierSchema,
+    requestHash: sha256Schema,
+    outcome: z.enum(["EXECUTED", "FAILED", "UNKNOWN"]),
+    reference: z.string().trim().min(1).max(200).nullable(),
+    errorCode: z.string().trim().min(1).max(100).nullable(),
+    consumedAt: z.string().datetime({ offset: true }),
+    completedAt: z.string().datetime({ offset: true })
+  })
+  .strict();
+
+export const executionGateReceiptSchema = gateReceiptBaseSchema
+  .extend({ receiptHash: sha256Schema })
+  .strict();
+
+export type ExecutionGateReceipt = z.infer<typeof executionGateReceiptSchema>;
+
+export const executionGatewayResultSchema = z
+  .object({
+    result: paymentExecutionResultSchema,
+    receipt: executionGateReceiptSchema
+  })
+  .strict();
+
+export type ExecutionGatewayResult = z.infer<typeof executionGatewayResultSchema>;
+
+export function executionGateReceiptHash(
+  receipt: Omit<ExecutionGateReceipt, "receiptHash">
+): string {
+  return sha256(canonicalJson(gateReceiptBaseSchema.parse(receipt)));
+}
+
+export interface ExecutionGateway {
+  readonly name: string;
+  invoke(request: ExecutionGatewayRequest): Promise<ExecutionGatewayResult>;
+}
+
+export interface LocalExecutionGatewayConfig {
+  gateId: string;
+  gate: ExecutionGate;
+  executor: PaymentExecutor;
+  clock?: () => Date;
+}
+
+export class LocalExecutionGateway implements ExecutionGateway {
+  readonly name: string;
+  private readonly gateId: string;
+  private readonly gate: ExecutionGate;
+  private readonly executor: PaymentExecutor;
+  private readonly clock: () => Date;
+
+  constructor(config: LocalExecutionGatewayConfig) {
+    this.gateId = identifierSchema.parse(config.gateId);
+    this.gate = config.gate;
+    this.executor = config.executor;
+    this.name = identifierSchema.parse(config.executor.name);
+    this.clock = config.clock ?? (() => new Date());
+  }
+
+  async invoke(invocation: ExecutionGatewayRequest): Promise<ExecutionGatewayResult> {
+    const parsed = executionGatewayRequestSchema.parse(invocation);
+    const context = executionClaimContextFromRequest(parsed.request, parsed.operation);
+    const payload = await this.gate.consume(parsed.claim, context);
+    const consumedAt = this.clock().toISOString();
+    let result: PaymentExecutionResult;
+    try {
+      const providerResult = parsed.operation === "RECONCILE"
+        ? await this.executor.reconcile(parsed.request)
+        : await this.executor.execute(parsed.request);
+      const validated = paymentExecutionResultSchema.safeParse(providerResult);
+      result = validated.success
+        ? validated.data
+        : { status: "UNKNOWN", reference: null, errorCode: "PROVIDER_INVALID_RESPONSE" };
+    } catch {
+      result = { status: "UNKNOWN", reference: null, errorCode: "PROVIDER_OUTCOME_UNKNOWN" };
+    }
+    const receiptBase: Omit<ExecutionGateReceipt, "receiptHash"> = {
+      version: 1,
+      gateId: this.gateId,
+      claimId: payload.jti,
+      operation: parsed.operation,
+      provider: this.name,
+      requestHash: payload.requestHash,
+      outcome: result.status,
+      reference: result.reference,
+      errorCode: result.errorCode,
+      consumedAt,
+      completedAt: this.clock().toISOString()
+    };
+    return {
+      result,
+      receipt: { ...receiptBase, receiptHash: executionGateReceiptHash(receiptBase) }
+    };
+  }
+}
+
+export const EXECUTION_GATEWAY_REJECTION_CODES = [
+  "CONTROL_CHANNEL_REJECTED",
+  "REQUEST_REJECTED"
+] as const;
+
+export type ExecutionGatewayRejectionCode = (typeof EXECUTION_GATEWAY_REJECTION_CODES)[number];
+
+export class ExecutionGatewayRejectedError extends Error {
+  override readonly name = "ExecutionGatewayRejectedError";
+
+  constructor(
+    readonly code: ExecutionGatewayRejectionCode,
+    message: string
+  ) {
+    super(message);
+  }
+}
+
+interface GatewayErrorBody {
+  error?: { code?: unknown; message?: unknown };
+}
+
+function remoteClaimError(body: GatewayErrorBody, status: number): ExecutionClaimError | null {
+  if (status !== 409 && status !== 422) return null;
+  const code = body.error?.code;
+  if (typeof code !== "string" || !code.startsWith("GATE_")) return null;
+  const claimCode = code.slice(5);
+  if (!(EXECUTION_CLAIM_ERROR_CODES as readonly string[]).includes(claimCode)) return null;
+  const message = typeof body.error?.message === "string"
+    ? body.error.message
+    : "The remote Gate rejected the execution claim";
+  return new ExecutionClaimError(claimCode as ExecutionClaimErrorCode, message);
+}
+
+function remoteGatewayRejection(body: GatewayErrorBody, status: number): ExecutionGatewayRejectedError | null {
+  const code = body.error?.code;
+  if ((status === 401 || status === 403) && code === "GATE_CONTROL_CHANNEL_REJECTED") {
+    return new ExecutionGatewayRejectedError(
+      "CONTROL_CHANNEL_REJECTED",
+      "The remote Gate rejected control-plane authentication"
+    );
+  }
+  if (status === 400 && code === "GATE_REQUEST_INVALID") {
+    return new ExecutionGatewayRejectedError("REQUEST_REJECTED", "The remote Gate rejected the invocation");
+  }
+  return null;
+}
+
+export interface HttpExecutionGatewayConfig {
+  baseUrl: string;
+  controlToken: string;
+  providerName: string;
+  expectedGateId: string;
+  timeoutMs?: number;
+  fetchImplementation?: typeof fetch;
+}
+
+const MAXIMUM_GATE_RESPONSE_BYTES = 65_536;
+
+async function readGateResponse(response: Response): Promise<string> {
+  const contentLength = response.headers.get("content-length");
+  if (contentLength !== null) {
+    const declaredBytes = Number(contentLength);
+    if (Number.isFinite(declaredBytes) && declaredBytes > MAXIMUM_GATE_RESPONSE_BYTES) {
+      throw new Error("Execution Gate response exceeded the maximum size");
+    }
+  }
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      totalBytes += chunk.value.byteLength;
+      if (totalBytes > MAXIMUM_GATE_RESPONSE_BYTES) {
+        try {
+          await reader.cancel();
+        } catch {
+          // The size failure remains authoritative even if stream cancellation fails.
+        }
+        throw new Error("Execution Gate response exceeded the maximum size");
+      }
+      chunks.push(chunk.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk))).toString("utf8");
+}
+
+export class HttpExecutionGateway implements ExecutionGateway {
+  readonly name: string;
+  private readonly endpoint: URL;
+  private readonly controlToken: string;
+  private readonly expectedGateId: string;
+  private readonly timeoutMs: number;
+  private readonly fetchImplementation: typeof fetch;
+
+  constructor(config: HttpExecutionGatewayConfig) {
+    const baseUrl = new URL(config.baseUrl);
+    if (baseUrl.protocol !== "http:" && baseUrl.protocol !== "https:") {
+      throw new Error("Execution Gate URL must use HTTP or HTTPS");
+    }
+    if (config.controlToken.length < 32) throw new Error("Execution Gate control token must be at least 32 characters");
+    this.endpoint = new URL("v1/invoke", baseUrl.href.endsWith("/") ? baseUrl : `${baseUrl.href}/`);
+    this.controlToken = config.controlToken;
+    this.name = identifierSchema.parse(config.providerName);
+    this.expectedGateId = identifierSchema.parse(config.expectedGateId);
+    this.timeoutMs = integerWithin(config.timeoutMs ?? 10_000, 100, 120_000, "Execution Gate timeout");
+    this.fetchImplementation = config.fetchImplementation ?? fetch;
+  }
+
+  async invoke(invocation: ExecutionGatewayRequest): Promise<ExecutionGatewayResult> {
+    const parsed = executionGatewayRequestSchema.parse(invocation);
+    const context = executionClaimContextFromRequest(parsed.request, parsed.operation);
+    const expectedClaimId = executionClaimId(context);
+    const response = await this.fetchImplementation(this.endpoint, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${this.controlToken}`,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify(parsed),
+      signal: AbortSignal.timeout(this.timeoutMs)
+    });
+    const responseText = await readGateResponse(response);
+    let body: unknown = null;
+    try {
+      body = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      throw new Error("Execution Gate returned malformed JSON");
+    }
+    if (!response.ok) {
+      const errorBody = body !== null && typeof body === "object" ? body as GatewayErrorBody : {};
+      const claimError = remoteClaimError(errorBody, response.status);
+      if (claimError) throw claimError;
+      const rejection = remoteGatewayRejection(errorBody, response.status);
+      if (rejection) throw rejection;
+      throw new Error(`Execution Gate failed with HTTP ${response.status}`);
+    }
+    const result = executionGatewayResultSchema.safeParse(body);
+    if (!result.success) throw new Error("Execution Gate returned an invalid result");
+    const receipt = result.data.receipt;
+    if (
+      receipt.gateId !== this.expectedGateId ||
+      receipt.provider !== this.name ||
+      receipt.claimId !== expectedClaimId ||
+      receipt.operation !== parsed.operation ||
+      receipt.requestHash !== parsed.request.requestHash ||
+      receipt.outcome !== result.data.result.status ||
+      receipt.reference !== result.data.result.reference ||
+      receipt.errorCode !== result.data.result.errorCode ||
+      executionGateReceiptHash({
+        version: receipt.version,
+        gateId: receipt.gateId,
+        claimId: receipt.claimId,
+        operation: receipt.operation,
+        provider: receipt.provider,
+        requestHash: receipt.requestHash,
+        outcome: receipt.outcome,
+        reference: receipt.reference,
+        errorCode: receipt.errorCode,
+        consumedAt: receipt.consumedAt,
+        completedAt: receipt.completedAt
+      }) !== receipt.receiptHash
+    ) {
+      throw new Error("Execution Gate receipt does not match the invocation");
+    }
+    return result.data;
+  }
+}

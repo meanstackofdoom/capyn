@@ -10,7 +10,8 @@
   "scripts": {
     "build": "turbo run build",
     "start": "node scripts/start-service.mjs",
-    "dev": "turbo run dev --parallel",
+    "dev": "turbo run dev --parallel --filter=@capyn/api --filter=@capyn/web",
+    "dev:gate": "pnpm --filter @capyn/gate-service dev",
     "lint": "pnpm db:generate && eslint . --max-warnings=0",
     "security:audit": "pnpm audit --prod --audit-level high",
     "docs:check": "node scripts/check-docs.mjs",

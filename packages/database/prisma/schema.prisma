@@ -400,3 +400,14 @@ model AuditEvent {
   @@index([organisationId, eventType, timestamp(sort: Desc)])
   @@map("audit_events")
 }
+
+model ExecutionClaimConsumption {
+  namespace  String   @db.VarChar(240)
+  claimId    String   @map("claim_id") @db.Char(64)
+  expiresAt  DateTime @map("expires_at")
+  consumedAt DateTime @default(now()) @map("consumed_at")
+
+  @@id([namespace, claimId])
+  @@index([expiresAt])
+  @@map("execution_claim_consumptions")
+}

@@ -95,19 +95,32 @@ Returns the normalized request, lifecycle state, decision, reasons and complete 
 
 ### `POST /v1/authorizations/:id/execute`
 
-Executes one unexpired `ALLOWED` or `APPROVED` authorization. The current alpha returns a simulated provider reference. A denied, rejected or expired authorization returns `409` or `410`.
+Executes one unexpired `ALLOWED` or `APPROVED` authorization. The hosted alpha
+returns a simulated provider reference. A configured remote Gate can instead
+return the shipped `aws_dry_run_*` boundary-rehearsal reference; it still does
+not call AWS or provision anything. A denied, rejected or expired authorization
+returns `409` or `410`.
 
 CAPYN creates one execution ID before calling the provider and holds a short execution lease. If the provider response is lost or explicitly uncertain, the authorization remains `EXECUTING` and the API returns `409 EXECUTION_OUTCOME_UNKNOWN`; CAPYN does not translate ambiguity into failure or issue a replacement payment. A retry before the lease expires returns `409 EXECUTION_IN_PROGRESS`. After expiry, the same endpoint calls the owning executor's `reconcile()` method with the original execution ID. A known result is finalized once; an unresolved result remains reserved and returns `EXECUTION_OUTCOME_UNKNOWN` again.
 
 Immediately before either provider operation, CAPYN issues a short-lived ES256
-execution claim bound to the exact stored request and leased attempt. The Gate
-must verify and atomically consume that claim before the provider is invoked.
-Gate verification failure is recorded as a definitive failed execution because
-the provider has not been called. The signed token is an internal
-control-to-Gate credential and is never returned to the agent. See
-[Execution Gate](execution-gate.md).
+execution claim bound to the exact stored request and leased attempt. In remote
+mode, the API sends that claim and request to the authenticated Gate; the Gate
+verifies, atomically consumes and invokes its provider adapter. A
+pre-consumption signature/context or control-channel rejection is a definitive
+failure because the provider was not called. Replay rejection, timeout,
+connection loss, 5xx or malformed Gate response is
+`EXECUTION_OUTCOME_UNKNOWN`, because execution may already have crossed the
+remote boundary. The signed token and Gate control secret are never returned to
+the agent. See [Execution Gate](execution-gate.md).
 
-Real executors must use `executionId` as their provider idempotency/reconciliation key. They must distinguish definitive failure from unknown outcome and implement read-only reconciliation. The agent must not retain an equivalent direct provider credential. Request-driven recovery and the in-process claim protocol are implemented, while an externally deployed Gate, durable replay storage, automatic background scanning, provider-specific alerts and a transactional outbox remain production follow-up work.
+Real executors must use `executionId` as their provider
+idempotency/reconciliation key. They must distinguish definitive failure from
+unknown outcome and implement read-only reconciliation. The agent and control
+API must not retain an equivalent direct provider credential. The external Gate
+and PostgreSQL replay adapter are implemented; automatic background scanning,
+a transactional outbox, provider-native reconciliation/evidence, signed
+receipts and a real provider adapter remain production follow-up work.
 
 ## Human management endpoints
 

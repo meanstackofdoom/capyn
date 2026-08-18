@@ -55,6 +55,20 @@ Local endpoints:
 | REST API | `http://localhost:4000` |
 | API health | `http://localhost:4000/health` |
 
+The default `pnpm dev` intentionally starts only web and API, leaving execution
+on the safe local mock. A remote Gate is an explicit second deployment. After
+configuring its public keys, replay database, control token and fixed blueprint
+from [Configuration](configuration.md), start it with:
+
+```bash
+corepack pnpm dev:gate
+```
+
+Gate liveness is `http://localhost:4100/healthz`; readiness is
+`http://localhost:4100/ready`. The shipped provider performs no AWS network
+call. The full control-to-Gate gauntlet is covered by the API and Gate service
+test suites rather than enabled by the default local environment.
+
 The seeded local user is `usr_demo_owner`. The seeded agent key is intentionally documented in [REST API](api.md); it is valid only for disposable local or explicitly published CAPYN demo environments and must never protect durable data or real authority.
 
 The commissioning page requires both web and API services. It creates a stateless 30-minute sandbox credential, evaluates a first authenticated action and emits portable synthetic proof without modifying the seeded repository. After proof, the onboarding rail can create owner and agent credentials plus a workspace record. In the default memory configuration that final step is explicitly labelled a process-memory rehearsal and resets with the API; use the volume journal for a single process or PostgreSQL for a scale-out durable result. See [Sandbox commissioning](sandbox-commissioning.md) and [Durable onboarding](durable-onboarding.md).

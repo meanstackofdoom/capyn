@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createDemoMemoryRepository, hashApiKey, type InMemoryCapynRepository } from "@capyn/database";
-import { createEphemeralExecutionAuthority } from "@capyn/gate";
+import { LocalExecutionGateway, createEphemeralExecutionAuthority } from "@capyn/gate";
 import { buildApp } from "../src/app";
 import type { BillingProvider } from "../src/domain/billing-provider";
 import type { ExecutionAuthority, PaymentExecutor } from "../src/domain/execution-service";
@@ -23,13 +23,23 @@ export async function createTestContext(options: {
 } = {}): Promise<TestContext> {
   const { repository } = createDemoMemoryRepository(hashApiKey(DEMO_KEY, TEST_PEPPER));
   const clock = options.clock ?? (() => new Date(TEST_NOW));
-  const executionAuthority = options.executionAuthority ?? (options.executor
-    ? createEphemeralExecutionAuthority({
+  let executionAuthority = options.executionAuthority;
+  if (!executionAuthority && options.executor) {
+    const ephemeral = createEphemeralExecutionAuthority({
         issuer: "urn:capyn:control:test",
         audience: `urn:capyn:gate:${options.executor.name}`,
         clock
+    });
+    executionAuthority = {
+      issuer: ephemeral.issuer,
+      gateway: new LocalExecutionGateway({
+        gateId: `capyn-test-${options.executor.name}`,
+        gate: ephemeral.gate,
+        executor: options.executor,
+        clock
       })
-    : undefined);
+    };
+  }
   const app = await buildApp({
     repository,
     apiKeyPepper: TEST_PEPPER,
@@ -40,7 +50,6 @@ export async function createTestContext(options: {
     logger: process.env.CAPYN_TEST_LOGS === "true",
     disableRateLimit: true,
     ...(options.billingProvider ? { billingProvider: options.billingProvider } : {}),
-    ...(options.executor ? { executor: options.executor } : {}),
     ...(executionAuthority ? { executionAuthority } : {})
   });
   return { app, repository };

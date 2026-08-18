@@ -4,15 +4,18 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 ## Unreleased
 
-### Request-bound execution Gate
+### Deployable execution Gate
 
 - Added `@capyn/gate`, a narrow MIT-licensed package for short-lived ES256 execution claims, exact-action verification and injected atomic replay storage.
 - Bound each claim to the organisation, agent, mandate, authorization, execution, leased attempt, operation and canonical request fingerprint.
 - Added separate `EXECUTE` and `RECONCILE` claims so recovery cannot reopen the original provider operation.
-- Placed Gate verification and one-time consumption immediately before every mock provider call; verification failure now fails closed without invoking the provider.
-- Refused non-mock executor construction unless an explicit authority and Gate are supplied.
-- Added adversarial package and API tests for action drift, signature tampering, expiry, audience isolation, concurrent replay, clock-skew retention, reconciliation binding and provider isolation.
-- Documented the deliberately incomplete production boundary: persistent KMS/HSM keys, durable shared replay state, authenticated transport, external Gate deployment and exclusive provider credentials remain mandatory.
+- Refactored execution behind one `ExecutionGateway` call so a remote Gate owns both claim consumption and provider invocation; the control API no longer verifies remotely and then calls a provider locally.
+- Added an authenticated Fastify Gate service, strict HTTP client, request-matched Gate receipts and conservative ambiguous-transport handling.
+- Added a namespaced PostgreSQL claim-consumption table and atomic unique-key replay store shared across Gate replicas; production Gate configuration refuses in-memory replay.
+- Added persistent P-256 PEM/key-ID configuration with overlapping public verification keys and fail-closed partial configuration.
+- Added a fixed AWS EC2 dry-run blueprint adapter that rejects arbitrary operations, extra metadata, unknown blueprints, region drift and projected-cost drift. It deliberately performs no AWS network call and cannot create resources.
+- Added adversarial package, database, Gate-service and API tests for action drift, signature tampering, expiry, audience isolation, concurrent replay, durable uniqueness, control authentication, receipt matching, reconciliation binding and the complete API-to-remote-Gate path.
+- Documented the deliberately incomplete live boundary: KMS/HSM signing, an exclusive provider role, a reviewed real adapter, provider-native evidence, signed receipts, outbox automation and alerting remain mandatory.
 
 ## v0.4.0 — 2026-08-18
 

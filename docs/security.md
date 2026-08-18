@@ -74,20 +74,23 @@ Production defence in depth should add PostgreSQL row-level security or isolated
 
 ### Execution claims and Gate
 
-- Every mock provider execution and reconciliation attempt is preceded by a short-lived ES256 claim with the protected type `capyn-execution+jwt`.
+- Every provider execution and reconciliation attempt is preceded by a short-lived ES256 claim with protected type `capyn-execution+jwt`.
 - The claim binds the exact organisation, agent, mandate, authorization, execution, leased attempt, operation and canonical request hash.
-- The Gate verifies the signature before evaluating caller-supplied context, requires the configured issuer and exact audience, and enforces a bounded lifetime.
-- The stored authorization fingerprint must match the reconstructed execution action before CAPYN issues the provider call.
-- The Gate atomically consumes the deterministic claim ID before invoking the provider. Replay entries outlive token expiry and accepted clock skew.
+- The Gate verifies the signature before evaluating request context, requires the configured issuer and exact audience, and enforces a bounded lifetime.
+- The stored authorization fingerprint must match the reconstructed execution action before CAPYN dispatches to a gateway.
+- The Gate atomically consumes the deterministic claim ID before invoking the provider. `PrismaExecutionClaimReplayStore` uses a namespaced PostgreSQL primary key shared across replicas; storage failure stops execution.
 - `EXECUTE` and read-only `RECONCILE` claims are distinct; reconciliation cannot reopen the original execution operation.
-- Gate rejection finalizes as failure without invoking the provider. Exceptions after claim consumption remain unknown until reconciliation.
-- A non-mock executor cannot attach to `ExecutionService` without an explicitly supplied authority and Gate.
-- Claim IDs, operation, request hash, key ID and audience are retained in execution audit metadata.
+- In remote mode the Gate, not the API, owns provider invocation. The agent and API must not hold equivalent provider authority.
+- Pre-consumption signature/context and control rejection finalizes as failure. Replay, network loss or server failure is unknown because the Gate may already have consumed and invoked; reconciliation is the only safe next operation.
+- The API validates the Gate ID, provider, claim, action, outcome and receipt digest before retaining Gate evidence in execution audit metadata.
+- Production Gate configuration refuses process-local replay storage.
 
-The current in-process Gate uses an ephemeral key and process-local replay store
-only with the mock executor. Production requires persistent KMS/HSM-backed keys,
-durable shared replay storage, workload-authenticated transport and exclusive
-Gate access to the downstream provider credential. See [Execution Gate](execution-gate.md).
+The hosted alpha still uses an ephemeral in-process Gate and mock executor. The
+repository also includes an authenticated deployable Gate, PostgreSQL replay
+adapter, key rotation map and fixed AWS dry-run blueprint. The dry-run adapter
+does not load AWS credentials or call AWS. Persistent PEM configuration is not
+a KMS/HSM signer, and receipt digests are not signatures. See
+[Execution Gate](execution-gate.md).
 
 ### Concurrent spend accounting
 
@@ -129,7 +132,10 @@ For regulated deployments, add immutable external export, retention policy, cloc
 - The fixed public agent key lets visitors consume the isolated synthetic demo's allowance. Rate limits bound request volume and the public instance makes no availability promise; durable workspaces receive unique revocable agent credentials.
 - The current Railway volume journal is a single-process hosted-alpha fallback. It has atomic checkpoints but no multi-replica locking, managed backups, point-in-time recovery or database row-level security.
 - `MockPaymentExecutor` moves no funds.
-- The alpha Gate runs in the API process with an ephemeral signing key and in-memory replay state. It proves the cryptographic contract but is not a remote credential boundary, durable replay service or portable signed execution receipt.
+- The public alpha selects the in-process mock Gate. The remote Gate and durable replay implementation are test-backed but are not deployed as the public alpha's credential boundary.
+- The only shipped remote provider is a no-network AWS blueprint dry run. There is no reviewed live provider adapter, exclusive AWS role, CloudTrail evidence or chargeable operation.
+- The control plane currently loads base64 PKCS#8 private PEM from its secret scope. KMS/HSM signing, rotation automation and recovery drills are not implemented.
+- Gate receipts carry a checked canonical digest but are not independently signed or externally anchored.
 - Request-driven leased reconciliation can recover an `EXECUTING` record after a lost provider response, but no background worker scans stale leases yet. Real adapters still require provider idempotency, a transactional outbox, automated reconciliation and alerting.
 - Rate-limit state is process-local.
 - Awaiting approvals do not reserve spend for 24 hours. Hard limits are rechecked at approval time instead.
@@ -148,7 +154,7 @@ Before real money:
 - treasury-level reservation model;
 - distributed rate limiting and abuse detection;
 - one reviewed real executor plus transactional outbox, automated reconciliation and alerting;
-- a separately deployed or customer-controlled Gate with exclusive provider authority, durable atomic replay storage and authenticated transport;
+- a separately deployed or customer-controlled Gate with exclusive provider authority, the implemented durable atomic replay store, authenticated private transport and tested database recovery;
 - persistent KMS/HSM-backed execution-claim keys with rotation and recovery procedures;
 - secret-manager integration and deployment-pepper rotation;
 - encrypted backups, tested restore and disaster recovery;

@@ -19,12 +19,60 @@ CAPYN uses environment variables at the API and web process boundaries. `.env.ex
 | `DEMO_HUMAN_AUTH` | `true` locally | No | Enables the development-only `x-capyn-user-id` adapter. Must be `false` outside a demo. |
 | `DEMO_HUMAN_USER_ID` | `usr_demo_owner` locally | Production demo | Pins the demo header adapter to exactly one seeded user. Required when demo auth is enabled with `NODE_ENV=production`. |
 | `BOOTSTRAP_TOKEN` | Local placeholder | No | Enables organisation bootstrap when present. Omit after controlled onboarding. |
+| `CAPYN_EXECUTION_MODE` | `local-mock` | No | Selects the ephemeral in-process mock or the configured remote Gate. |
+| `CAPYN_EXECUTION_GATE_URL` | unset | Remote Gate | Base URL for the separately deployed Gate. |
+| `CAPYN_EXECUTION_GATE_CONTROL_TOKEN` | unset | Remote Gate | High-entropy workload credential sent only from the API to the Gate. |
+| `CAPYN_EXECUTION_GATE_ID` | unset | Remote Gate | Exact Gate identity expected in every returned receipt. |
+| `CAPYN_EXECUTION_PROVIDER_NAME` | unset | Remote Gate | Exact provider identity expected in execution records and Gate receipts. The shipped value is `aws-ec2-dry-run`. |
+| `CAPYN_EXECUTION_ISSUER` | unset | Remote Gate | Stable execution-claim issuer. Must match the Gate verifier. |
+| `CAPYN_EXECUTION_AUDIENCE` | unset | Remote Gate | Exact Gate audience. Must match the Gate verifier. |
+| `CAPYN_EXECUTION_KEY_ID` | unset | Remote Gate | Active P-256 signing-key ID. |
+| `CAPYN_EXECUTION_PRIVATE_KEY_B64` | unset | Remote Gate | Base64 PKCS#8 P-256 private PEM. Keep only in the control-plane secret scope. |
+| `CAPYN_EXECUTION_CLAIM_TTL_SECONDS` | `30` | No | Claim lifetime, bounded to 1–300 seconds. The Gate may enforce a smaller maximum. |
+| `CAPYN_EXECUTION_GATE_TIMEOUT_MS` | `10000` | No | HTTP deadline. A timeout is recorded as an unknown outcome, never a safe failure. |
 | `STRIPE_SECRET_KEY` | unset | Hosted billing | Server-side Stripe key. Never expose it to the web bundle. |
 | `STRIPE_WEBHOOK_SECRET` | unset | Hosted billing | Verifies the exact raw body delivered by Stripe. |
 | `STRIPE_PRICE_TEAM_MONTHLY` | unset | Hosted billing | Stripe recurring base-price ID for Team. |
 | `STRIPE_PRICE_BUSINESS_MONTHLY` | unset | Hosted billing | Stripe recurring base-price ID for Business. |
 
-The API refuses to start in PostgreSQL mode without `DATABASE_URL`, in volume mode without `CAPYN_VOLUME_PATH`, with an `API_KEY_PEPPER` shorter than 32 characters, when production demo auth is not pinned to one user, or when only part of the Stripe configuration is present. Leave all four Stripe variables absent to keep checkout disabled while the free/internal plan remains usable.
+The API refuses to start in PostgreSQL mode without `DATABASE_URL`, in volume mode without `CAPYN_VOLUME_PATH`, with an `API_KEY_PEPPER` shorter than 32 characters, when production demo auth is not pinned to one user, or when only part of the Stripe or remote-Gate configuration is present. Remote variables are rejected unless `CAPYN_EXECUTION_MODE=remote-gate`; otherwise the safe local mock remains selected.
+
+## Gate service variables
+
+Run `apps/gate` as a separate service with `CAPYN_SERVICE=gate`. It has no
+browser routes and should not share the API's private signing-key secret.
+
+| Variable | Default | Required | Purpose |
+|---|---|---|---|
+| `HOST` | `0.0.0.0` | No | Gate listen address. |
+| `PORT` | `4100` | No | Gate listen port. |
+| `DATABASE_URL` | unset | PostgreSQL replay mode | Database containing `execution_claim_consumptions`. Prefer a separately scoped Gate database or a role restricted to that table. |
+| `GATE_REPLAY_STORAGE` | `postgres` | Production | Selects durable PostgreSQL or local/test memory. Production refuses memory. |
+| `GATE_CONTROL_TOKEN` | none | Yes | Workload bearer secret matching the API's control token. |
+| `GATE_ID` | none | Yes | Stable identity included in Gate receipts. |
+| `GATE_EXPECTED_ISSUER` | none | Yes | Exact accepted claim issuer. |
+| `GATE_AUDIENCE` | none | Yes | Exact accepted audience. |
+| `GATE_PUBLIC_KEYS_B64` | none | Yes | Base64 JSON object from key ID to P-256 SPKI public PEM. The Gate never needs the control private key. |
+| `GATE_ALLOWED_CLOCK_SKEW_SECONDS` | `5` | No | Accepted clock skew, bounded to 0–60 seconds. |
+| `GATE_MAX_CLAIM_TTL_SECONDS` | `60` | No | Maximum accepted claim lifetime, bounded to 1–300 seconds. |
+| `AWS_SANDBOX_BLUEPRINTS_B64` | none | Yes | Base64 JSON array of fixed EC2 dry-run blueprints. No AWS credential or live-call switch exists in the shipped adapter. |
+
+One blueprint has this strict shape:
+
+```json
+{
+  "id": "capyn-t3-micro-v1",
+  "region": "ap-southeast-2",
+  "instanceType": "t3.micro",
+  "imageFamily": "al2023",
+  "instanceCount": 1,
+  "maxMonthlyCostMinor": "12000"
+}
+```
+
+Use `/healthz` for liveness and `/ready` for the replay-database readiness
+check. The control channel still requires private networking or TLS; the bearer
+secret alone does not provide transport confidentiality.
 
 ## Web variables
 
@@ -41,7 +89,7 @@ The API refuses to start in PostgreSQL mode without `DATABASE_URL`, in volume mo
 | `PROJECT_STATUS_SESSION_SECRET` | unset | High-entropy server-only key used to sign the private project-status session cookie. |
 | `PROJECT_STATUS_CONTENT_B64` | unset | Base64-encoded private Markdown stored in the deployment secret manager, never in the public repository or browser bundle. |
 | `PORT` | platform supplied in production | Next.js listen port for `pnpm --filter @capyn/web start`. Development stays on `3010`. |
-| `CAPYN_SERVICE` | unset locally | Set to `web` or `api` for the preferred split deployment, or `combined` for a constrained single-service deployment. |
+| `CAPYN_SERVICE` | unset locally | Set to `web`, `api` or `gate` for split deployment, or `combined` for the constrained web/API public alpha. |
 | `CAPYN_INTERNAL_API_PORT` | `4100` | Private API port used only by the combined demo launcher. |
 | `CAPYN_INTERNAL_WEB_PORT` | `3100` | Private Next.js port used only by the combined demo launcher. |
 
@@ -78,6 +126,9 @@ The adapter initializes the isolated demo tenant once, serializes all transactio
 ## Secret handling
 
 - generate `API_KEY_PEPPER` and `BOOTSTRAP_TOKEN` with a cryptographically secure secret manager;
+- keep the execution private key only in the control-plane secret scope and Gate public keys only in the Gate scope;
+- rotate claim keys with an overlap in `GATE_PUBLIC_KEYS_B64`, then remove the old verifier only after its maximum claim/reconciliation window;
+- transport `CAPYN_EXECUTION_GATE_CONTROL_TOKEN` only over authenticated private networking or TLS and rotate both service copies together;
 - rotate `API_KEY_PEPPER` only as a coordinated credential event: it invalidates durable key lookups and every unexpired stateless sandbox credential;
 - scope secrets per environment;
 - never expose the pepper, database URL or bootstrap token through `NEXT_PUBLIC_*` variables;

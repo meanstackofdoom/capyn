@@ -976,7 +976,7 @@ export function createDemoMemoryRepository(keyHash: string): {
     createdBy: ids.ownerId,
     createdAt,
     revokedAt: null,
-    capabilities: ["spend.compute", "spend.api"],
+    capabilities: ["spend.compute", "spend.api", "aws.ec2.run-instances.dry-run"],
     policy: {
       currency: "USD",
       allowedVendorIds: ["openai", "anthropic", "aws"],
