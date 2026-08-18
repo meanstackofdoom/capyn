@@ -25,6 +25,7 @@ No unreleased changes.
 ### Supply-chain security
 
 - Resolved `GHSA-ggr8-5vv4-36mx` by pinning Prisma's transitive `deepmerge-ts` dependency to the patched 8.0.0 release.
+- Resolved the Windows development-server path traversal in transitive `esbuild` by pinning the workspace graph to 0.28.2.
 - Added a production-dependency audit to remote CI and weekly Dependabot groups for pnpm and GitHub Actions.
 
 ### Hosted authority economics
