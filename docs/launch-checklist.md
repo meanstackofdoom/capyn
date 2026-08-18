@@ -22,8 +22,8 @@ This is CAPYN's 20-gate release register for durable self-serve onboarding. A ve
 | 16 | Durable adapters | Existing Railway volume journal is deployable; PostgreSQL schema and migration are ready | Verified |
 | 17 | Automated coverage | API, web, database, policy, billing and SDK suites pass | Verified |
 | 18 | Built-service smoke | Separate and combined production builds complete onboarding and authenticated reads | Verified |
-| 19 | Public revision | Audited commits pushed and remote CI confirmed | Pending deployment |
-| 20 | Hosted persistence | Railway cutover, live onboarding and restart-survival verified | Pending deployment |
+| 19 | Public revision | Audited feature revision pushed and remote CI confirmed | Verified |
+| 20 | Hosted persistence | Railway cutover, live onboarding and restart-survival verified | Verified |
 
 ## Commands
 
@@ -40,7 +40,9 @@ git diff --check
 
 ## Hosted evidence
 
-The version 0.3 synthetic public alpha remains live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app) while version 0.4 is staged. The two hosted gates above remain pending until the new revision is green, onboarding succeeds against the public origin and the commissioned tenant survives a Railway restart.
+Version 0.4 is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). Feature revision `a8fc2ce` passed the complete remote CI gate and deployed successfully as Railway deployment `0a3d6607-73c6-4685-995a-a1eddd3360dc` on 18 August 2026.
+
+Hosted verification commissioned a fresh sandbox identity, received an `ALLOW` decision, atomically created a durable Developer workspace, issued separate owner and agent credentials, and recovered the exact response on an idempotent replay. The service reported `VOLUME_JOURNAL`; after a deliberate Railway restart, the same unprinted owner and agent credentials still resolved the same tenant and identities. Browser review also covered the homepage, commissioning, pricing and locked private-status surfaces with no CAPYN application errors.
 
 Railway's current plan rejected a new managed PostgreSQL service. Version 0.4 therefore targets the existing attached volume through the fail-closed single-service journal while retaining the PostgreSQL adapter and migration as the scale-out path. This constraint is reported in the product and does not weaken the one-time credential or tenant-isolation boundaries.
 
