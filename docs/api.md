@@ -6,7 +6,7 @@ Synthetic public-demo base URL: `https://capyn-production.up.railway.app`
 
 Start with [Getting started](getting-started.md) for the database-free local flow and [Configuration](configuration.md) for environment variables.
 
-Agent endpoints use `Authorization: Bearer <CAPYN_API_KEY>`. Human endpoints use the development-only `x-capyn-user-id` adapter in a seeded demo. The hosted demo pins that adapter to the approver identity, so knowing another seeded user ID does not grant its role.
+Agent endpoints use `Authorization: Bearer <CAPYN_API_KEY>`. Durable workspace owners use `Authorization: Bearer <CAPYN_OWNER_KEY>`. The development-only public demonstration can instead use the `x-capyn-user-id` adapter; the hosted build pins that adapter to the approver identity, so knowing another seeded user ID does not grant its role.
 
 The demo values are:
 
@@ -31,6 +31,16 @@ Lab operations are isolated from the repository and billing ledger. They hold on
 `POST /v1/sandbox/authorize` accepts a normal Lab-shaped action and requires the issued credential as `Authorization: Bearer <CAPYN_SANDBOX_KEY>`. It recovers identity and mandate server-side, runs the production policy engine and returns `200` for `ALLOW` or `DENY`, or `202` for `REQUIRE_APPROVAL`. It is limited to sixty requests per minute.
 
 Both responses state `mode: "SYNTHETIC"` and `scope: "STATELESS_SANDBOX"`. They never create repository or billing records and never call a payment provider. See [Sandbox commissioning](sandbox-commissioning.md) for the complete credential and threat boundary.
+
+## Durable workspace onboarding
+
+`POST /v1/onboarding/launch` claims one valid sandbox credential into the configured durable hosted-alpha repository. The public single-service deployment uses its attached volume journal; scale-out deployments use PostgreSQL. The route requires the sandbox bearer credential, an `Idempotency-Key` and the strict onboarding body documented in [Durable onboarding](durable-onboarding.md). It is limited to three attempts per hour per resolved client IP.
+
+The first call returns `201`; an exact retry returns `200` with `replayed: true` and the same deterministic one-time credentials. The transaction creates the organisation, owner, agent, active 30-day mandate, Developer subscription, credential digests, claim record and audit events together. A sandbox credential cannot claim a second workspace.
+
+The response returns separate `capyn_owner_live_…` and `capyn_live_…` plaintext values. Only HMAC digests are stored. The owner key is accepted only by human management endpoints; the agent key is accepted only by the agent API. A bearer header that fails owner-key authentication never falls back to the public demo header.
+
+Developer is active immediately. Team or Business intent can return a hosted Checkout URL only when Stripe is fully configured. The paid plan remains inactive until a signed webhook verifies the provider subscription. Every self-serve workspace continues to use mock execution.
 
 ## Agent endpoints
 
@@ -92,6 +102,8 @@ CAPYN creates one execution ID before calling the provider and holds a short exe
 Real executors must use `executionId` as their provider idempotency/reconciliation key. They must distinguish definitive failure from unknown outcome and implement read-only reconciliation. Request-driven recovery is implemented, while automatic background scanning, provider-specific alerts and a transactional outbox remain production follow-up work.
 
 ## Human management endpoints
+
+Durable owners send `Authorization: Bearer capyn_owner_live_…`. Local/public demo requests use `x-capyn-user-id` only when the demo adapter is explicitly enabled and pinned by deployment configuration.
 
 | Method | Path | Roles |
 |---|---|---|

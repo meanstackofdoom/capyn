@@ -110,6 +110,7 @@ model Organisation {
   auditEvents    AuditEvent[]
   subscription   OrganisationSubscription?
   billingUsageEvents BillingUsageEvent[]
+  productionLaunch ProductionLaunch?
 
   @@map("organisations")
 }
@@ -175,6 +176,8 @@ model User {
   organisation   Organisation      @relation(fields: [organisationId], references: [id], onDelete: Restrict)
   createdMandates Mandate[]        @relation("MandateCreator")
   approvalDecisions ApprovalRequest[] @relation("ApprovalDecider")
+  credentials     UserCredential[]
+  productionLaunch ProductionLaunch? @relation("ProductionLaunchOwner")
 
   @@unique([organisationId, email])
   @@index([organisationId, role])
@@ -194,6 +197,7 @@ model Agent {
   credentials    AgentCredential[]
   mandates       Mandate[]
   authorizations Authorization[]
+  productionLaunch ProductionLaunch?
 
   @@unique([organisationId, slug])
   @@index([organisationId, status])
@@ -213,11 +217,27 @@ model AgentCredential {
   agent                  Agent             @relation(fields: [agentId], references: [id], onDelete: Restrict)
   rotatedFrom            AgentCredential?  @relation("CredentialRotations", fields: [rotatedFromId], references: [id], onDelete: Restrict)
   rotations              AgentCredential[] @relation("CredentialRotations")
+  productionLaunch       ProductionLaunch?
 
   @@unique([agentId, rotationIdempotencyKey])
   @@index([agentId, revokedAt])
   @@index([rotatedFromId])
   @@map("agent_credentials")
+}
+
+model UserCredential {
+  id               String            @id @db.VarChar(40)
+  userId           String            @map("user_id") @db.VarChar(40)
+  keyPrefix        String            @map("key_prefix") @db.VarChar(32)
+  keyHash          String            @unique @map("key_hash") @db.Char(64)
+  createdAt        DateTime          @default(now()) @map("created_at")
+  lastUsedAt       DateTime?         @map("last_used_at")
+  revokedAt        DateTime?         @map("revoked_at")
+  user             User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  productionLaunch ProductionLaunch?
+
+  @@index([userId, revokedAt])
+  @@map("user_credentials")
 }
 
 model Mandate {
@@ -238,11 +258,38 @@ model Mandate {
   capabilities   MandateCapability[]
   spendingPolicy SpendingPolicy?
   authorizations Authorization[]
+  productionLaunch ProductionLaunch?
 
   @@unique([agentId, name, version])
   @@index([organisationId, status])
   @@index([agentId, status, validFrom, validUntil])
   @@map("mandates")
+}
+
+model ProductionLaunch {
+  id                    String          @id @db.VarChar(40)
+  sandboxCredentialHash String          @unique @map("sandbox_credential_hash") @db.Char(64)
+  idempotencyKey        String          @map("idempotency_key") @db.VarChar(200)
+  requestHash           String          @map("request_hash") @db.Char(64)
+  organisationId        String          @unique @map("organisation_id") @db.VarChar(40)
+  ownerId               String          @unique @map("owner_id") @db.VarChar(40)
+  agentId               String          @unique @map("agent_id") @db.VarChar(40)
+  mandateId             String          @unique @map("mandate_id") @db.VarChar(40)
+  ownerCredentialId     String          @unique @map("owner_credential_id") @db.VarChar(40)
+  agentCredentialId     String          @unique @map("agent_credential_id") @db.VarChar(40)
+  mandateValidUntil     DateTime        @map("mandate_valid_until")
+  planIntent            BillingPlan     @map("plan_intent")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  organisation          Organisation    @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  owner                 User            @relation("ProductionLaunchOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  agent                 Agent           @relation(fields: [agentId], references: [id], onDelete: Restrict)
+  mandate               Mandate         @relation(fields: [mandateId], references: [id], onDelete: Restrict)
+  ownerCredential       UserCredential  @relation(fields: [ownerCredentialId], references: [id], onDelete: Restrict)
+  agentCredential       AgentCredential @relation(fields: [agentCredentialId], references: [id], onDelete: Restrict)
+
+  @@index([planIntent, createdAt])
+  @@index([idempotencyKey])
+  @@map("production_launches")
 }
 
 model MandateCapability {

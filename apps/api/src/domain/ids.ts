@@ -5,6 +5,7 @@ export type IdPrefix =
   | "usr"
   | "agt"
   | "key"
+  | "ukey"
   | "man"
   | "pol"
   | "auth"
@@ -13,7 +14,8 @@ export type IdPrefix =
   | "evt"
   | "sub"
   | "use"
-  | "bwh";
+  | "bwh"
+  | "lch";
 
 export function createId(prefix: IdPrefix): string {
   return `${prefix}_${randomUUID().replaceAll("-", "")}`;

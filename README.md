@@ -5,9 +5,9 @@
 [![CI](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml/badge.svg)](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ac39c.svg)](LICENSE)
 
-[Commission a sandbox agent and run its first authenticated decision](https://capyn-production.up.railway.app/activate), or inspect the [v0.3.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.3.0) with its expiring credential, real policy trace and portable proof.
+[Commission an agent, prove its first decision and claim a durable workspace](https://capyn-production.up.railway.app/activate), or inspect the [v0.4.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.4.0).
 
-The hosted alpha is a synthetic, memory-backed demonstration with mock execution. Its state can reset during deployment, it contains no customer data, and it does not move real money.
+The hosted alpha now persists tenant-scoped identities, mandates, credential digests, subscriptions and audit evidence in an atomic journal on its attached Railway volume. The PostgreSQL schema and migrations remain the scale-out target. Execution remains mock: it does not custody or move real money and it must not receive real provider credentials or settlement instructions.
 
 CAPYN allows organisations to delegate constrained financial authority to AI agents using capabilities, spending limits, vendor policies, approvals and complete audit trails.
 
@@ -29,7 +29,7 @@ CAPYN POLICY ENGINE
       └── REQUIRE_APPROVAL
 ```
 
-CAPYN is not a wallet, token, DAO or payment rail. It is the decision point before consequential execution. The v0.3 executor simulates payment; future adapters can settle through Solana/USDC, x402, Stripe, AP2 or another rail without moving policy enforcement into the adapter.
+CAPYN is not a wallet, token, DAO or payment rail. It is the decision point before consequential execution. The v0.4 executor simulates payment; future adapters can settle through Solana/USDC, x402, Stripe, AP2 or another rail without moving policy enforcement into the adapter.
 
 ## See it in 24 seconds
 
@@ -72,7 +72,7 @@ The seeded hard per-transaction ceiling is `$150`, not `$50`. A `$50` hard ceili
 The public surface is a complete, responsive Next.js site:
 
 - `/` — positioning, authority rail and the core demo story
-- `/activate` — complete sandbox commissioning from workspace and agent identity through expiring credential, decision and portable proof
+- `/activate` — sandbox commissioning through expiring credential, decision and portable proof, followed by an optional one-way claim into a durable workspace
 - `/lab` — a public, ephemeral instrument backed by the real policy evaluator
 - `/proof` — a client-side verifier for shareable synthetic decision receipts
 - `/start` — the browser-local Mandate Studio for drafting an exact authority boundary
@@ -119,7 +119,7 @@ Open:
 - API health: `http://localhost:4000/health`
 - Website health: `http://localhost:3010/healthz`
 
-The fixed demo key is documented in [docs/api.md](docs/api.md). It is valid only for disposable local or explicitly published CAPYN demo environments and must never protect durable data or real authority. PostgreSQL remains available as an optional repository adapter when a database is provisioned.
+The fixed demo key is documented in [docs/api.md](docs/api.md). It is valid only for disposable local or explicitly published CAPYN demo environments and must never protect durable data or real authority. PostgreSQL and the single-service volume journal are separate repository adapters.
 
 ## Hosting handoff
 
@@ -130,9 +130,9 @@ corepack pnpm build
 corepack pnpm start
 ```
 
-For a resource-constrained synthetic public demo, `CAPYN_SERVICE=combined` runs those same built processes behind one first-party proxy. It is deliberately not the durable/customer-data topology. Run `corepack pnpm smoke:combined` to verify that adapter; no Docker configuration is used.
+For a resource-constrained hosted alpha, `CAPYN_SERVICE=combined` runs those same built processes behind one first-party proxy and can checkpoint its repository to an attached volume. Run `corepack pnpm smoke:combined` to verify that adapter; no Docker configuration is used.
 
-The current synthetic public alpha is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). Its Railway project, service and generated hostname all use the CAPYN name; a dedicated product domain remains a launch follow-up.
+The current volume-backed public alpha is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). Its Railway project, service and generated hostname all use the CAPYN name; a dedicated product domain and managed-PostgreSQL upgrade remain launch follow-ups.
 
 The selected service binds to `0.0.0.0` and respects the platform `PORT`. Set `NEXT_PUBLIC_SITE_URL` to the final public origin and use `/healthz` for the web health check. The API uses `/health`. No Docker configuration is required.
 
@@ -231,9 +231,10 @@ pnpm db:seed       # seed Acme AI and procurement-agent
 
 - Fail closed for absent, ambiguous or malformed policy.
 - HMAC-SHA-256 API-key hashes at rest with a deployment pepper.
+- Separate owner and agent credentials with domain-separated derivation and one-time plaintext recovery.
 - API keys are organisation-scoped, revocable and bound to one agent.
 - Strict Zod request schemas reject extra identity fields.
-- PostgreSQL serializable transactions and per-agent advisory locks protect spend accounting.
+- PostgreSQL serializable transactions and advisory locks protect scale-out spend accounting; the single-service volume adapter uses one process-wide transaction mutex and atomic file replacement.
 - Organisation advisory locks protect hosted quotas across simultaneous agents.
 - Approval rechecks every hard rule under the same lock and applies only to one authorization.
 - Execution is claimed once with a unique database record after rechecking the agent and exact mandate binding.
@@ -244,11 +245,11 @@ pnpm db:seed       # seed Acme AI and procurement-agent
 
 ## Commercial model
 
-The MIT-licensed policy engine remains free. The hosted Developer plan includes 3 active agents and 10,000 authorization decisions per month. Hosted Alpha is `$99/month`. Business remains implemented as staged billing packaging, while public production engagements are custom until their adapters and service boundary are explicitly contracted. Design-partner engagements begin at `$1,000/month` for 8–12 weeks of founder-led integration work.
+The MIT-licensed policy engine remains free. The hosted Developer plan includes 3 active agents and 10,000 authorization decisions per month. Team is `$99/month`; Business is `$499/month`. Both are hosted-alpha authority workspaces with mock execution, while production engagements remain custom until their adapters and service boundary are explicitly contracted. Design-partner engagements begin at `$1,000/month` for 8–12 weeks of founder-led integration work.
 
 CAPYN meters decisions, active agents, approval operations, audit evidence and integration connections. It never charges a percentage of money moved, and approvals carry no per-request fee. Stripe Checkout, customer portal and signed subscription webhooks are implemented when configured. Automated Stripe overage invoicing remains explicitly deferred; current overage values are durable, test-backed projections. See [Billing](docs/billing.md).
 
-Read [docs/security.md](docs/security.md) before considering a non-demo deployment. v0.3 intentionally uses a demo human-auth adapter and a mock executor; both must be replaced for production.
+Read [docs/security.md](docs/security.md) before considering live execution. v0.4 adds durable owner-key authentication while retaining an isolated public-demo adapter and a mock executor; SSO/MFA and a reviewed real executor remain production gates.
 
 ## Documentation
 
@@ -263,13 +264,14 @@ Read [docs/security.md](docs/security.md) before considering a non-demo deployme
 - [Security](docs/security.md)
 - [REST API](docs/api.md)
 - [Sandbox commissioning](docs/sandbox-commissioning.md)
+- [Durable onboarding](docs/durable-onboarding.md)
 - [Deployment](docs/deployment.md)
 - [Documentation policy](docs/documentation.md)
-- [Public alpha launch checklist](docs/launch-checklist.md)
+- [Version 0.4 launch checklist](docs/launch-checklist.md)
 - [Solana roadmap](docs/solana-roadmap.md)
 - [The Agent Authority Problem](docs/agent-authority-problem.md)
 - [Changelog](CHANGELOG.md)
 
 ## Status
 
-CAPYN v0.3 is a public, open-source developer alpha, tagged as [`v0.3.0`](https://github.com/meanstackofdoom/capyn/releases/tag/v0.3.0). It adds end-to-end sandbox commissioning with expiring authenticated credentials and portable decision proof to the bounded authorization engine; it does not move real money. Hosted-demo progress and founder launch actions are maintained in a server-protected record outside the public repository. Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).
+CAPYN v0.4 is a public, open-source hosted alpha, tagged as [`v0.4.0`](https://github.com/meanstackofdoom/capyn/releases/tag/v0.4.0). It adds a one-way sandbox-to-durable-repository launch, separate owner and agent credentials, persistent tenant dashboards and self-serve plan intent without claiming live execution. Founder launch actions remain in a server-protected record outside the public repository. Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).

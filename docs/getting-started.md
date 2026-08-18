@@ -57,7 +57,7 @@ Local endpoints:
 
 The seeded local user is `usr_demo_owner`. The seeded agent key is intentionally documented in [REST API](api.md); it is valid only for disposable local or explicitly published CAPYN demo environments and must never protect durable data or real authority.
 
-The commissioning page requires both web and API services. It creates a stateless 30-minute sandbox credential, evaluates a first authenticated action and emits portable synthetic proof without modifying the seeded repository. See [Sandbox commissioning](sandbox-commissioning.md).
+The commissioning page requires both web and API services. It creates a stateless 30-minute sandbox credential, evaluates a first authenticated action and emits portable synthetic proof without modifying the seeded repository. After proof, the onboarding rail can create owner and agent credentials plus a workspace record. In the default memory configuration that final step is explicitly labelled a process-memory rehearsal and resets with the API; use the volume journal for a single process or PostgreSQL for a scale-out durable result. See [Sandbox commissioning](sandbox-commissioning.md) and [Durable onboarding](durable-onboarding.md).
 
 ## Make one authorization request
 

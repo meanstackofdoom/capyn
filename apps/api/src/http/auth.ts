@@ -36,8 +36,28 @@ export class RepositoryAuthAdapter implements AuthAdapter {
   }
 
   async authenticateUser(request: FastifyRequest): Promise<UserPrincipal> {
+    const authorization = request.headers.authorization;
+    if (authorization) {
+      const [scheme, apiKey, extra] = authorization.split(" ");
+      if (scheme !== "Bearer" || !apiKey || extra || !apiKey.startsWith("capyn_owner_live_")) {
+        throw new AuthenticationError("A valid CAPYN owner access key is required");
+      }
+      const credential = await this.repository.findUserCredentialByHash(
+        hashApiKey(apiKey, this.apiKeyPepper)
+      );
+      if (!credential || credential.revokedAt) {
+        throw new AuthenticationError("A valid CAPYN owner access key is required");
+      }
+      await this.repository.touchUserCredential(credential.id, new Date());
+      return {
+        type: "USER",
+        organisationId: credential.organisationId,
+        userId: credential.userId,
+        role: credential.role
+      };
+    }
     if (!this.allowDemoHumanHeader) {
-      throw new AuthenticationError("No human authentication adapter is configured");
+      throw new AuthenticationError("A valid CAPYN owner access key is required");
     }
     const userId = request.headers["x-capyn-user-id"];
     if (typeof userId !== "string" || !userId) {

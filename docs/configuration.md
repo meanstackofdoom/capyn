@@ -10,9 +10,11 @@ CAPYN uses environment variables at the API and web process boundaries. `.env.ex
 | `HOST` | `0.0.0.0` | No | API listen address. |
 | `PORT` | `4000` | No | API listen port. Hosting platforms may supply it. |
 | `TRUST_PROXY` | `false` | Reverse-proxy deployments | Trusts the controlled ingress proxy's forwarded client address for per-client rate limiting. |
-| `CAPYN_STORAGE` | `memory` in `.env.example` | No | Selects `memory` or `postgres`. |
+| `CAPYN_STORAGE` | `memory` in `.env.example` | No | Selects `memory`, `volume` or `postgres`. |
 | `DATABASE_URL` | Local example only | PostgreSQL mode | Prisma connection URL. |
-| `API_KEY_PEPPER` | No safe deployment default | Yes | High-entropy secret used to HMAC durable agent credentials and derive the domain-separated public-sandbox encryption key. |
+| `CAPYN_VOLUME_PATH` | unset | Volume mode | Absolute path to the single-service atomic state journal, normally on an attached persistent volume. |
+| `API_KEY_PEPPER` | No safe deployment default | Yes | High-entropy secret used for domain-separated HMACs over durable owner/agent credentials and public-sandbox encryption. |
+| `CAPYN_SEED_DEMO` | unset | No | When `true`, the root PostgreSQL launcher idempotently refreshes the isolated Acme demonstration tenant after migrations. |
 | `WEB_ORIGIN` | `http://localhost:3010` | No | Exact browser origin allowed by API CORS. |
 | `DEMO_HUMAN_AUTH` | `true` locally | No | Enables the development-only `x-capyn-user-id` adapter. Must be `false` outside a demo. |
 | `DEMO_HUMAN_USER_ID` | `usr_demo_owner` locally | Production demo | Pins the demo header adapter to exactly one seeded user. Required when demo auth is enabled with `NODE_ENV=production`. |
@@ -22,7 +24,7 @@ CAPYN uses environment variables at the API and web process boundaries. `.env.ex
 | `STRIPE_PRICE_TEAM_MONTHLY` | unset | Hosted billing | Stripe recurring base-price ID for Team. |
 | `STRIPE_PRICE_BUSINESS_MONTHLY` | unset | Hosted billing | Stripe recurring base-price ID for Business. |
 
-The API refuses to start in PostgreSQL mode without `DATABASE_URL`, with an `API_KEY_PEPPER` shorter than 32 characters, when production demo auth is not pinned to one user, or when only part of the Stripe configuration is present. Leave all four Stripe variables absent to keep checkout disabled while the free/internal plan remains usable.
+The API refuses to start in PostgreSQL mode without `DATABASE_URL`, in volume mode without `CAPYN_VOLUME_PATH`, with an `API_KEY_PEPPER` shorter than 32 characters, when production demo auth is not pinned to one user, or when only part of the Stripe configuration is present. Leave all four Stripe variables absent to keep checkout disabled while the free/internal plan remains usable.
 
 ## Web variables
 
@@ -39,7 +41,7 @@ The API refuses to start in PostgreSQL mode without `DATABASE_URL`, with an `API
 | `PROJECT_STATUS_SESSION_SECRET` | unset | High-entropy server-only key used to sign the private project-status session cookie. |
 | `PROJECT_STATUS_CONTENT_B64` | unset | Base64-encoded private Markdown stored in the deployment secret manager, never in the public repository or browser bundle. |
 | `PORT` | platform supplied in production | Next.js listen port for `pnpm --filter @capyn/web start`. Development stays on `3010`. |
-| `CAPYN_SERVICE` | unset locally | Set to `web` or `api` for the preferred split deployment, or `combined` only for the constrained synthetic demo. |
+| `CAPYN_SERVICE` | unset locally | Set to `web` or `api` for the preferred split deployment, or `combined` for a constrained single-service deployment. |
 | `CAPYN_INTERNAL_API_PORT` | `4100` | Private API port used only by the combined demo launcher. |
 | `CAPYN_INTERNAL_WEB_PORT` | `3100` | Private Next.js port used only by the combined demo launcher. |
 
@@ -60,7 +62,18 @@ corepack pnpm db:migrate
 corepack pnpm db:seed
 ```
 
-The seed is for local demonstrations only. Do not run it against a production organisation database.
+The seed creates only the fixed `acme-ai` synthetic demonstration tenant. A public-alpha deployment may run it idempotently with `CAPYN_SEED_DEMO=true` when that tenant is intentionally exposed and the header adapter is pinned to its approver. Do not enable it in a dedicated customer deployment.
+
+### Single-service volume journal
+
+Use `CAPYN_STORAGE=volume` only for one API process with an attached persistent volume:
+
+```text
+CAPYN_STORAGE=volume
+CAPYN_VOLUME_PATH=/data/capyn/capyn-state.v8
+```
+
+The adapter initializes the isolated demo tenant once, serializes all transactions through one process-wide mutex, writes a versioned V8 state envelope to a same-directory temporary file and atomically renames it over the previous checkpoint before acknowledging the transaction. An unreadable or unsupported state file fails startup instead of silently replacing data. It is a recoverable hosted-alpha fallback, not a multi-replica database: use PostgreSQL before horizontal scale, database-level row isolation, point-in-time recovery or production service guarantees.
 
 ## Secret handling
 
@@ -73,6 +86,6 @@ The seed is for local demonstrations only. Do not run it against a production or
 - redact Stripe signatures and never log Checkout payloads or billing secrets;
 - keep the project-status password, content and session secret server-side, rotate credentials together, and never prefix them with `NEXT_PUBLIC_`;
 - keep `TRUST_PROXY=false` unless the API is behind a controlled ingress proxy; Railway API services should set it to `true`;
-- disable demo human authentication for every real or customer-data environment. A deliberately public demo may enable it only with synthetic, disposable state, mock execution and `DEMO_HUMAN_USER_ID` pinned to a least-privilege approver.
+- keep the demo header adapter pinned to the isolated synthetic tenant when it shares a public-alpha deployment with durable owner-key workspaces; disable it entirely in dedicated customer deployments.
 
 See [Billing](billing.md) for plan and webhook behavior, [Security](security.md) for the deployment gate and [Deployment](deployment.md) for service-level configuration.

@@ -6,9 +6,9 @@ import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
   title: "Pricing",
-  absoluteTitle: "CAPYN pricing — Free engine, $99 hosted alpha, scoped production",
+  absoluteTitle: "CAPYN pricing — Developer, Team and Business authority workspaces",
   path: "/pricing",
-  description: "Use CAPYN's open-source engine for free, run a managed hosted alpha for $99 per month, or scope a design-partner and production authority boundary."
+  description: "Commission a durable CAPYN workspace for free, choose Team at $99 or Business at $499, and contract live execution only against an explicit production boundary."
 });
 
 const offers = [
@@ -16,52 +16,52 @@ const offers = [
     signal: "OPEN",
     icon: Code2,
     name: "Developer",
-    audience: "Build and self-host",
+    audience: "Prove one bounded agent",
     price: "$0",
     cadence: "forever",
     availability: "Available now",
     tone: "permission",
-    copy: "Use the MIT-licensed policy engine, SDK and public instruments to prove the authority flow before production.",
+    copy: "Commission a durable hosted workspace or use the MIT-licensed engine and SDK yourself. The policy boundary is identical on every plan.",
     features: PLAN_CATALOG.DEVELOPER.features,
-    cta: "Use the engine",
-    href: "/developers"
+    cta: "Commission free workspace",
+    href: "/activate"
   },
   {
     signal: "HOSTED",
     icon: FileCheck2,
-    name: "Hosted Alpha",
-    audience: "Small agent teams",
+    name: "Team",
+    audience: PLAN_CATALOG.TEAM.audience,
     price: "$99",
     cadence: "USD / month",
-    availability: "Public-alpha packaging",
+    availability: "Hosted-alpha enrolment open",
     tone: "authority",
     copy: "Managed mandates, approvals and retained evidence with a predictable allowance and an explicit best-effort service boundary.",
-    features: ["10 active agents", "100,000 decisions / month", "90-day hosted evidence access", "Request-bound approval operations", "No percentage of agent spend"],
-    cta: "Request Hosted Alpha",
-    href: "/design-partners"
+    features: PLAN_CATALOG.TEAM.features,
+    cta: "Commission Team workspace",
+    href: "/activate"
   },
   {
-    signal: "CO-DESIGN",
-    icon: Handshake,
-    name: "Design Partner",
-    audience: "One consequential action",
-    price: "From $1,000",
+    signal: "OPERATIONS",
+    icon: ServerCog,
+    name: "Business",
+    audience: PLAN_CATALOG.BUSINESS.audience,
+    price: "$499",
     cadence: "USD / month",
-    availability: "Selective 8–12 week engagement",
+    availability: "Hosted-alpha enrolment open",
     tone: "review",
-    copy: "Founder-led authority modelling and integration work for teams shaping CAPYN's first production adapters.",
-    features: ["One scoped agent action", "Authority-model review", "Integration and reconciliation plan", "Direct product feedback loop", "No implied certification or SLA"],
-    cta: "Bring a boundary",
-    href: "/design-partners"
+    copy: "A larger durable authority ledger for operational agent fleets that still keeps live execution outside the self-serve boundary.",
+    features: PLAN_CATALOG.BUSINESS.features,
+    cta: "Commission Business workspace",
+    href: "/activate"
   },
   {
     signal: "CONTRACT",
-    icon: ServerCog,
+    icon: Handshake,
     name: "Production",
     audience: "Operational agent systems",
     price: "Custom",
     cadence: "written scope",
-    availability: "Not self-serve during alpha",
+    availability: "Contract only during alpha",
     tone: "ink",
     copy: "Real execution adapters, infrastructure, support, retention, residency and reliability promises agreed against an explicit production boundary.",
     features: ["Contracted capacity", "Provider adapter and reconciliation scope", "Custom evidence retention", "Private deployment options", "SLA only when written and deliverable"],
@@ -87,7 +87,8 @@ const pricingAxes = [
 const questions = [
   ["Does CAPYN take a percentage of agent spend?", "No. A $10 request and a $10,000 request each consume one authorization decision. Policy—not pricing—determines whether either action may proceed."],
   ["Why is decision volume not the headline price?", "Authorization checks multiply quickly. Hosted plans include a generous allowance; volume remains an operational guardrail rather than the primary expression of value."],
-  ["Is Hosted Alpha a production plan?", "No. It is a managed environment for evaluation and early team workflows. Production adapters, service levels and compliance promises require a written scope."],
+  ["Do the Team and Business plans move real money?", "No. Self-serve plans provide durable identity, policy, approvals, credentials and evidence, while execution remains synthetic. A live adapter and service level require a written production scope."],
+  ["Can I pay for Team or Business today?", "You can commission the workspace and record the plan intent now. CAPYN presents a verified Stripe checkout only when hosted billing is enabled; until its signed webhook confirms payment, bounded Developer entitlements remain active."],
   ["Why does a design partnership cost more?", "It includes focused architecture and integration work around one real consequential action. It is a product-shaping engagement, not a discounted SaaS seat."],
   ["Can the policy engine stay self-hosted?", "Yes. The deterministic engine remains MIT-licensed. Hosted fees pay for the managed control plane, evidence, approvals, integrations and operational boundary around it."]
 ] as const;
@@ -102,9 +103,9 @@ export default function PricingPage() {
             <div>
               <Eyebrow tone="authority">Pricing / stage-appropriate authority</Eyebrow>
               <h1 className="display-title mt-7 max-w-5xl text-balance text-5xl font-semibold leading-[.93] tracking-[-.068em] sm:text-7xl">
-                A free engine. A <span className="text-authority">$99 hosted path.</span> Production by agreement.
+                $0 to prove. <span className="text-authority">$99 to coordinate.</span> $499 to operate.
               </h1>
-              <p className="mt-8 max-w-2xl text-lg leading-9 text-white/60">Pay for operating the authority control plane—not for the value an agent spends, and never for weakening a decision.</p>
+              <p className="mt-8 max-w-2xl text-lg leading-9 text-white/60">Pay for the durable authority control plane—not for the value an agent spends, never for weakening a decision, and never for an execution adapter that is not actually connected.</p>
             </div>
 
             <aside className="border border-white/20 bg-white/[.035]" aria-label="CAPYN pricing commitments">

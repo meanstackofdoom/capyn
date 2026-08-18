@@ -56,7 +56,7 @@ export default function LabPage() {
           <AuthorityLab />
 
           <div className="lab-hero__footnote">
-            <span>PUBLIC LAB / v0.3</span>
+            <span>PUBLIC LAB / v0.4</span>
             <p>This instrument cannot reach customer data, payment rails, or production credentials.</p>
           </div>
         </div>

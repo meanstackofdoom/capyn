@@ -1,3 +1,3 @@
 export function GET() {
-  return Response.json({ status: "ok", service: "capyn-web", version: "0.3.0" });
+  return Response.json({ status: "ok", service: "capyn-web", version: "0.4.0" });
 }

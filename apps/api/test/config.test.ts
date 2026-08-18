@@ -16,6 +16,12 @@ describe("CAPYN deployment configuration", () => {
     expect(() => loadConfig({ ...base, CAPYN_STORAGE: "postgres" })).toThrow("DATABASE_URL is required");
   });
 
+  it("requires an explicit journal path for single-service volume persistence", () => {
+    expect(() => loadConfig({ ...base, CAPYN_STORAGE: "volume" })).toThrow("CAPYN_VOLUME_PATH is required");
+    expect(loadConfig({ ...base, CAPYN_STORAGE: "volume", CAPYN_VOLUME_PATH: "/data/capyn/state.v8" }).CAPYN_STORAGE)
+      .toBe("volume");
+  });
+
   it("requires the complete Stripe configuration as one deployment unit", () => {
     expect(() => loadConfig({ ...base, STRIPE_SECRET_KEY: "sk_test_capyn" })).toThrow(
       "All Stripe billing variables must be configured together"

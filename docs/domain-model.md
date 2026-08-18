@@ -13,7 +13,9 @@ A human principal with one role:
 - `APPROVER`: approve or reject exact requests;
 - `VIEWER`: read-only control-plane access.
 
-The v0.3 `x-capyn-user-id` adapter is explicitly development-only. The `AuthAdapter` boundary is where Clerk, Auth0, Better Auth or an enterprise identity provider can be added.
+The v0.4 hosted alpha accepts an owner credential for durable tenants and retains the pinned `x-capyn-user-id` adapter only for the isolated public demonstration. The `AuthAdapter` boundary is where SSO/MFA or an enterprise identity provider can be added.
+
+A `UserCredential` belongs to exactly one user. As with agent credentials, CAPYN stores only a prefix, HMAC-SHA-256 digest and lifecycle timestamps. The one-time `capyn_owner_live_…` plaintext is returned during durable onboarding and can authenticate only human management endpoints.
 
 ## Agent and credential
 
@@ -37,7 +39,7 @@ Mandate activation runs under the agent lock and revokes the previous active ver
 
 ## Spending policy
 
-v0.3 stores:
+v0.4 stores:
 
 - currency (`USD` only);
 - vendor IDs;
@@ -60,13 +62,13 @@ An approval has a one-to-one relation with an authorization. A human decision ca
 
 ## Execution
 
-An execution has a one-to-one relation with an authorization. Its unique constraint is the replay barrier. Immediately before claiming execution, CAPYN rechecks the agent, the exact mandate binding, capability, vendor and current hard limits under the agent lock. v0.3 uses `MockPaymentExecutor`; a future adapter must use the CAPYN execution ID as its provider idempotency key.
+An execution has a one-to-one relation with an authorization. Its unique constraint is the replay barrier. Immediately before claiming execution, CAPYN rechecks the agent, the exact mandate binding, capability, vendor and current hard limits under the agent lock. v0.4 uses `MockPaymentExecutor`; a future adapter must use the CAPYN execution ID as its provider idempotency key.
 
 Each pending execution records an attempt count, last-attempt timestamp and lease expiry. A thrown or explicitly unknown provider result keeps the execution pending and the authorization `EXECUTING`, so its spend remains reserved. Once the lease expires, one exact retry can claim reconciliation under the agent lock and call the same executor's read-only `reconcile()` method. Conditional finalization prevents an older, slow attempt from overwriting a newer reconciliation result. Completed executions replay their stored outcome without touching the provider.
 
 ## Audit event
 
-An audit event records tenant, actor, event type, entity, timestamp and safe metadata. Application code exposes create/list only. PostgreSQL rejects updates and deletes through a trigger. Database superusers remain a trust boundary, so production exports or hash chaining may be added later.
+An audit event records tenant, actor, event type, entity, timestamp and safe metadata. Application code exposes create/list only. PostgreSQL rejects updates and deletes through a trigger. The single-service journal has no update/delete repository methods but lacks a database trigger; volume administrators remain a trust boundary. Production exports or hash chaining may be added later.
 
 ## Organisation subscription
 
@@ -79,3 +81,9 @@ Provider webhooks update the record only after raw-body signature verification, 
 Usage events are append-oriented accounting facts with a metric, integer quantity, occurrence time and exact source. `(organisationId, metric, sourceType, sourceId)` is unique. An authorization and its idempotent replay therefore map to one decision event, while approval usage maps to the exact approval request.
 
 Active-agent and audit counts are derived from canonical domain records rather than accepting client totals. See [Billing](billing.md) for the plan catalogue and payment boundary.
+
+## Production launch
+
+A `ProductionLaunch` is the one-way replay barrier between a stateless sandbox claim and a durable workspace. It uniquely binds the sandbox credential fingerprint, idempotency key, normalized request hash, organisation, owner, agent, mandate and both credential records. It also retains the selected plan intent and mandate expiry needed to reconstruct an exact onboarding response without storing plaintext credentials.
+
+The record name describes the transition into the durable product surface; it does not claim production execution. The response remains `HOSTED_ALPHA` with `MockPaymentExecutor`.

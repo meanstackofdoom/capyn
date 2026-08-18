@@ -1,29 +1,29 @@
-# Public alpha launch checklist
+# Version 0.4 launch checklist
 
-This is CAPYN's 20-gate release register for the public alpha. A verified code gate means the repository contains the control and its automated evidence passed on 17 August 2026. It does not redefine the separate production gate for real funds.
+This is CAPYN's 20-gate release register for durable self-serve onboarding. A verified code gate means the repository contains the control and its automated evidence passed on 18 August 2026. It does not expand the hosted alpha's mock-execution boundary or claim readiness for real funds.
 
 | # | Gate | Evidence | Status |
 |---:|---|---|---|
-| 1 | Repository hygiene | Secret, placeholder, Java, Docker and debug-output sweep | Verified |
-| 2 | Environment boundary | Strict environment parsing, log redaction and explicit proxy trust | Verified |
-| 3 | Commercial contract | One plan catalogue drives limits, pricing and entitlements | Verified |
-| 4 | Payment readiness | Stripe Checkout, portal and signed webhook adapters | Verified |
-| 5 | Tenant security | Organisation-scoped queries, role checks and IDOR tests | Verified |
-| 6 | Quota concurrency | Organisation and agent locks guard usage and spend reservations | Verified |
-| 7 | Authority lifecycle | Approval races, replay, revocation and execution-time revalidation tested | Verified |
-| 8 | Persistent billing | Prisma subscription, usage and webhook schema plus migration invariants | Verified |
-| 9 | Product narrative | Four seeded decisions match the public demonstration | Verified |
-| 10 | API journey | Authorization, approval and mock execution smoke path | Verified |
-| 11 | Website journey | Public, docs and dashboard route smoke coverage | Verified |
-| 12 | Search metadata | Titles, descriptions, canonicals, Open Graph and JSON-LD | Verified |
-| 13 | Crawl and headers | Robots, sitemap, manifest, noindex and security headers | Verified |
-| 14 | Interaction quality | Responsive, reduced-motion, keyboard and console review | Verified |
-| 15 | Documentation | Canonical Markdown catalog rendered directly by the website | Verified |
-| 16 | Release record | Changelog, explicit deferrals and this evidence register | Verified |
-| 17 | Full verification | Lint, typecheck, unit/API/security tests and production builds | Verified |
-| 18 | Production smoke | Built web and API exercised on isolated non-default ports | Verified |
-| 19 | Public revision | Audited commits pushed and remote CI confirmed | Verified |
-| 20 | Hosting cutover | Recoverable prior-service compute stop, CAPYN deploy and hosted verification | Verified |
+| 1 | Verified source | Launch begins only from a valid, unexpired sandbox credential | Verified |
+| 2 | One-way claim | A sandbox credential can commission only one durable workspace | Verified |
+| 3 | Atomic tenant commit | Organisation, owner, agent, mandate, billing and audit records commit together | Verified |
+| 4 | Scoped idempotency | Exact retries replay safely; drift conflicts; different callers cannot collide | Verified |
+| 5 | Owner authentication | Tenant dashboard accepts hashed owner bearer credentials without demo fallback | Verified |
+| 6 | Separate agent authentication | A distinct agent credential is issued for SDK and API calls | Verified |
+| 7 | Secret-at-rest boundary | Plaintext owner and agent credentials are returned once and never persisted | Verified |
+| 8 | Tenant dashboard | A launched owner sees only their organisation, agents, mandates and events | Verified |
+| 9 | Custody gate | Recovery acknowledgement is required before entering the control plane | Verified |
+| 10 | Persistence truth | UI and API report PostgreSQL, volume journal or process memory exactly as configured | Verified |
+| 11 | Commercial rails | Developer, Team and Business prices and entitlements share one product contract | Verified |
+| 12 | Billing honesty | Paid intent is recorded; activation waits for signed Stripe state | Verified |
+| 13 | Demo isolation | The public Acme demonstration remains separate from commissioned tenants | Verified |
+| 14 | Launch experience | Four-stage air-gap flow, clear state transitions and one-time recovery bundle | Verified |
+| 15 | Accessibility | Labels, keyboard paths, reduced motion, contrast and responsive breakpoints reviewed | Verified |
+| 16 | Durable adapters | Existing Railway volume journal is deployable; PostgreSQL schema and migration are ready | Verified |
+| 17 | Automated coverage | API, web, database, policy, billing and SDK suites pass | Verified |
+| 18 | Built-service smoke | Separate and combined production builds complete onboarding and authenticated reads | Verified |
+| 19 | Public revision | Audited commits pushed and remote CI confirmed | Pending deployment |
+| 20 | Hosted persistence | Railway cutover, live onboarding and restart-survival verified | Pending deployment |
 
 ## Commands
 
@@ -36,18 +36,16 @@ corepack pnpm smoke:production
 git diff --check
 ```
 
-`smoke:production` starts the built API and web services temporarily on ports `4110` and `3110`, verifies the four policy outcomes and public surfaces, then releases both ports. `smoke:combined` verifies the constrained one-service Railway adapter on three additional non-default ports. Neither requires Docker.
+`smoke:production` starts the built API and web services temporarily on ports `4110` and `3110`, verifies the policy path, onboarding, owner authentication and public surfaces, then releases both ports. `smoke:combined` verifies the constrained one-service Railway adapter on three additional non-default ports. Neither requires Docker.
 
 ## Hosted evidence
 
-The synthetic public alpha is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). The 17 August 2026 cutover was verified against the deployed GitHub revision and a green remote CI run; the Railway project, service and generated hostnames now consistently use CAPYN.
+The version 0.3 synthetic public alpha remains live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app) while version 0.4 is staged. The two hosted gates above remain pending until the new revision is green, onboarding succeeds against the public origin and the commissioned tenant survives a Railway restart.
 
-Hosted checks covered the four logical decisions, same-payload idempotency, conflicting-payload rejection, invalid credentials, agent-identity injection, denied execution, exact-request approval, approval replay, idempotent execution, least-privilege demo identity, Developer-plan metering and append-oriented audit output. They also covered all 22 public routes, all nine noindex dashboard routes, canonical and social metadata, JSON-LD, CSP, HSTS, robots, sitemap and the web manifest.
-
-Railway's free-plan resource ceiling prevented a new project or second service. The authorized fallback stopped only the prior workload's compute and reconnected that service to CAPYN. Its existing volume was preserved for recovery. Once the aligned CAPYN hostname was healthy, the prior custom-domain mapping was detached so it could not continue serving CAPYN; no project, service or volume was deleted.
+Railway's current plan rejected a new managed PostgreSQL service. Version 0.4 therefore targets the existing attached volume through the fail-closed single-service journal while retaining the PostgreSQL adapter and migration as the scale-out path. This constraint is reported in the product and does not weaken the one-time credential or tenant-isolation boundaries.
 
 ## Hosting safety boundary
 
-The Railway cutover may stop the prior workload's running compute only after CAPYN's public revision is green. Its persistent volume remains intact, while its custom domain is deliberately detached from CAPYN and may be re-added when that workload is restored. Project, service and volume deletion remain outside this checklist.
+The Railway cutover may restart CAPYN only after its public revision is green. The attached volume remains intact and CAPYN writes only beneath `/data/capyn/`. Project, service and volume deletion remain outside this checklist.
 
 The hosted alpha remains a mock-execution developer demonstration. Stripe collection is available only when real provider credentials and price identifiers are supplied. Real settlement, production human identity, distributed rate limiting, provider reconciliation and the remaining controls in [Security](security.md) stay outside the public-alpha claim.

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CAPYN_VERSION = "0.3.0";
+export const CAPYN_VERSION = "0.4.0";
 
 export const CORE_CAPABILITIES = [
   "spend.compute",
@@ -101,6 +101,31 @@ export const sandboxActivateRequestSchema = z
   .strict();
 
 export type SandboxActivateRequest = z.infer<typeof sandboxActivateRequestSchema>;
+
+export const productionLaunchRequestSchema = z
+  .object({
+    organisation: z
+      .object({
+        slug: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+      })
+      .strict(),
+    owner: z
+      .object({
+        name: z.string().trim().min(2).max(160),
+        email: z.string().trim().email().max(320)
+      })
+      .strict(),
+    planIntent: z.enum(["DEVELOPER", "TEAM", "BUSINESS"]),
+    acknowledgements: z
+      .object({
+        keyCustody: z.literal(true),
+        syntheticExecution: z.literal(true)
+      })
+      .strict()
+  })
+  .strict();
+
+export type ProductionLaunchRequest = z.infer<typeof productionLaunchRequestSchema>;
 
 export const DECISIONS = ["ALLOW", "DENY", "REQUIRE_APPROVAL"] as const;
 export type Decision = (typeof DECISIONS)[number];
@@ -443,6 +468,49 @@ export interface SandboxEvaluationResult {
   evidence: LabEvidence;
 }
 
+export interface ProductionLaunchResult {
+  mode: "HOSTED_ALPHA";
+  scope: "DURABLE_WORKSPACE";
+  replayed: boolean;
+  createdAt: string;
+  workspace: { id: string; name: string; slug: string; persistence: "POSTGRESQL" | "VOLUME_JOURNAL" | "PROCESS_MEMORY" };
+  owner: { id: string; name: string; email: string; role: "OWNER" };
+  agent: { id: string; name: string; slug: string; status: "ACTIVE" };
+  mandate: {
+    id: string;
+    name: string;
+    version: number;
+    validUntil: string;
+    capabilities: string[];
+  };
+  credentials: {
+    owner: {
+      id: string;
+      apiKey: string;
+      keyPrefix: string;
+      scope: "OWNER_CONTROL_PLANE";
+    };
+    agent: {
+      id: string;
+      apiKey: string;
+      keyPrefix: string;
+      scope: "AGENT_AUTHORIZATION";
+    };
+  };
+  billing: {
+    planIntent: "DEVELOPER" | "TEAM" | "BUSINESS";
+    activePlan: "DEVELOPER";
+    checkoutAvailable: boolean;
+    checkoutUrl: string | null;
+    note: string;
+  };
+  handoff: {
+    dashboardPath: "/dashboard";
+    importedFrom: "STATELESS_SANDBOX";
+    sandboxCredentialConsumed: true;
+  };
+}
+
 export interface AgentPrincipal {
   type: "AGENT";
   organisationId: string;
@@ -538,6 +606,7 @@ export interface AuditEventView {
 
 export interface DashboardSnapshot {
   organisation: { id: string; name: string; slug: string };
+  operator?: { id: string; name: string; email: string; role: UserRole };
   stats: {
     activeAgents: number;
     activeMandates: number;

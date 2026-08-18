@@ -31,6 +31,8 @@ Mandate Studio also issues a browser-local Authority Passport. Its versioned pay
 
 The sandbox commissioning bay is the primary activation journey. Six instrument contacts carry a visitor through workspace, agent, mandate, credential, decision and proof. Its bearer is a real 30-minute server-authenticated sandbox credential kept only in component memory; its decision runs the shared policy engine and its proof opens in the independent client-side viewer. The page must keep the synthetic, stateless and no-real-execution boundary visible at every consequential step.
 
+After proof, the durable launch rail creates a deliberate visual air gap between ephemeral evidence and a tenant ledger. Four stages bind a custodian, choose a hosted service rail, review one atomic commit and hand over two one-time credentials. The copper/stock/sage palette, transfer packet and key locker are scoped to that consequential transition. The interface must block dashboard handoff until the user downloads the recovery bundle or copies both keys, and it must state that every self-serve plan still uses mock execution.
+
 The private boundary brief is browser-local too. It collects one exact action, hard stop, human checkpoint and smallest useful outcome without posting or persisting the fields. Visitors can copy or download Markdown; an owner-approved `CAPYN_CONTACT_EMAIL` adds a prefilled mail handoff without turning CAPYN into a form processor.
 
 ## Motion contract

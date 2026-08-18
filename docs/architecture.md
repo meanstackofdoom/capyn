@@ -20,7 +20,7 @@ Human / organisation
         ▼
  PaymentExecutor execute + reconcile interface
         │
-        ├── MockPaymentExecutor (v0.3)
+        ├── MockPaymentExecutor (v0.4)
         └── future adapters: Solana / x402 / Stripe / AP2
 ```
 
@@ -59,6 +59,25 @@ The transaction lock makes the spend snapshot and the newly reserved `ALLOWED` a
 
 The organisation lock serializes hosted quota checks across different agents. Billing is orchestration around the evaluator: exhausting a bounded free allowance can stop a new hosted request, but no billing code can turn a failed policy rule into permission.
 
+## Sandbox-to-workspace sequence
+
+```text
+Browser                 API              Durable repository      Billing provider
+  │                      │                       │                       │
+  ├─ sandbox bearer ────►│                       │                       │
+  │                      ├─ decrypt + verify     │                       │
+  │                      ├─ serializable tx ────►│                       │
+  │                      │  org + owner + agent  │                       │
+  │                      │  mandate + key hashes │                       │
+  │                      │  claim + audit        │                       │
+  │                      │◄─ atomic commit ──────┤                       │
+  │                      ├─ Team/Business intent ──────────────────────►│
+  │◄─ two one-time keys ─┤                       │                       │
+  │   + checkout?        │                       │                       │
+```
+
+The claim record binds one sandbox credential fingerprint and one idempotency key to the complete durable record set. Exact retries reconstruct the same owner and agent plaintext credentials from domain-separated HMAC derivations; ordinary read endpoints never return those values. Billing happens after the durable transaction, and only a signed provider webhook can change the active plan.
+
 ## Lifecycle
 
 ```text
@@ -89,10 +108,13 @@ PostgreSQL is the production persistence target. Prisma supplies typed access, w
 - ordered positive spend limits;
 - positive authorization amounts;
 - one credential-rotation idempotency record per agent and source-bound replacement lineage;
+- one user credential digest per owner key and one one-way sandbox claim per durable launch;
 - leased execution attempts with a recovery index over pending lease expiry;
 - an update/delete prevention trigger on audit events.
 
 The in-memory repository implements the same interface for deterministic API/security tests and the one-command demo. It is not a production store.
+
+The single-service volume repository is the hosted-alpha fallback when a platform account cannot provision another managed resource. It starts from the same isolated demo seed, serializes transactions through one process-wide mutex, checkpoints a versioned binary envelope by same-directory atomic rename, and fails closed on an unreadable file. It persists restarts but does not provide multi-process locking, row-level isolation, point-in-time recovery or database operations. Its response identifies itself as `VOLUME_JOURNAL`; memory rehearsal identifies itself as `PROCESS_MEMORY`; neither is allowed to masquerade as `POSTGRESQL`.
 
 ## Deployment shape
 

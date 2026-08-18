@@ -224,13 +224,55 @@ async function smokeApi() {
     "Sandbox credential did not authenticate a digest-covered first decision"
   );
 
+  const onboardingBody = {
+    organisation: { slug: "production-smoke-works" },
+    owner: { name: "Production Smoke Owner", email: "owner@production-smoke.test" },
+    planIntent: "DEVELOPER",
+    acknowledgements: { keyCustody: true, syntheticExecution: true }
+  };
+  const onboardingResponse = await request(`${apiOrigin}/v1/onboarding/launch`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${sandboxActivation.credential.apiKey}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": "production-smoke-launch-0001"
+    },
+    body: JSON.stringify(onboardingBody)
+  }, 201);
+  const onboarding = await onboardingResponse.json();
+  assert(
+    onboarding.scope === "DURABLE_WORKSPACE" &&
+      onboarding.workspace?.persistence === "PROCESS_MEMORY" &&
+      onboarding.credentials?.owner?.apiKey?.startsWith("capyn_owner_live_") &&
+      onboarding.credentials?.agent?.apiKey?.startsWith("capyn_live_"),
+    "Sandbox proof did not produce separated workspace credentials"
+  );
+  const onboardingReplay = await (await request(`${apiOrigin}/v1/onboarding/launch`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${sandboxActivation.credential.apiKey}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": "production-smoke-launch-0001"
+    },
+    body: JSON.stringify(onboardingBody)
+  })).json();
+  assert(onboardingReplay.replayed === true && onboardingReplay.credentials.owner.apiKey === onboarding.credentials.owner.apiKey, "Onboarding replay did not recover the exact owner key");
+  const ownerDashboard = await (await request(`${apiOrigin}/v1/dashboard`, {
+    headers: { Authorization: `Bearer ${onboarding.credentials.owner.apiKey}` }
+  })).json();
+  assert(ownerDashboard.organisation.id === onboarding.workspace.id && ownerDashboard.operator.role === "OWNER", "Owner key did not resolve its tenant dashboard");
+  const importedAgent = await (await request(`${apiOrigin}/v1/me`, {
+    headers: { Authorization: `Bearer ${onboarding.credentials.agent.apiKey}` }
+  })).json();
+  assert(importedAgent.id === onboarding.agent.id && importedAgent.organisationId === onboarding.workspace.id, "Imported agent key did not resolve its durable identity");
+
   const billing = await (await request(`${apiOrigin}/v1/billing`, {
     headers: { "x-capyn-user-id": demoUserId }
   })).json();
   assert(billing.planId === "DEVELOPER", "Demo billing account is not on Developer");
   assert(billing.usage.some((line) => line.metric === "AUTHORIZATION_DECISION" && line.used === 4), "Decision usage was not recorded exactly once");
 
-  return { decisions: [allow.decision, unknown.decision, approval.decision, transfer.decision], execution: execution.status, authorityLab: labResolution.resolution, sandbox: sandboxAuthorization.decision };
+  return { decisions: [allow.decision, unknown.decision, approval.decision, transfer.decision], execution: execution.status, authorityLab: labResolution.resolution, sandbox: sandboxAuthorization.decision, onboarding: onboarding.workspace.persistence };
 }
 
 async function smokeWeb() {

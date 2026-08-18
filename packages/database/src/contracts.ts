@@ -44,6 +44,15 @@ export interface UserAuthRecord {
   role: UserRole;
 }
 
+export interface UserCredentialAuthRecord {
+  id: string;
+  keyHash: string;
+  userId: string;
+  organisationId: string;
+  role: UserRole;
+  revokedAt: Date | null;
+}
+
 export interface AgentRecord {
   id: string;
   organisationId: string;
@@ -170,6 +179,13 @@ export interface CreateCredentialRecord {
   rotatedFromId?: string | null;
 }
 
+export interface CreateUserCredentialRecord {
+  id: string;
+  userId: string;
+  keyPrefix: string;
+  keyHash: string;
+}
+
 export interface CreateMandateRecord {
   id: string;
   policyId: string;
@@ -193,6 +209,24 @@ export interface CreateOrganisationRecord {
   owner: { id: string; name: string; email: string };
   subscription: { id: string; currentPeriodStart: Date; currentPeriodEnd: Date };
 }
+
+export interface ProductionLaunchRecord {
+  id: string;
+  sandboxCredentialHash: string;
+  idempotencyKey: string;
+  requestHash: string;
+  organisationId: string;
+  ownerId: string;
+  agentId: string;
+  mandateId: string;
+  ownerCredentialId: string;
+  agentCredentialId: string;
+  mandateValidUntil: Date;
+  planIntent: Extract<BillingPlanId, "DEVELOPER" | "TEAM" | "BUSINESS">;
+  createdAt: Date;
+}
+
+export type CreateProductionLaunchRecord = Omit<ProductionLaunchRecord, "createdAt">;
 
 export interface StoredSubscription {
   id: string;
@@ -307,11 +341,14 @@ export interface CapynTransaction {
   createAgent(input: CreateAgentRecord): Promise<AgentRecord>;
   updateAgentStatus(agentId: string, status: AgentStatus): Promise<AgentRecord>;
   createCredential(input: CreateCredentialRecord): Promise<void>;
+  createUserCredential(input: CreateUserCredentialRecord): Promise<void>;
   revokeCredential(credentialId: string, agentId: string, at: Date): Promise<boolean>;
   revokeAgentCredentials(agentId: string, at: Date): Promise<number>;
   createActiveMandate(input: CreateMandateRecord): Promise<{ id: string; version: number }>;
   revokeActiveMandates(agentId: string, at: Date): Promise<number>;
   createOrganisation(input: CreateOrganisationRecord): Promise<{ organisationId: string; ownerId: string }>;
+  findProductionLaunchBySandboxHash(sandboxCredentialHash: string): Promise<ProductionLaunchRecord | null>;
+  createProductionLaunch(input: CreateProductionLaunchRecord): Promise<ProductionLaunchRecord>;
   getBillingAllowance(organisationId: string, now: Date): Promise<BillingAllowance>;
   recordBillingUsage(input: RecordBillingUsage): Promise<void>;
   updateSubscription(input: UpdateSubscriptionRecord): Promise<StoredSubscription>;
@@ -321,6 +358,8 @@ export interface CapynTransaction {
 export interface CapynRepository {
   findCredentialByHash(keyHash: string): Promise<CredentialAuthRecord | null>;
   touchCredential(id: string, at: Date): Promise<void>;
+  findUserCredentialByHash(keyHash: string): Promise<UserCredentialAuthRecord | null>;
+  touchUserCredential(id: string, at: Date): Promise<void>;
   findUser(id: string): Promise<UserAuthRecord | null>;
   transaction<T>(work: (tx: CapynTransaction) => Promise<T>): Promise<T>;
   getDashboardSnapshot(organisationId: string, now: Date): Promise<DashboardSnapshot | null>;

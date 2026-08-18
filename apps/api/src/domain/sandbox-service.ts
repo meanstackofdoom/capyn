@@ -65,7 +65,8 @@ const credentialPayloadSchema = z
   })
   .strict();
 
-type CredentialPayload = z.infer<typeof credentialPayloadSchema>;
+export type SandboxCredentialClaim = z.infer<typeof credentialPayloadSchema>;
+type CredentialPayload = SandboxCredentialClaim;
 
 function createId(prefix: "org" | "agt" | "man" | "auth" | "rcpt"): string {
   return `sbx_${prefix}_${randomUUID().replaceAll("-", "")}`;
@@ -260,6 +261,10 @@ export class SandboxService {
       outcome,
       evidence: evidence(authorizationId, request, events)
     };
+  }
+
+  inspect(apiKey: string | undefined): SandboxCredentialClaim {
+    return structuredClone(this.open(apiKey));
   }
 
   private policyInput(

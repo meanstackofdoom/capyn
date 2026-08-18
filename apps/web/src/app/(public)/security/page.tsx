@@ -6,7 +6,7 @@ import { createPageMetadata } from "@/lib/metadata";
 export const metadata = createPageMetadata({
   title: "Security",
   path: "/security",
-  description: "CAPYN's fail-closed authorization model, credential handling, tenant isolation, concurrency controls, replay protection and known v0.3 limitations."
+  description: "CAPYN's fail-closed authorization model, credential handling, tenant isolation, concurrency controls, replay protection and known v0.4 limitations."
 });
 
 const controls = [
@@ -58,7 +58,7 @@ export default function SecurityPage() {
 
       <section id="controls" className="site-section bg-panel">
         <div className="site-container">
-          <SectionHeading eyebrow="Implemented in v0.3" title="Security boundaries exist in the server and repository—not in the interface." copy="The dashboard communicates policy. It does not enforce it. These controls sit in authentication, domain services, transactions and the database model." />
+          <SectionHeading eyebrow="Implemented in v0.4" title="Security boundaries exist in the server and repository—not in the interface." copy="The dashboard communicates policy. It does not enforce it. These controls sit in authentication, domain services, transactions and the database model." />
           <div className="mt-14 grid gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-4">
             {controls.map(({ icon: Icon, title, copy }) => (
               <article key={title} className="bg-paper p-6 sm:p-7">
@@ -97,11 +97,11 @@ export default function SecurityPage() {
           <div>
             <Eyebrow tone="permission">Transparent scope</Eyebrow>
             <h2 className="display-title mt-6 text-4xl font-semibold tracking-[-.055em] sm:text-5xl">A developer MVP, not a claim of production certification.</h2>
-            <p className="mt-6 max-w-xl text-base leading-8 text-white/60">CAPYN v0.3 establishes the architecture and demonstrates its critical controls. It intentionally does not custody or move real funds.</p>
+            <p className="mt-6 max-w-xl text-base leading-8 text-white/60">CAPYN v0.4 adds durable hosted workspaces and scoped owner credentials to the established authority architecture. It intentionally does not custody or move real funds.</p>
             <div className="mt-8"><TextLink href="/about#roadmap" inverse>See what comes next</TextLink></div>
           </div>
           <div className="border border-white/15">
-            <div className="flex items-center gap-3 border-b border-white/15 px-5 py-4"><AlertTriangle size={16} className="text-review" /><span className="font-mono text-[9px] uppercase tracking-[.15em] text-white/55">Known v0.3 limitations</span></div>
+            <div className="flex items-center gap-3 border-b border-white/15 px-5 py-4"><AlertTriangle size={16} className="text-review" /><span className="font-mono text-[9px] uppercase tracking-[.15em] text-white/55">Known v0.4 limitations</span></div>
             {limits.map((limit) => <div key={limit} className="flex gap-3 border-b border-white/10 px-5 py-4 text-xs leading-6 text-white/55 last:border-0"><span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-review" />{limit}</div>)}
           </div>
         </div>

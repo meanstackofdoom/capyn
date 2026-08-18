@@ -1,4 +1,4 @@
-import { createDemoMemoryRepository, hashApiKey, PrismaCapynRepository } from "@capyn/database";
+import { createDemoMemoryRepository, createVolumeCapynRepository, hashApiKey, PrismaCapynRepository } from "@capyn/database";
 import { fileURLToPath } from "node:url";
 import { buildApp } from "./app";
 import { loadConfig } from "./config";
@@ -11,10 +11,18 @@ try {
 }
 
 const config = loadConfig();
-const memory = createDemoMemoryRepository(
-  hashApiKey("capyn_demo_N7m2kQ4xR8vB3pL6sT9wY1cF5hJ0dG2a", config.API_KEY_PEPPER)
+const demoKeyHash = hashApiKey(
+  "capyn_demo_N7m2kQ4xR8vB3pL6sT9wY1cF5hJ0dG2a",
+  config.API_KEY_PEPPER
 );
-const repository = config.CAPYN_STORAGE === "memory" ? memory.repository : new PrismaCapynRepository();
+const memory = createDemoMemoryRepository(
+  demoKeyHash
+);
+let repository = config.CAPYN_STORAGE === "memory" ? memory.repository : new PrismaCapynRepository();
+if (config.CAPYN_STORAGE === "volume") {
+  if (!config.CAPYN_VOLUME_PATH) throw new Error("CAPYN_VOLUME_PATH is required in volume mode");
+  repository = (await createVolumeCapynRepository(config.CAPYN_VOLUME_PATH, demoKeyHash)).repository;
+}
 const billingProvider = config.STRIPE_SECRET_KEY
   ? new StripeBillingProvider({
       secretKey: config.STRIPE_SECRET_KEY,
@@ -31,7 +39,12 @@ const app = await buildApp({
   ...(config.BOOTSTRAP_TOKEN ? { bootstrapToken: config.BOOTSTRAP_TOKEN } : {}),
   ...(billingProvider ? { billingProvider } : {}),
   webOrigin: config.WEB_ORIGIN,
-  trustProxy: config.TRUST_PROXY
+  trustProxy: config.TRUST_PROXY,
+  onboardingPersistence: config.CAPYN_STORAGE === "postgres"
+    ? "POSTGRESQL"
+    : config.CAPYN_STORAGE === "volume"
+      ? "VOLUME_JOURNAL"
+      : "PROCESS_MEMORY"
 });
 
 const shutdown = async (signal: string): Promise<void> => {

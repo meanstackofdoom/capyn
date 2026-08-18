@@ -14,6 +14,7 @@ CAPYN is security-sensitive infrastructure. The developer alpha establishes boun
 - Rotation retries are idempotent without plaintext storage, and a captured principal is revalidated inside consequential authorization and execution transactions.
 - Agent revocation is terminal, revokes active credentials and prevents replacement credentials.
 - Human role checks execute in API handlers, never in the browser alone.
+- Durable workspace owners authenticate with a separate `capyn_owner_live_…` credential whose HMAC digest, prefix, user and organisation binding are stored; a failed bearer credential never falls back to demo authentication.
 - Production demo configuration refuses to start unless its header adapter is pinned to one explicit user; the public alpha pins it to an approver, so owner/admin routes remain unavailable even though seeded IDs are public.
 
 `API_KEY_PEPPER` must be a high-entropy deployment secret kept outside the database. Key hashing is appropriate here because generated keys already have high entropy; password hashing is not required for brute-force resistance.
@@ -29,6 +30,18 @@ CAPYN is security-sensitive infrastructure. The developer alpha establishes boun
 
 Statelessness means an issued sandbox credential cannot be individually revoked before expiry and repeated requests do not accumulate spend. It must never be accepted by durable `/v1/authorize` or used as a production credential. See [Sandbox commissioning](sandbox-commissioning.md).
 
+### One-way durable claim
+
+- `/v1/onboarding/launch` authenticates and inspects the exact sandbox credential before any persistent write.
+- One HMAC fingerprint of the sandbox credential can appear in only one production-launch record, preventing a second workspace claim.
+- The required idempotency key is bound to the sandbox fingerprint and normalized request; exact retry is recoverable while any drift conflicts.
+- Organisation, owner, agent, mandate, subscription, both credential digests, claim record and launch audit events are written in one transaction.
+- Owner and agent plaintext credentials are derived from distinct HMAC domains and returned only in the launch/replay response. The database stores neither plaintext.
+- The browser retains only the owner key, in tab-scoped `sessionStorage`, after an explicit dashboard handoff. It never stores the agent key.
+- Team/Business intent cannot self-assert an entitlement. Developer remains active until a verified billing webhook changes the subscription.
+
+The route is an onboarding boundary, not a live execution boundary. It imports the already-proved capabilities, vendor list and spend limits without widening them. See [Durable onboarding](durable-onboarding.md).
+
 ### Tenant isolation
 
 Authenticated principals carry an organisation ID loaded server-side. Every resource lookup compares the stored organisation and returns not found across tenant boundaries. The test suite covers cross-organisation authorization reads and approval decisions.
@@ -40,7 +53,7 @@ Production defence in depth should add PostgreSQL row-level security or isolated
 - Strict Zod objects reject unknown fields.
 - Body size is capped at 32 KiB and metadata at 8 KiB.
 - Amounts are decimal strings and convert to integer minor units.
-- Only USD is accepted in v0.3.
+- Only USD is accepted in v0.4.
 - Structured errors do not return stacks or database details.
 - Authorization, bootstrap and Stripe-signature headers are redacted from structured logs.
 - Fastify rate limiting provides an adapter point; production needs a distributed Redis-backed store and agent-aware keys.
@@ -70,6 +83,8 @@ PostgreSQL authorization and approval operations use:
 
 This prevents two CAPYN API requests for one agent from trivially observing the same available balance and both reserving it. Tests issue four simultaneous `$30` authorization requests against a `$100` daily limit and assert that three are allowed while the fourth is denied. Separate tests cover approval races against one request and against a shared daily cap.
 
+The single-service volume adapter provides the equivalent in-process serialization with one repository-wide mutex and acknowledges a transaction only after atomic checkpoint replacement. It must never be mounted by multiple API processes; PostgreSQL is required before horizontal scale or stronger database isolation guarantees.
+
 Cross-agent constraints on a shared treasury are not yet implemented. Add a treasury-level lock and reservation ledger before multiple agents share one aggregate budget.
 
 ### Billing isolation and replay
@@ -92,8 +107,10 @@ For regulated deployments, add immutable external export, retention policy, cloc
 
 ## Known alpha limitations
 
-- Human authentication is a demo header adapter. It may be exposed only when pinned to a least-privilege user with synthetic, disposable state and mock execution; disable it and install a real identity adapter before any customer-data or real-money deployment.
-- The fixed public agent key lets visitors consume the synthetic demo's in-memory allowance. Rate limits bound request volume, but this instance makes no availability promise and may be reset; design-partner environments require unique revocable credentials and durable isolation.
+- The public demonstration still uses a pinned, least-privilege header adapter alongside durable owner-key authentication. The pinned principal can access only the isolated synthetic demo tenant; disable the adapter entirely in a dedicated customer or real-money deployment.
+- Owner access keys are long-lived alpha recovery credentials. Tab logout removes the local copy but is not server-side revocation; self-service owner-key rotation, account recovery, MFA and session inventory are not implemented.
+- The fixed public agent key lets visitors consume the isolated synthetic demo's allowance. Rate limits bound request volume and the public instance makes no availability promise; durable workspaces receive unique revocable agent credentials.
+- The current Railway volume journal is a single-process hosted-alpha fallback. It has atomic checkpoints but no multi-replica locking, managed backups, point-in-time recovery or database row-level security.
 - `MockPaymentExecutor` moves no funds.
 - Request-driven leased reconciliation can recover an `EXECUTING` record after a lost provider response, but no background worker scans stale leases yet. Real adapters still require provider idempotency, a transactional outbox, automated reconciliation and alerting.
 - Rate-limit state is process-local.

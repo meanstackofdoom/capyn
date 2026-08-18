@@ -7,6 +7,9 @@ import {
   type DashboardSnapshot,
   type MandatePolicyContext
 } from "@capyn/types";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { deserialize, serialize } from "node:v8";
 import type {
   AgentRecord,
   AppendAuditEvent,
@@ -19,19 +22,23 @@ import type {
   CreateExecutionRecord,
   CreateMandateRecord,
   CreateOrganisationRecord,
+  CreateProductionLaunchRecord,
+  CreateUserCredentialRecord,
   CredentialAuthRecord,
   BillingAccountRecord,
   BillingAllowance,
   DemoSeedIds,
   RecordBillingUsage,
   RecordBillingWebhook,
+  ProductionLaunchRecord,
   StoredCredential,
   StoredApproval,
   StoredAuthorization,
   StoredExecution,
   StoredSubscription,
   UpdateSubscriptionRecord,
-  UserAuthRecord
+  UserAuthRecord,
+  UserCredentialAuthRecord
 } from "./contracts";
 
 interface MemoryOrganisation {
@@ -53,6 +60,16 @@ interface MemoryCredential {
   rotatedFromId: string | null;
 }
 
+interface MemoryUserCredential {
+  id: string;
+  userId: string;
+  keyPrefix: string;
+  keyHash: string;
+  createdAt: Date;
+  lastUsedAt: Date | null;
+  revokedAt: Date | null;
+}
+
 interface MemoryMandate extends MandatePolicyContext {
   organisationId: string;
   agentId: string;
@@ -61,9 +78,10 @@ interface MemoryMandate extends MandatePolicyContext {
   revokedAt: Date | null;
 }
 
-interface MemoryState {
+export interface MemoryState {
   organisations: MemoryOrganisation[];
   users: UserAuthRecord[];
+  userCredentials: MemoryUserCredential[];
   agents: AgentRecord[];
   credentials: MemoryCredential[];
   mandates: MemoryMandate[];
@@ -74,12 +92,14 @@ interface MemoryState {
   subscriptions: StoredSubscription[];
   billingUsageEvents: RecordBillingUsage[];
   billingWebhookEvents: RecordBillingWebhook[];
+  productionLaunches: ProductionLaunchRecord[];
 }
 
 function blankState(): MemoryState {
   return {
     organisations: [],
     users: [],
+    userCredentials: [],
     agents: [],
     credentials: [],
     mandates: [],
@@ -89,7 +109,8 @@ function blankState(): MemoryState {
     auditEvents: [],
     subscriptions: [],
     billingUsageEvents: [],
-    billingWebhookEvents: []
+    billingWebhookEvents: [],
+    productionLaunches: []
   };
 }
 
@@ -111,7 +132,7 @@ function cloneAuthorization(auth: StoredAuthorization): StoredAuthorization {
 }
 
 export class InMemoryCapynRepository implements CapynRepository, CapynTransaction {
-  private state: MemoryState;
+  protected state: MemoryState;
   private transactionQueue: Promise<void> = Promise.resolve();
 
   constructor(initial?: MemoryState) {
@@ -139,6 +160,26 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
 
   async findUser(id: string): Promise<UserAuthRecord | null> {
     return structuredClone(this.state.users.find((item) => item.id === id) ?? null);
+  }
+
+  async findUserCredentialByHash(keyHash: string): Promise<UserCredentialAuthRecord | null> {
+    const credential = this.state.userCredentials.find((item) => item.keyHash === keyHash);
+    if (!credential) return null;
+    const user = this.state.users.find((item) => item.id === credential.userId);
+    if (!user) return null;
+    return {
+      id: credential.id,
+      keyHash: credential.keyHash,
+      userId: user.id,
+      organisationId: user.organisationId,
+      role: user.role,
+      revokedAt: credential.revokedAt
+    };
+  }
+
+  async touchUserCredential(id: string, at: Date): Promise<void> {
+    const credential = this.state.userCredentials.find((item) => item.id === id && item.revokedAt === null);
+    if (credential) credential.lastUsedAt = at;
   }
 
   async transaction<T>(work: (tx: CapynTransaction) => Promise<T>): Promise<T> {
@@ -412,6 +453,18 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
     });
   }
 
+  async createUserCredential(input: CreateUserCredentialRecord): Promise<void> {
+    if (this.state.userCredentials.some((item) => item.keyHash === input.keyHash)) {
+      throw new Error("User credential key hash must be unique");
+    }
+    this.state.userCredentials.push({
+      ...input,
+      createdAt: new Date(),
+      lastUsedAt: null,
+      revokedAt: null
+    });
+  }
+
   async revokeCredential(credentialId: string, agentId: string, at: Date): Promise<boolean> {
     const item = this.state.credentials.find(
       (credential) => credential.id === credentialId && credential.agentId === agentId && credential.revokedAt === null
@@ -479,6 +532,9 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
   }
 
   async createOrganisation(input: CreateOrganisationRecord): Promise<{ organisationId: string; ownerId: string }> {
+    if (this.state.organisations.some((item) => item.slug === input.organisation.slug)) {
+      throw new Error("Organisation slug unique constraint");
+    }
     this.state.organisations.push({ ...input.organisation, createdAt: new Date() });
     this.state.users.push({
       ...input.owner,
@@ -498,6 +554,21 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
       cancelAtPeriodEnd: false
     });
     return { organisationId: input.organisation.id, ownerId: input.owner.id };
+  }
+
+  async findProductionLaunchBySandboxHash(sandboxCredentialHash: string): Promise<ProductionLaunchRecord | null> {
+    return structuredClone(
+      this.state.productionLaunches.find((item) => item.sandboxCredentialHash === sandboxCredentialHash) ?? null
+    );
+  }
+
+  async createProductionLaunch(input: CreateProductionLaunchRecord): Promise<ProductionLaunchRecord> {
+    if (this.state.productionLaunches.some((item) => item.sandboxCredentialHash === input.sandboxCredentialHash)) {
+      throw new Error("Sandbox credential launch must be unique");
+    }
+    const record = { ...structuredClone(input), createdAt: new Date() };
+    this.state.productionLaunches.push(record);
+    return structuredClone(record);
   }
 
   async getBillingAllowance(organisationId: string, now: Date): Promise<BillingAllowance> {
@@ -728,9 +799,105 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
     };
   }
 
-  inspect(): Readonly<MemoryState> {
+  inspect(): MemoryState {
     return structuredClone(this.state);
   }
+}
+
+const VOLUME_STATE_FORMAT = "CAPYN_VOLUME_STATE";
+const VOLUME_STATE_VERSION = 1;
+const stateCollections = [
+  "organisations",
+  "users",
+  "userCredentials",
+  "agents",
+  "credentials",
+  "mandates",
+  "authorizations",
+  "approvals",
+  "executions",
+  "auditEvents",
+  "subscriptions",
+  "billingUsageEvents",
+  "billingWebhookEvents",
+  "productionLaunches"
+] as const satisfies ReadonlyArray<keyof MemoryState>;
+
+function readStateEnvelope(value: unknown): MemoryState {
+  if (typeof value !== "object" || value === null) throw new Error("CAPYN volume state envelope is invalid");
+  const envelope = value as { format?: unknown; version?: unknown; state?: unknown };
+  if (envelope.format !== VOLUME_STATE_FORMAT || envelope.version !== VOLUME_STATE_VERSION) {
+    throw new Error("CAPYN volume state format is unsupported");
+  }
+  if (typeof envelope.state !== "object" || envelope.state === null) {
+    throw new Error("CAPYN volume state payload is invalid");
+  }
+  const state = envelope.state as Partial<Record<keyof MemoryState, unknown>>;
+  if (stateCollections.some((key) => !Array.isArray(state[key]))) {
+    throw new Error("CAPYN volume state is incomplete");
+  }
+  return structuredClone(state) as MemoryState;
+}
+
+export class VolumeCapynRepository extends InMemoryCapynRepository {
+  constructor(
+    private readonly statePath: string,
+    initial: MemoryState
+  ) {
+    super(initial);
+  }
+
+  override async transaction<T>(work: (tx: CapynTransaction) => Promise<T>): Promise<T> {
+    return super.transaction(async (tx) => {
+      const result = await work(tx);
+      await this.checkpoint();
+      return result;
+    });
+  }
+
+  async checkpoint(): Promise<void> {
+    const folder = dirname(this.statePath);
+    const temporaryPath = `${this.statePath}.${process.pid}.tmp`;
+    await mkdir(folder, { recursive: true, mode: 0o700 });
+    const payload = serialize({
+      format: VOLUME_STATE_FORMAT,
+      version: VOLUME_STATE_VERSION,
+      state: this.inspect()
+    });
+    await writeFile(temporaryPath, payload, { mode: 0o600, flush: true });
+    await rename(temporaryPath, this.statePath);
+  }
+}
+
+export async function createVolumeCapynRepository(
+  statePath: string,
+  keyHash: string
+): Promise<{ repository: VolumeCapynRepository; ids: DemoSeedIds }> {
+  const seeded = createDemoMemoryRepository(keyHash);
+  let initial = seeded.repository.inspect();
+  let loaded = false;
+  try {
+    initial = readStateEnvelope(deserialize(await readFile(statePath)) as unknown);
+    loaded = true;
+  } catch (error) {
+    if (!(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")) {
+      throw error;
+    }
+  }
+  if (!loaded) {
+    const now = new Date();
+    for (const mandate of initial.mandates) {
+      mandate.validFrom = new Date(now.getTime() - 24 * 60 * 60 * 1_000).toISOString();
+      mandate.validUntil = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1_000).toISOString();
+    }
+    for (const subscription of initial.subscriptions) {
+      subscription.currentPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      subscription.currentPeriodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+    }
+  }
+  const repository = new VolumeCapynRepository(statePath, initial);
+  if (!loaded) await repository.checkpoint();
+  return { repository, ids: seeded.ids };
 }
 
 export function createDemoMemoryRepository(keyHash: string): {

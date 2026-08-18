@@ -41,6 +41,7 @@ import {
 } from "@capyn/types";
 import { Brand } from "./brand";
 import type { DashboardSection } from "@/lib/dashboard";
+import { OWNER_SESSION_STORAGE_KEY } from "@/lib/production-launch";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const DEMO_USER = process.env.NEXT_PUBLIC_DEMO_USER_ID ?? "usr_demo_owner";
@@ -75,7 +76,9 @@ const navigation = [
 
 async function humanRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
-  headers.set("x-capyn-user-id", DEMO_USER);
+  const ownerKey = typeof window === "undefined" ? null : window.sessionStorage.getItem(OWNER_SESSION_STORAGE_KEY);
+  if (ownerKey) headers.set("Authorization", `Bearer ${ownerKey}`);
+  else headers.set("x-capyn-user-id", DEMO_USER);
   headers.set("Accept", "application/json");
   if (init.body) headers.set("Content-Type", "application/json");
   const response = await fetch(`${API_BASE}${path}`, { ...init, headers, cache: "no-store" });
@@ -293,6 +296,7 @@ export function ControlPlane({ section }: { section: DashboardSection }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedAuthorization, setSelectedAuthorization] = useState<AuthorizationView | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [ownerSession, setOwnerSession] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -311,13 +315,48 @@ export function ControlPlane({ section }: { section: DashboardSection }) {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    setOwnerSession(Boolean(window.sessionStorage.getItem(OWNER_SESSION_STORAGE_KEY)));
+    void load();
+  }, [load]);
   useEffect(() => { setMobileOpen(false); }, [section]);
 
   const notify = (message: string) => {
     setNotice(message);
     window.setTimeout(() => setNotice(null), 4200);
   };
+
+  const setOwnerKey = async (apiKey: string): Promise<void> => {
+    const previous = window.sessionStorage.getItem(OWNER_SESSION_STORAGE_KEY);
+    window.sessionStorage.setItem(OWNER_SESSION_STORAGE_KEY, apiKey);
+    try {
+      const [nextSnapshot, nextBilling] = await Promise.all([
+        humanRequest<DashboardSnapshot>("/v1/dashboard"),
+        humanRequest<BillingOverview>("/v1/billing")
+      ]);
+      setSnapshot(nextSnapshot);
+      setBilling(nextBilling);
+      setError(null);
+      setOwnerSession(true);
+      notify("Owner key session opened for this tab.");
+    } catch (caught) {
+      if (previous) window.sessionStorage.setItem(OWNER_SESSION_STORAGE_KEY, previous);
+      else window.sessionStorage.removeItem(OWNER_SESSION_STORAGE_KEY);
+      throw caught;
+    }
+  };
+
+  const endOwnerSession = async (): Promise<void> => {
+    window.sessionStorage.removeItem(OWNER_SESSION_STORAGE_KEY);
+    setOwnerSession(false);
+    await load();
+    notify("Owner key removed from this tab.");
+  };
+
+  const operatorName = snapshot?.operator?.name ?? DEMO_USER_NAME;
+  const operatorRole = snapshot?.operator?.role ?? DEMO_USER_ROLE;
+  const operatorInitials = operatorName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+  const canAdmin = ownerSession || DEMO_MANAGEMENT_ENABLED;
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[248px_1fr]">
@@ -353,10 +392,10 @@ export function ControlPlane({ section }: { section: DashboardSection }) {
         </nav>
         <div className="border-t border-line p-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-8 w-8 place-items-center bg-ink text-[10px] font-bold text-paper">{DEMO_USER_INITIALS}</div>
+            <div className="grid h-8 w-8 place-items-center bg-ink text-[10px] font-bold text-paper">{operatorInitials || DEMO_USER_INITIALS}</div>
             <div className="min-w-0">
-              <p className="truncate text-xs font-bold">{DEMO_USER_NAME}</p>
-              <p className="font-mono text-[8px] uppercase tracking-[.12em] text-muted">{DEMO_USER_ROLE} · demo auth</p>
+              <p className="truncate text-xs font-bold">{operatorName}</p>
+              <p className="font-mono text-[8px] uppercase tracking-[.12em] text-muted">{operatorRole} · {ownerSession ? "owner key" : "demo auth"}</p>
             </div>
           </div>
         </div>
@@ -380,22 +419,22 @@ export function ControlPlane({ section }: { section: DashboardSection }) {
         </header>
 
         <div className="mx-auto max-w-[1500px] p-5 sm:p-8">
-          {!DEMO_MANAGEMENT_ENABLED && (
+          {!canAdmin && (
             <div className="mb-5 border border-review/30 bg-review/10 px-4 py-3 text-[11px] leading-5 text-muted">
               <strong className="text-ink">Public demonstration:</strong> organisation administration is disabled. The scoped approver can inspect evidence and decide exact pending requests; state is synthetic and disposable.
             </div>
           )}
-          {loading && !snapshot ? <LoadingState /> : error ? <ErrorState error={error} retry={() => void load()} /> : snapshot ? (
+          {loading && !snapshot ? <LoadingState /> : error ? <ErrorState error={error} retry={() => void load()} ownerSession={ownerSession} clearOwnerKey={() => void endOwnerSession()} /> : snapshot ? (
             <div className="enter-control">
               {section === "overview" && <Overview snapshot={snapshot} selectAuthorization={setSelectedAuthorization} />}
-              {section === "agents" && <Agents snapshot={snapshot} reload={load} notify={notify} canAdmin={DEMO_MANAGEMENT_ENABLED} />}
-              {section === "mandates" && <Mandates snapshot={snapshot} reload={load} notify={notify} canAdmin={DEMO_MANAGEMENT_ENABLED} />}
+              {section === "agents" && <Agents snapshot={snapshot} reload={load} notify={notify} canAdmin={canAdmin} />}
+              {section === "mandates" && <Mandates snapshot={snapshot} reload={load} notify={notify} canAdmin={canAdmin} />}
               {section === "authorizations" && <Authorizations snapshot={snapshot} selectAuthorization={setSelectedAuthorization} />}
               {section === "approvals" && <Approvals snapshot={snapshot} reload={load} notify={notify} />}
               {section === "audit" && <AuditLog snapshot={snapshot} />}
               {section === "billing" && billing && <BillingPanel billing={billing} reload={load} notify={notify} />}
               {section === "developers" && <Developers snapshot={snapshot} notify={notify} />}
-              {section === "settings" && <SettingsPage snapshot={snapshot} />}
+              {section === "settings" && <SettingsPage snapshot={snapshot} ownerSession={ownerSession} setOwnerKey={setOwnerKey} endOwnerSession={endOwnerSession} />}
             </div>
           ) : null}
         </div>
@@ -411,14 +450,14 @@ function LoadingState() {
   return <div className="grid gap-4 md:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <div key={index} className="h-32 animate-pulse border border-line bg-panel" />)}</div>;
 }
 
-function ErrorState({ error, retry }: { error: string; retry: () => void }) {
+function ErrorState({ error, retry, ownerSession, clearOwnerKey }: { error: string; retry: () => void; ownerSession: boolean; clearOwnerKey: () => void }) {
   return (
     <div className="panel mx-auto mt-16 max-w-xl p-8">
       <ShieldAlert size={25} className="text-denial" />
       <h2 className="mt-6 text-xl font-bold">The control plane API is unavailable</h2>
       <p className="mt-3 text-sm leading-6 text-muted">{error}</p>
       <div className="mt-5 bg-paper p-4 font-mono text-[10px] leading-5 text-muted">pnpm dev<br />API expected at {API_BASE}</div>
-      <Button className="mt-5" onClick={retry}><RefreshCw size={13} /> Try again</Button>
+      <div className="mt-5 flex flex-wrap gap-2"><Button onClick={retry}><RefreshCw size={13} /> Try again</Button>{ownerSession && <Button tone="danger" onClick={clearOwnerKey}><X size={13} /> Clear invalid owner key</Button>}</div>
     </div>
   );
 }
@@ -845,6 +884,59 @@ function CodeBlock({ label, code, notify }: { label: string; code: string; notif
   return <div className="overflow-hidden border border-line bg-[color:#0b1014] text-[color:#dce5e1]"><div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><span className="font-mono text-[9px] uppercase tracking-[.13em] text-white/50">{label}</span><button className="flex items-center gap-2 font-mono text-[9px] text-white/60 hover:text-white" onClick={() => { void navigator.clipboard.writeText(code); notify("Code copied."); }}><Clipboard size={11} /> Copy</button></div><pre className="overflow-x-auto p-5 font-mono text-[10px] leading-6"><code>{code}</code></pre></div>;
 }
 
-function SettingsPage({ snapshot }: { snapshot: DashboardSnapshot }) {
-  return <div className="grid gap-5 lg:grid-cols-2"><section className="panel p-6"><div className="flex items-center gap-3"><Shield size={19} /><div><h2 className="text-sm font-bold">Security posture</h2><p className="mt-1 text-[10px] text-muted">Enforced on the server</p></div></div><div className="mt-6 divide-y divide-line">{[["Policy default", "Fail closed"], ["Money representation", "Integer minor units"], ["Organisation isolation", "Repository-scoped"], ["Authorization lifetime", "15 minutes"], ["Audit model", "Append-oriented"]].map(([label, value]) => <div className="flex justify-between gap-3 py-3 text-xs" key={label}><span className="text-muted">{label}</span><span className="font-semibold">{value}</span></div>)}</div></section><section className="panel p-6"><div className="flex items-center gap-3"><SlidersHorizontal size={19} /><div><h2 className="text-sm font-bold">Adapters</h2><p className="mt-1 text-[10px] text-muted">Replaceable infrastructure boundaries</p></div></div><div className="mt-6 space-y-3">{[["Human authentication", "Demo header adapter", "review"], ["Agent authentication", "Hashed API keys", "ok"], ["Payment executor", "MockPaymentExecutor", "ok"], ["Settlement", "Solana / USDC deferred", "muted"]].map(([label, value, state]) => <div className="border border-line bg-paper p-4" key={label}><div className="flex items-center justify-between gap-3"><span className="text-xs font-semibold">{label}</span><span className={cn("status-dot", state === "ok" ? "text-permission" : state === "review" ? "text-review" : "text-muted")} /></div><p className="mt-2 font-mono text-[9px] text-muted">{value}</p></div>)}</div></section><section className="panel p-6 lg:col-span-2"><p className="font-mono text-[9px] uppercase tracking-[.14em] text-muted">Organisation identifiers</p><div className="mt-5 grid gap-4 sm:grid-cols-3"><div><p className="text-[10px] text-muted">Name</p><p className="mt-1 text-sm font-bold">{snapshot.organisation.name}</p></div><div><p className="text-[10px] text-muted">Slug</p><p className="mt-1 font-mono text-xs">{snapshot.organisation.slug}</p></div><div><p className="text-[10px] text-muted">ID</p><p className="mt-1 font-mono text-xs">{snapshot.organisation.id}</p></div></div></section></div>;
+function SettingsPage({ snapshot, ownerSession, setOwnerKey, endOwnerSession }: { snapshot: DashboardSnapshot; ownerSession: boolean; setOwnerKey: (apiKey: string) => Promise<void>; endOwnerSession: () => Promise<void> }) {
+  const [key, setKey] = useState("");
+  const [keyError, setKeyError] = useState<string | null>(null);
+  const [keyBusy, setKeyBusy] = useState(false);
+
+  async function openOwnerSession(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    const candidate = key.trim();
+    if (!candidate.startsWith("capyn_owner_live_") || candidate.length < 32) {
+      setKeyError("Paste the capyn_owner_live_ key from your recovery bundle.");
+      return;
+    }
+    setKeyBusy(true);
+    setKeyError(null);
+    try {
+      await setOwnerKey(candidate);
+      setKey("");
+    } catch (caught) {
+      setKeyError(caught instanceof Error ? caught.message : "The owner key could not be verified.");
+    } finally {
+      setKeyBusy(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-2">
+      <section className="panel p-6">
+        <div className="flex items-center gap-3"><Shield size={19} /><div><h2 className="text-sm font-bold">Security posture</h2><p className="mt-1 text-[10px] text-muted">Enforced on the server</p></div></div>
+        <div className="mt-6 divide-y divide-line">{[["Policy default", "Fail closed"], ["Money representation", "Integer minor units"], ["Organisation isolation", "Repository-scoped"], ["Authorization lifetime", "15 minutes"], ["Audit model", "Append-oriented"]].map(([label, value]) => <div className="flex justify-between gap-3 py-3 text-xs" key={label}><span className="text-muted">{label}</span><span className="font-semibold">{value}</span></div>)}</div>
+      </section>
+      <section className="panel p-6">
+        <div className="flex items-center gap-3"><SlidersHorizontal size={19} /><div><h2 className="text-sm font-bold">Runtime boundaries</h2><p className="mt-1 text-[10px] text-muted">What is durable and what remains simulated</p></div></div>
+        <div className="mt-6 space-y-3">{[["Human authentication", ownerSession ? "Scoped owner access key" : "Public demo adapter", ownerSession ? "ok" : "review"], ["Agent authentication", "HMAC-digested API keys", "ok"], ["Persistence", "Durable tenant repository", "ok"], ["Payment executor", "MockPaymentExecutor", "review"], ["Settlement", "Live-money adapter not connected", "muted"]].map(([label, value, state]) => <div className="border border-line bg-paper p-4" key={label}><div className="flex items-center justify-between gap-3"><span className="text-xs font-semibold">{label}</span><span className={cn("status-dot", state === "ok" ? "text-permission" : state === "review" ? "text-review" : "text-muted")} /></div><p className="mt-2 font-mono text-[9px] text-muted">{value}</p></div>)}</div>
+      </section>
+      <section className="panel p-6 lg:col-span-2">
+        <div className="flex items-center gap-3"><KeyRound size={19} /><div><h2 className="text-sm font-bold">Owner key session</h2><p className="mt-1 text-[10px] text-muted">Kept in this browser tab only; never written to CAPYN in plaintext</p></div></div>
+        {ownerSession ? (
+          <div className="mt-6 flex flex-col gap-4 border border-permission/30 bg-permission/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="text-xs font-bold text-ink">Authenticated as {snapshot.operator?.name ?? "workspace owner"}</p><p className="mt-1 font-mono text-[9px] text-muted">OWNER · KEY SESSION · {snapshot.operator?.email ?? "TENANT SCOPED"}</p></div>
+            <Button tone="danger" onClick={() => void endOwnerSession()}><XCircle size={13} /> End session</Button>
+          </div>
+        ) : (
+          <form className="mt-6" onSubmit={(event) => void openOwnerSession(event)}>
+            <label className="block"><span className="text-xs font-semibold">Open an existing workspace</span><span className="mt-1 block text-[10px] leading-5 text-muted">Retrieve the owner key from the recovery bundle you downloaded at launch.</span><input type="password" autoComplete="off" spellCheck={false} value={key} onChange={(event) => { setKey(event.target.value); setKeyError(null); }} placeholder="capyn_owner_live_…" className="mt-3 h-11 w-full border border-line bg-paper px-3 font-mono text-[10px] outline-none focus:border-ink" /></label>
+            {keyError && <p className="mt-2 text-[10px] text-denial">{keyError}</p>}
+            <Button className="mt-4" tone="primary" type="submit" disabled={keyBusy}><KeyRound size={13} /> {keyBusy ? "Verifying…" : "Verify owner key"}</Button>
+          </form>
+        )}
+      </section>
+      <section className="panel p-6 lg:col-span-2">
+        <p className="font-mono text-[9px] uppercase tracking-[.14em] text-muted">Organisation identifiers</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-3"><div><p className="text-[10px] text-muted">Name</p><p className="mt-1 text-sm font-bold">{snapshot.organisation.name}</p></div><div><p className="text-[10px] text-muted">Slug</p><p className="mt-1 font-mono text-xs">{snapshot.organisation.slug}</p></div><div><p className="text-[10px] text-muted">ID</p><p className="mt-1 font-mono text-xs">{snapshot.organisation.id}</p></div></div>
+      </section>
+    </div>
+  );
 }

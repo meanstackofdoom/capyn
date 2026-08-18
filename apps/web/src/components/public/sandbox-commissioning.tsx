@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { type FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ProductionLaunch } from "@/components/public/production-launch";
 import { createLabProofBundle, createLabProofHref } from "@/lib/lab-proof";
 import {
   createSandboxActivationRequest,
@@ -134,6 +135,7 @@ export function SandboxCommissioning() {
   const [copied, setCopied] = useState<CopyTarget>(null);
   const [secondsRemaining, setSecondsRemaining] = useState(30 * 60);
   const [selectedScenario, setSelectedScenario] = useState("inside");
+  const [productionLaunchOpen, setProductionLaunchOpen] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
   const workfaceRef = useRef<HTMLElement>(null);
   const alignmentTimerRef = useRef<number | null>(null);
@@ -319,11 +321,22 @@ export function SandboxCommissioning() {
     setCopied(null);
     setSecondsRemaining(30 * 60);
     setSelectedScenario("inside");
+    setProductionLaunchOpen(false);
     slugEdited.current = false;
   }
 
   const decision = result ? decisionCopy(result) : null;
   const resultTone = result?.decision === "ALLOW" ? "permission" : result?.decision === "REQUIRE_APPROVAL" ? "review" : "denial";
+
+  if (productionLaunchOpen && activation) {
+    return (
+      <ProductionLaunch
+        activation={activation}
+        sandboxCredential={activation.credential.apiKey}
+        onBack={() => setProductionLaunchOpen(false)}
+      />
+    );
+  }
 
   return (
     <main ref={rootRef} className="commissioning-page">
@@ -557,7 +570,7 @@ export function SandboxCommissioning() {
                     </div>
                     <div className="commission-proof-next">
                       <div><Code2 size={17} /><p><strong>You completed the full trust loop.</strong><span>Identity → mandate → credential → decision → portable proof. Production workspaces add persistence, revocation, approvals and execution adapters.</span></p></div>
-                      <Link href="/design-partners">Move this boundary into production <ArrowRight size={14} /></Link>
+                      <button type="button" onClick={() => setProductionLaunchOpen(true)}>Create a durable workspace <ArrowRight size={14} /></button>
                     </div>
                     <div className="commission-stage__actions">
                       <button type="button" className="is-quiet" onClick={() => goToStage("decision")}><ArrowLeft size={14} /> Decision</button>

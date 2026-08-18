@@ -164,6 +164,39 @@ try {
     "Combined sandbox authorization is invalid"
   );
 
+  const onboardingBody = {
+    organisation: { slug: "combined-smoke-works" },
+    owner: { name: "Combined Smoke Owner", email: "owner@combined-smoke.test" },
+    planIntent: "DEVELOPER",
+    acknowledgements: { keyCustody: true, syntheticExecution: true }
+  };
+  const onboardingResponse = await fetch(`${origin}/v1/onboarding/launch`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${sandboxActivation.credential.apiKey}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": "combined-smoke-launch-0001"
+    },
+    body: JSON.stringify(onboardingBody)
+  });
+  const onboarding = await onboardingResponse.json();
+  assert(
+    onboardingResponse.status === 201 &&
+      onboarding.workspace?.persistence === "PROCESS_MEMORY" &&
+      onboarding.credentials?.owner?.apiKey?.startsWith("capyn_owner_live_") &&
+      onboarding.credentials?.agent?.apiKey?.startsWith("capyn_live_"),
+    "Combined durable-onboarding adapter is invalid"
+  );
+  const ownerDashboard = await fetch(`${origin}/v1/dashboard`, {
+    headers: { Authorization: `Bearer ${onboarding.credentials.owner.apiKey}` }
+  });
+  const ownerSnapshot = await ownerDashboard.json();
+  assert(ownerDashboard.ok && ownerSnapshot.organisation.id === onboarding.workspace.id && ownerSnapshot.operator.role === "OWNER", "Combined owner key did not resolve its tenant");
+  const importedAgent = await fetch(`${origin}/v1/me`, {
+    headers: { Authorization: `Bearer ${onboarding.credentials.agent.apiKey}` }
+  });
+  assert(importedAgent.ok && (await importedAgent.json()).id === onboarding.agent.id, "Combined imported agent key is invalid");
+
   const privateGate = await fetch(`${origin}/private/project-status`);
   const privateGateHtml = await privateGate.text();
   assert(privateGateHtml.includes("Unlock status ledger"), "Combined private status gate is missing");
@@ -185,7 +218,7 @@ try {
 
   const me = await fetch(`${origin}/v1/me`, { headers: { Authorization: `Bearer ${agentApiKey}` } });
   assert(me.ok && (await me.json()).name === "procurement-agent", "Combined agent route is invalid");
-  process.stdout.write(`combined-smoke · ${JSON.stringify({ origin, api: "ok", web: "ok", proxy: "ok", authorityLab: "ok", sandbox: "ok", privateStatus: "ok" })}\n`);
+  process.stdout.write(`combined-smoke · ${JSON.stringify({ origin, api: "ok", web: "ok", proxy: "ok", authorityLab: "ok", sandbox: "ok", onboarding: "ok", privateStatus: "ok" })}\n`);
 } catch (error) {
   process.stderr.write(`${output.join("").slice(-8_000)}\n`);
   throw error;

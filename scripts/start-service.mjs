@@ -37,6 +37,10 @@ function run(command, args, { forwardSignals = false } = {}) {
 if ((service === "api" || service === "combined") && process.env.CAPYN_STORAGE === "postgres") {
   const migrationCode = await run(pnpm, ["db:migrate"]);
   if (migrationCode !== 0) process.exit(migrationCode);
+  if (process.env.CAPYN_SEED_DEMO === "true") {
+    const seedCode = await run(pnpm, ["db:seed"]);
+    if (seedCode !== 0) process.exit(seedCode);
+  }
 }
 
 const exitCode = service === "combined"

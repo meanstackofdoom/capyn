@@ -45,7 +45,7 @@ export default function HomePage() {
       name: "CAPYN",
       applicationCategory: "SecurityApplication",
       operatingSystem: "Web, Node.js",
-      softwareVersion: "0.3.0",
+      softwareVersion: "0.4.0",
       description: "A programmable authorization control plane for autonomous agents with capabilities, limits, approvals and audit evidence.",
       url: siteUrl,
       codeRepository: "https://github.com/meanstackofdoom/capyn",
@@ -55,12 +55,15 @@ export default function HomePage() {
         "Versioned authority mandates",
         "Deterministic spending policy evaluation",
         "Request-bound human approvals",
+        "Durable PostgreSQL workspaces",
+        "Separate owner and agent credentials",
         "Client-verifiable decision receipts",
         "Shareable draft Authority Passports"
       ],
       offers: [
         { "@type": "Offer", name: "Developer", price: "0", priceCurrency: "USD" },
-        { "@type": "Offer", name: "Hosted Alpha", price: "99", priceCurrency: "USD" }
+        { "@type": "Offer", name: "Team", price: "99", priceCurrency: "USD" },
+        { "@type": "Offer", name: "Business", price: "499", priceCurrency: "USD" }
       ]
     }
   ];

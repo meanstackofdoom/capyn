@@ -6,6 +6,30 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 No unreleased changes.
 
+## v0.4.0 — 2026-08-18
+
+### Durable workspace handoff
+
+- Added a four-stage air-gap handoff from verified sandbox proof to a durable hosted-alpha workspace.
+- Added atomic creation of the organisation, subscription, owner, imported agent, 30-day mandate, credential digests, launch claim and append-oriented audit evidence.
+- Added one-claim-per-sandbox enforcement plus request-bound idempotency that recovers the same one-time credentials on an exact replay and rejects drift.
+- Added a one-time recovery bundle with distinct owner-control-plane and agent-authorization credentials; only HMAC digests and short prefixes persist.
+- Added scoped owner-key authentication for human APIs and a tab-scoped control-plane session without weakening the isolated public demo adapter.
+
+### Commercial and interface boundary
+
+- Connected Developer, Team and Business plan intent directly to onboarding while keeping Developer active until a signed billing webhook verifies a paid subscription.
+- Made unconfigured Stripe state explicit: durable onboarding succeeds, records paid-plan intent and reports checkout as pending without claiming payment.
+- Reworked public pricing around `$0` Developer, `$99` Team, `$499` Business and contracted live execution.
+- Added an intentionally distinct transfer-rail launch interface, responsive key-custody locker, reduced-motion behavior and scoped GSAP transitions.
+
+### Persistence and assurance
+
+- Added Prisma models and migration coverage for owner credentials and production-launch replay records.
+- Added API tests for atomic provisioning, authentication, plaintext-at-rest exclusion, audit creation, replay conflicts, tampering and billing handoff.
+- Added browser utility tests for launch validation, normalized requests, masking and recovery exports.
+- Added an atomic single-service volume journal for the constrained Railway topology, retained the managed-PostgreSQL migration path, and documented both persistence boundaries.
+
 ## v0.3.0 — 2026-08-18
 
 ### Authenticated sandbox commissioning

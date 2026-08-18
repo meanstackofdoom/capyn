@@ -13,7 +13,7 @@ Agent ────────────────────► API servic
 
 The web service has no direct database access. The API is the only application component allowed to mutate authority state.
 
-When a public-alpha account is limited to one application service, `CAPYN_SERVICE=combined` starts the same built web and API processes on private loopback ports and exposes them through a small first-party HTTP proxy. This is a deployment adapter for the synthetic, memory-backed demo only; the domain and application boundaries remain separate in code. Durable or customer-data environments should use the preferred separate-service shape above.
+When a public-alpha account is limited to one application service, `CAPYN_SERVICE=combined` starts the same built web and API processes on private loopback ports and exposes them through a small first-party HTTP proxy. The API can use an atomic journal on the service's attached persistent volume, and the domain and application boundaries remain separate in code. Higher-scale or dedicated customer environments should use the preferred separate-service shape above.
 
 ## Web service
 
@@ -68,15 +68,15 @@ Create independent web and API services from the same repository. Configure each
 
 Provision PostgreSQL as a managed service and restrict connectivity to the API service. No container-specific configuration is required by CAPYN.
 
-For a one-service synthetic demo, set `CAPYN_SERVICE=combined`, `CAPYN_STORAGE=memory`, `DEMO_HUMAN_AUTH=true`, pin `DEMO_HUMAN_USER_ID` to a least-privilege seeded approver, and make `WEB_ORIGIN`, `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_URL` the same HTTPS public origin. Set the matching browser-visible demo identity and disable management controls. Do not configure Stripe or real customer data in this topology. Verify it locally with `corepack pnpm smoke:combined` after the normal build.
+For a one-service hosted alpha when the account cannot provision PostgreSQL, set `CAPYN_SERVICE=combined`, `CAPYN_STORAGE=volume`, and `CAPYN_VOLUME_PATH` to a dedicated subdirectory on the attached volume. Make `WEB_ORIGIN`, `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_URL` the same HTTPS public origin. The volume adapter initializes the fixed demonstration, so enable demo auth, pin `DEMO_HUMAN_USER_ID` to its least-privilege approver, and disable demo management controls in the web build. Durable workspaces authenticate separately with owner keys. Never run more than one API process against this journal.
 
 The checked-in `railway.json` explicitly selects Railway's native Railpack builder, builds only the API/web dependency graphs, starts the root service launcher and checks `/healthz`. This prevents an older service-level Dockerfile setting from surviving a source swap; CAPYN contains no Dockerfile.
 
 ### Current public-alpha instance
 
-The synthetic public alpha is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). It runs `CAPYN_SERVICE=combined`, `CAPYN_STORAGE=memory`, a human adapter pinned to the seeded approver, hidden organisation-administration controls and `MockPaymentExecutor`. Deployments reset its state, and it must not receive customer data, real provider credentials or real settlement instructions.
+The public alpha is live at [capyn-production.up.railway.app](https://capyn-production.up.railway.app). Railway rejected another managed database at the account's current resource ceiling, so the combined service checkpoints to `/data/capyn/` on its existing attached volume. It does not read or alter the prior workload's other volume paths. The fixed Acme demonstration remains pinned to a least-privilege approver with hidden administration controls, while newly commissioned workspaces receive independent owner and agent credentials and durable tenant-scoped records. `MockPaymentExecutor` remains mandatory: the service must not receive real provider credentials or settlement instructions.
 
-Railway's free-plan resource ceiling required a recoverable source swap onto an existing stopped service. The prior volume remains preserved and CAPYN does not read it. The prior custom domain was detached after the CAPYN hostname became healthy, so it no longer routes to CAPYN and can be reconfigured when the prior workload returns. The intended customer-data topology remains separate web/API services with managed PostgreSQL.
+Railway's original resource ceiling required a recoverable source swap onto an existing stopped service. The prior volume contents remain preserved; CAPYN owns only its new `/data/capyn/` subdirectory. The prior custom domain was detached after the CAPYN hostname became healthy, so it no longer routes to CAPYN and can be reconfigured when the prior workload returns. The intended higher-scale topology remains separate web/API services with managed PostgreSQL.
 
 ## Pre-deployment checklist
 

@@ -6,6 +6,8 @@ import {
   type ApprovalRequest,
   type Execution,
   type OrganisationSubscription,
+  type ProductionLaunch,
+  type UserCredential,
   type User
 } from "@prisma/client";
 import {
@@ -36,18 +38,22 @@ import type {
   CreateExecutionRecord,
   CreateMandateRecord,
   CreateOrganisationRecord,
+  CreateProductionLaunchRecord,
+  CreateUserCredentialRecord,
   CredentialAuthRecord,
   BillingAccountRecord,
   BillingAllowance,
   RecordBillingUsage,
   RecordBillingWebhook,
+  ProductionLaunchRecord,
   StoredCredential,
   StoredApproval,
   StoredAuthorization,
   StoredExecution,
   StoredSubscription,
   UpdateSubscriptionRecord,
-  UserAuthRecord
+  UserAuthRecord,
+  UserCredentialAuthRecord
 } from "./contracts";
 
 const reasonCodesSchema = z.array(z.enum(REASON_CODES));
@@ -105,6 +111,38 @@ function mapUser(row: User): UserAuthRecord {
     name: row.name,
     email: row.email,
     role: row.role
+  };
+}
+
+function mapUserCredential(row: UserCredential & { user: User }): UserCredentialAuthRecord {
+  return {
+    id: row.id,
+    keyHash: row.keyHash,
+    userId: row.userId,
+    organisationId: row.user.organisationId,
+    role: row.user.role,
+    revokedAt: row.revokedAt
+  };
+}
+
+function mapProductionLaunch(row: ProductionLaunch): ProductionLaunchRecord {
+  if (row.planIntent !== "DEVELOPER" && row.planIntent !== "TEAM" && row.planIntent !== "BUSINESS") {
+    throw new Error("Unsupported self-serve production launch plan");
+  }
+  return {
+    id: row.id,
+    sandboxCredentialHash: row.sandboxCredentialHash,
+    idempotencyKey: row.idempotencyKey,
+    requestHash: row.requestHash,
+    organisationId: row.organisationId,
+    ownerId: row.ownerId,
+    agentId: row.agentId,
+    mandateId: row.mandateId,
+    ownerCredentialId: row.ownerCredentialId,
+    agentCredentialId: row.agentCredentialId,
+    mandateValidUntil: row.mandateValidUntil,
+    planIntent: row.planIntent,
+    createdAt: row.createdAt
   };
 }
 
@@ -509,6 +547,10 @@ class PrismaCapynTransaction implements CapynTransaction {
     await this.db.agentCredential.create({ data: input });
   }
 
+  async createUserCredential(input: CreateUserCredentialRecord): Promise<void> {
+    await this.db.userCredential.create({ data: input });
+  }
+
   async revokeCredential(credentialId: string, agentId: string, at: Date): Promise<boolean> {
     const result = await this.db.agentCredential.updateMany({
       where: { id: credentialId, agentId, revokedAt: null },
@@ -586,6 +628,15 @@ class PrismaCapynTransaction implements CapynTransaction {
       }
     });
     return { organisationId: input.organisation.id, ownerId: input.owner.id };
+  }
+
+  async findProductionLaunchBySandboxHash(sandboxCredentialHash: string): Promise<ProductionLaunchRecord | null> {
+    const row = await this.db.productionLaunch.findUnique({ where: { sandboxCredentialHash } });
+    return row ? mapProductionLaunch(row) : null;
+  }
+
+  async createProductionLaunch(input: CreateProductionLaunchRecord): Promise<ProductionLaunchRecord> {
+    return mapProductionLaunch(await this.db.productionLaunch.create({ data: input }));
   }
 
   async getBillingAllowance(organisationId: string, now: Date): Promise<BillingAllowance> {
@@ -690,6 +741,15 @@ export class PrismaCapynRepository implements CapynRepository {
 
   async touchCredential(id: string, at: Date): Promise<void> {
     await this.client.agentCredential.updateMany({ where: { id, revokedAt: null }, data: { lastUsedAt: at } });
+  }
+
+  async findUserCredentialByHash(keyHash: string): Promise<UserCredentialAuthRecord | null> {
+    const row = await this.client.userCredential.findUnique({ where: { keyHash }, include: { user: true } });
+    return row ? mapUserCredential(row) : null;
+  }
+
+  async touchUserCredential(id: string, at: Date): Promise<void> {
+    await this.client.userCredential.updateMany({ where: { id, revokedAt: null }, data: { lastUsedAt: at } });
   }
 
   async findUser(id: string): Promise<UserAuthRecord | null> {

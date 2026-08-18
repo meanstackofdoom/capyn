@@ -13,6 +13,8 @@ async function seed(): Promise<void> {
   const mandateId = "man_demo_procurement_v1";
   const keyHash = hashApiKey(demoApiKey, pepper);
   const now = new Date();
+  const mandateValidFrom = new Date(now.getTime() - 24 * 60 * 60 * 1_000);
+  const mandateValidUntil = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1_000);
   const currentPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const currentPeriodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 
@@ -24,7 +26,7 @@ async function seed(): Promise<void> {
     });
     await tx.organisationSubscription.upsert({
       where: { organisationId },
-      update: {},
+      update: { currentPeriodStart, currentPeriodEnd },
       create: {
         id: "sub_demo_acme",
         organisationId,
@@ -89,8 +91,8 @@ async function seed(): Promise<void> {
       update: {
         name: "Procurement authority",
         status: "ACTIVE",
-        validFrom: new Date("2026-08-01T00:00:00.000Z"),
-        validUntil: new Date("2026-09-30T00:00:00.000Z"),
+        validFrom: mandateValidFrom,
+        validUntil: mandateValidUntil,
         revokedAt: null
       },
       create: {
@@ -100,8 +102,8 @@ async function seed(): Promise<void> {
         name: "Procurement authority",
         version: 1,
         status: "ACTIVE",
-        validFrom: new Date("2026-08-01T00:00:00.000Z"),
-        validUntil: new Date("2026-09-30T00:00:00.000Z"),
+        validFrom: mandateValidFrom,
+        validUntil: mandateValidUntil,
         createdBy: ownerId
       }
     });
@@ -178,9 +180,10 @@ async function seed(): Promise<void> {
     });
   });
 
-  process.stdout.write(
-    `CAPYN demo data is ready.\nAgent API key (shown only by the seed): ${demoApiKey}\nDemo user: ${ownerId}\n`
-  );
+  process.stdout.write("CAPYN demo data is ready.\n");
+  if (process.env.NODE_ENV !== "production") {
+    process.stdout.write(`Agent API key: ${demoApiKey}\nDemo user: ${ownerId}\n`);
+  }
 }
 
 seed()

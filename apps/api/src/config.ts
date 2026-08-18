@@ -11,8 +11,9 @@ const configSchema = z
     PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
     HOST: z.string().default("0.0.0.0"),
     TRUST_PROXY: booleanString,
-    CAPYN_STORAGE: z.enum(["postgres", "memory"]).default("postgres"),
+    CAPYN_STORAGE: z.enum(["postgres", "volume", "memory"]).default("postgres"),
     DATABASE_URL: z.string().optional(),
+    CAPYN_VOLUME_PATH: z.string().trim().min(1).optional(),
     API_KEY_PEPPER: z.string().min(32),
     WEB_ORIGIN: z.string().url().default("http://localhost:3010"),
     DEMO_HUMAN_AUTH: booleanString,
@@ -26,6 +27,9 @@ const configSchema = z
   .superRefine((value, context) => {
     if (value.CAPYN_STORAGE === "postgres" && !value.DATABASE_URL) {
       context.addIssue({ code: "custom", path: ["DATABASE_URL"], message: "DATABASE_URL is required" });
+    }
+    if (value.CAPYN_STORAGE === "volume" && !value.CAPYN_VOLUME_PATH) {
+      context.addIssue({ code: "custom", path: ["CAPYN_VOLUME_PATH"], message: "CAPYN_VOLUME_PATH is required" });
     }
     if (value.DEMO_HUMAN_USER_ID && !value.DEMO_HUMAN_AUTH) {
       context.addIssue({

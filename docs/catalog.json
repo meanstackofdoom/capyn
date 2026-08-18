@@ -40,6 +40,16 @@
     "order": 35
   },
   {
+    "slug": "durable-onboarding",
+    "file": "durable-onboarding.md",
+    "title": "Durable onboarding",
+    "description": "Claim a verified sandbox boundary into a durable workspace with one-time owner and agent credentials.",
+    "category": "Build",
+    "status": "Implemented",
+    "reviewedAt": "2026-08-18",
+    "order": 37
+  },
+  {
     "slug": "policy-engine",
     "file": "policy-engine.md",
     "title": "Policy engine",
@@ -132,8 +142,8 @@
   {
     "slug": "launch-checklist",
     "file": "launch-checklist.md",
-    "title": "Public alpha launch checklist",
-    "description": "Twenty evidence-led gates from repository hygiene through the recoverable Railway cutover.",
+    "title": "Version 0.4 launch checklist",
+    "description": "Twenty evidence-led gates for durable onboarding, isolated credentials and hosted persistence.",
     "category": "Direction",
     "status": "Live",
     "reviewedAt": "2026-08-17",

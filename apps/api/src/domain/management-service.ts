@@ -26,9 +26,22 @@ export class ManagementService {
   ) {}
 
   async dashboard(principal: UserPrincipal): Promise<DashboardSnapshot> {
-    const snapshot = await this.repository.getDashboardSnapshot(principal.organisationId, this.clock());
-    if (!snapshot) throw new NotFoundError("Organisation not found");
-    return snapshot;
+    const [snapshot, operator] = await Promise.all([
+      this.repository.getDashboardSnapshot(principal.organisationId, this.clock()),
+      this.repository.findUser(principal.userId)
+    ]);
+    if (!snapshot || !operator || operator.organisationId !== principal.organisationId) {
+      throw new NotFoundError("Organisation not found");
+    }
+    return {
+      ...snapshot,
+      operator: {
+        id: operator.id,
+        name: operator.name,
+        email: operator.email,
+        role: operator.role
+      }
+    };
   }
 
   async createAgent(principal: UserPrincipal, request: CreateAgentRequest) {

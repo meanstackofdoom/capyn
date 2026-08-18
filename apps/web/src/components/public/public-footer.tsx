@@ -18,7 +18,7 @@ export function PublicFooter() {
             Authority infrastructure for autonomous agents. Delegate capabilities with enforceable limits, approvals and evidence.
           </p>
           <div className="mt-8 inline-flex items-center gap-2 border border-line bg-paper px-3 py-2 font-mono text-[9px] uppercase tracking-[.14em] text-muted">
-            <span className="status-dot text-permission" /> Developer alpha · v0.3
+            <span className="status-dot text-permission" /> Hosted alpha · v0.4
           </div>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
