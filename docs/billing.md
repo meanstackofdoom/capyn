@@ -14,7 +14,9 @@ Prices are monthly USD amounts before tax.
 | Team | $99 | 10 | 100,000 | 90 days | 3 |
 | Business | $499 | 50 | 1,000,000 | 365 days | 10 |
 | Enterprise | Contract | Contract | Contract | Contract | Contract |
-| Design partner | $250–$1,000 | Scoped | Scoped | 365-day target | Scoped |
+| Design partner | $1,000–$2,500 | Scoped | Scoped | 365-day target | Scoped |
+
+The `$499` Business row is implemented staging for entitlement, provider and webhook testing. It is not presented as a self-serve production offer during public alpha. Public production work requires a custom written scope covering the adapter, infrastructure and service boundary.
 
 The Developer allowances are hard hosted limits. Team and Business remain available above included usage and calculate overage instead of interrupting authority decisions:
 
@@ -80,7 +82,7 @@ Configured Checkout can collect the Team or Business base subscription now. The 
 
 The usage ledger and projected overage model are implemented, but v0.1 does **not** yet publish those usage events to Stripe Billing meters or add them to an invoice. Paid overage therefore remains a transparent projection for manual reconciliation until a durable outbox/retry worker and Stripe meter configuration are added. This avoids claiming revenue that the payment provider has not actually invoiced.
 
-Early design-partner fees are agreed and invoiced manually. Enterprise pricing requires a written scope covering infrastructure, support, assurance, residency and deployment obligations.
+Early design-partner fees are agreed and invoiced manually, beginning at `$1,000/month` for a scoped 8–12 week engagement. Production and Enterprise pricing require a written scope covering infrastructure, support, assurance, residency and deployment obligations.
 
 ## Entitlements versus shipped integrations
 

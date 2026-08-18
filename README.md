@@ -233,7 +233,7 @@ pnpm db:seed       # seed Acme AI and procurement-agent
 
 ## Commercial model
 
-The MIT-licensed policy engine remains free. The hosted Developer plan includes 3 active agents and 10,000 authorization decisions per month. Team is `$99/month`; Business is `$499/month`; Enterprise is scoped. Early design partners can be manually contracted at `$250–$1,000/month` for founder-led integration work.
+The MIT-licensed policy engine remains free. The hosted Developer plan includes 3 active agents and 10,000 authorization decisions per month. Hosted Alpha is `$99/month`. Business remains implemented as staged billing packaging, while public production engagements are custom until their adapters and service boundary are explicitly contracted. Design-partner engagements begin at `$1,000/month` for 8–12 weeks of founder-led integration work.
 
 CAPYN meters decisions, active agents, approval operations, audit evidence and integration connections. It never charges a percentage of money moved, and approvals carry no per-request fee. Stripe Checkout, customer portal and signed subscription webhooks are implemented when configured. Automated Stripe overage invoicing remains explicitly deferred; current overage values are durable, test-backed projections. See [Billing](docs/billing.md).
 

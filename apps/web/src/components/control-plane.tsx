@@ -797,7 +797,7 @@ function BillingPanel({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        {(["TEAM", "BUSINESS"] as const).map((planId) => {
+        {(["TEAM"] as const).map((planId) => {
           const plan = PLAN_CATALOG[planId];
           const current = billing.planId === planId;
           const canCheckout = billing.planId === "DEVELOPER" &&
@@ -817,6 +817,18 @@ function BillingPanel({
             </article>
           );
         })}
+        <article className={cn("panel p-6 sm:p-7", billing.planId === "BUSINESS" && "border-authority")}>
+          <div className="flex items-start justify-between gap-5">
+            <div><p className="font-mono text-[9px] uppercase tracking-[.14em] text-muted">Operational agent systems</p><h2 className="mt-3 text-xl font-extrabold">Production</h2></div>
+            <p className="mono-number text-xl font-semibold">Custom</p>
+          </div>
+          <div className="mt-6 grid gap-2 text-xs text-muted">
+            {["Written adapter and reconciliation scope", "Contracted infrastructure and capacity", "Custom evidence retention", "Explicit support and reliability boundary"].map((feature) => <p className="flex items-center gap-2" key={feature}><Check size={12} className="text-permission" />{feature}</p>)}
+          </div>
+          <div className="mt-7">
+            {billing.planId === "BUSINESS" ? <Button disabled className="w-full">Current contracted plan</Button> : <Link href="/design-partners" className="inline-flex min-h-9 w-full items-center justify-center border border-line bg-panel px-3.5 text-xs font-bold">Discuss production scope</Link>}
+          </div>
+        </article>
       </section>
     </div>
   );

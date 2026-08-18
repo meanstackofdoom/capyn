@@ -59,8 +59,7 @@ export default function HomePage() {
       ],
       offers: [
         { "@type": "Offer", name: "Developer", price: "0", priceCurrency: "USD" },
-        { "@type": "Offer", name: "Team", price: "99", priceCurrency: "USD" },
-        { "@type": "Offer", name: "Business", price: "499", priceCurrency: "USD" }
+        { "@type": "Offer", name: "Hosted Alpha", price: "99", priceCurrency: "USD" }
       ]
     }
   ];

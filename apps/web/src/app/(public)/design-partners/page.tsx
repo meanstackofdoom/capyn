@@ -162,8 +162,8 @@ export default function DesignPartnersPage() {
             <h2 className="display-title">Founder-led, tightly scoped, deliberately early.</h2>
           </div>
           <div className="partner-commercial__terms">
-            <p><strong>$250–$1,000</strong><span>USD / month</span></p>
-            <span>Scope and fees are agreed manually. The programme is for integration discovery and product-shaping work; acceptance, production readiness and delivery dates are not implied by an application.</span>
+            <p><strong>From $1,000</strong><span>USD / month</span></p>
+            <span>Each 8–12 week engagement is scoped manually around one consequential action. The programme is for integration discovery and product-shaping work; acceptance, production readiness and delivery dates are not implied by an application.</span>
           </div>
         </div>
       </section>

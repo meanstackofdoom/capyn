@@ -4,7 +4,7 @@ import { Brand } from "@/components/brand";
 
 const columns = [
   { title: "Explore", links: [["Mandate Studio", "/start"], ["Authority Lab", "/lab"], ["Proof viewer", "/proof"], ["Product", "/product"], ["Security", "/security"], ["Pricing", "/pricing"], ["Developers", "/developers"], ["Documentation", "/docs"]] },
-  { title: "CAPYN", links: [["Design partners", "/design-partners"], ["About", "/about"], ["Control plane", "/dashboard"], ["Audit log", "/dashboard/audit"]] },
+  { title: "CAPYN", links: [["Boundary File 001", "/case-studies/procurement-agent"], ["Design partners", "/design-partners"], ["About", "/about"], ["Control plane", "/dashboard"], ["Audit log", "/dashboard/audit"]] },
   { title: "Read", links: [["Getting started", "/docs/getting-started"], ["Architecture", "/docs/architecture"], ["Security model", "/docs/security"], ["API reference", "/docs/api"]] }
 ] as const;
 

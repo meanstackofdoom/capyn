@@ -117,7 +117,7 @@ export const PLAN_CATALOG = {
     audience: "Early teams shaping production integrations",
     description: "Founder-led implementation and architecture support while the hosted product matures.",
     basePriceCents: null,
-    priceRangeCents: [25_000, 100_000],
+    priceRangeCents: [100_000, 250_000],
     checkoutEligible: false,
     limits: { activeAgents: null, authorizationDecisions: null, auditRetentionDays: 365, integrationConnections: null },
     overages: { authorizationDecisions: null, activeAgents: null, integrationConnections: null },
@@ -126,7 +126,7 @@ export const PLAN_CATALOG = {
     approvalWorkflows: "Co-designed approval operations",
     reliability: "Founder-supported evaluation",
     compliance: "Explicit pilot boundary and evidence review",
-    features: ["$250–$1,000 / month", "Founder-led integration", "Architecture reviews", "Priority feedback loop", "No implied production certification"]
+    features: ["From $1,000 / month", "8–12 week scoped engagement", "Founder-led integration", "Architecture reviews", "No implied production certification"]
   }
 } as const satisfies Record<BillingPlanId, PlanDefinition>;
 

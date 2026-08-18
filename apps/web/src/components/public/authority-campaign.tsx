@@ -41,7 +41,7 @@ export function AuthorityCampaign() {
       <div className="authority-campaign__field" aria-hidden="true" />
       <div className="site-container authority-campaign__shell">
         <header className="authority-campaign__header">
-          <p className="authority-campaign__eyebrow"><span /> CAPYN object study / 001</p>
+          <p className="authority-campaign__eyebrow"><span /> CAPYN authority sequence / visual record</p>
           <div className="authority-campaign__statement">
             <h2 id="authority-campaign-title" className="display-title authority-campaign__title">
               Every autonomous action has <em>a moment before consequence.</em>
@@ -87,10 +87,10 @@ export function AuthorityCampaign() {
         </ol>
 
         <div className="authority-campaign__handoff">
-          <p><span>Next / make it real</span>Watch one request cross the boundary.</p>
+          <p><span>Next / inspect the file</span>Replay the $120 request that reaches a human line.</p>
           <div className="authority-campaign__actions">
-            <Link href="/lab">Run the sequence <ArrowRight size={15} /></Link>
-            <Link href="/start">Build your boundary</Link>
+            <Link href="/case-studies/procurement-agent">Open Boundary File 001 <ArrowRight size={15} /></Link>
+            <Link href="/lab">Open the full Lab</Link>
           </div>
         </div>
       </div>
