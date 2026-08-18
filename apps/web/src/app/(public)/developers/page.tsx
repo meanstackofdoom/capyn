@@ -49,6 +49,8 @@ const curlExample = `curl -X POST http://localhost:4000/v1/authorize \\
   }'`;
 
 const endpoints = [
+  ["POST", "/v1/sandbox/activate", "Issue a stateless 30-minute credential for one bounded sandbox agent."],
+  ["POST", "/v1/sandbox/authorize", "Authenticate that agent and run an exact synthetic policy decision."],
   ["GET", "/v1/me", "Resolve the authenticated agent identity."],
   ["GET", "/v1/mandate", "Inspect the agent's current active authority."],
   ["POST", "/v1/authorize", "Request a decision for one consequential action."],
@@ -94,7 +96,7 @@ export default function DevelopersPage() {
             <h1 className="display-title mt-7 text-balance text-5xl font-semibold leading-[.95] tracking-[-.065em] sm:text-7xl">One call before the agent acts.</h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-muted">Authenticate the agent once, describe the exact requested action and let CAPYN return the only three outcomes your integration needs.</p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link href="/start" className="public-primary-button min-h-12 justify-center px-6">Generate your integration <ArrowRight size={15} /></Link>
+              <Link href="/activate" className="public-primary-button min-h-12 justify-center px-6">Run an authenticated decision <ArrowRight size={15} /></Link>
               <a href="#quickstart" className="public-secondary-button min-h-12 justify-center px-6">Run the local demo</a>
             </div>
             <a href={repositoryUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 text-xs font-extrabold text-muted hover:text-ink"><Github size={14} /> Inspect the MIT-licensed source <ArrowRight size={13} /></a>

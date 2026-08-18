@@ -45,7 +45,7 @@ export default function HomePage() {
       name: "CAPYN",
       applicationCategory: "SecurityApplication",
       operatingSystem: "Web, Node.js",
-      softwareVersion: "0.2.0",
+      softwareVersion: "0.3.0",
       description: "A programmable authorization control plane for autonomous agents with capabilities, limits, approvals and audit evidence.",
       url: siteUrl,
       codeRepository: "https://github.com/meanstackofdoom/capyn",
@@ -85,7 +85,7 @@ export default function HomePage() {
               Write one exact action below. CAPYN evaluates the live mandate, stops or advances it, then issues proof you can verify without trusting us.
             </p>
             <div className="home-hero__actions">
-              <Link href="/start" className="public-primary-button min-h-12 justify-center px-6">Build your mandate <ArrowRight size={16} /></Link>
+              <Link href="/activate" className="public-primary-button min-h-12 justify-center px-6">Commission an agent <ArrowRight size={16} /></Link>
               <Link href="#authority-check" className="public-secondary-button min-h-12 justify-center px-6">Test an action <ArrowDown size={16} /></Link>
             </div>
           </div>

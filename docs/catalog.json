@@ -30,6 +30,16 @@
     "order": 30
   },
   {
+    "slug": "sandbox-commissioning",
+    "file": "sandbox-commissioning.md",
+    "title": "Sandbox commissioning",
+    "description": "Issue a stateless expiring agent credential, cross the real policy engine and carry away portable synthetic proof.",
+    "category": "Build",
+    "status": "Implemented",
+    "reviewedAt": "2026-08-18",
+    "order": 35
+  },
+  {
     "slug": "policy-engine",
     "file": "policy-engine.md",
     "title": "Policy engine",

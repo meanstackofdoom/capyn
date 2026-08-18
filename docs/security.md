@@ -1,6 +1,6 @@
 # Security
 
-CAPYN is security-sensitive infrastructure. v0.2 establishes boundaries and demonstrates the controls, but it is not yet certified or ready to custody production funds.
+CAPYN is security-sensitive infrastructure. The developer alpha establishes boundaries and demonstrates the controls, but it is not yet certified or ready to custody production funds.
 
 ## Implemented controls
 
@@ -18,6 +18,17 @@ CAPYN is security-sensitive infrastructure. v0.2 establishes boundaries and demo
 
 `API_KEY_PEPPER` must be a high-entropy deployment secret kept outside the database. Key hashing is appropriate here because generated keys already have high entropy; password hashing is not required for brute-force resistance.
 
+### Stateless public sandbox
+
+- `/v1/sandbox/activate` seals a bounded identity and mandate into a versioned AES-256-GCM credential derived from a domain-separated deployment pepper.
+- The API authenticates and decrypts that credential before constructing policy input; the authorization body still cannot choose an agent identity.
+- Credentials expire after 30 minutes, invalid and tampered envelopes return one generic authentication error, and secrets are redacted by the existing authorization-header log rule.
+- Activation and authorization have separate strict IP rate limits, strict schemas and the global 32 KiB body ceiling.
+- The browser holds plaintext only in component memory and does not place the credential in storage, cookies, query strings or proof links.
+- The sandbox is synthetic and stateless: it creates no durable identity or spend record and never reaches a real executor.
+
+Statelessness means an issued sandbox credential cannot be individually revoked before expiry and repeated requests do not accumulate spend. It must never be accepted by durable `/v1/authorize` or used as a production credential. See [Sandbox commissioning](sandbox-commissioning.md).
+
 ### Tenant isolation
 
 Authenticated principals carry an organisation ID loaded server-side. Every resource lookup compares the stored organisation and returns not found across tenant boundaries. The test suite covers cross-organisation authorization reads and approval decisions.
@@ -29,7 +40,7 @@ Production defence in depth should add PostgreSQL row-level security or isolated
 - Strict Zod objects reject unknown fields.
 - Body size is capped at 32 KiB and metadata at 8 KiB.
 - Amounts are decimal strings and convert to integer minor units.
-- Only USD is accepted in v0.2.
+- Only USD is accepted in v0.3.
 - Structured errors do not return stacks or database details.
 - Authorization, bootstrap and Stripe-signature headers are redacted from structured logs.
 - Fastify rate limiting provides an adapter point; production needs a distributed Redis-backed store and agent-aware keys.
@@ -79,7 +90,7 @@ Audit entries are append-only through repository interfaces. A PostgreSQL trigge
 
 For regulated deployments, add immutable external export, retention policy, clock monitoring, cryptographic event chaining and SIEM delivery.
 
-## Known v0.2 limitations
+## Known alpha limitations
 
 - Human authentication is a demo header adapter. It may be exposed only when pinned to a least-privilege user with synthetic, disposable state and mock execution; disable it and install a real identity adapter before any customer-data or real-money deployment.
 - The fixed public agent key lets visitors consume the synthetic demo's in-memory allowance. Rate limits bound request volume, but this instance makes no availability promise and may be reset; design-partner environments require unique revocable credentials and durable isolation.

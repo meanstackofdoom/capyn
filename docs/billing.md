@@ -80,7 +80,7 @@ Checkout is only used to create the first active paid subscription. Each request
 
 Configured Checkout can collect the Team or Business base subscription now. The customer portal can manage a known Stripe customer, and webhook delivery synchronizes the local entitlement.
 
-The usage ledger and projected overage model are implemented, but v0.2 does **not** yet publish those usage events to Stripe Billing meters or add them to an invoice. Paid overage therefore remains a transparent projection for manual reconciliation until a durable outbox/retry worker and Stripe meter configuration are added. This avoids claiming revenue that the payment provider has not actually invoiced.
+The usage ledger and projected overage model are implemented, but v0.3 does **not** yet publish those usage events to Stripe Billing meters or add them to an invoice. Paid overage therefore remains a transparent projection for manual reconciliation until a durable outbox/retry worker and Stripe meter configuration are added. This avoids claiming revenue that the payment provider has not actually invoiced.
 
 Early design-partner fees are agreed and invoiced manually, beginning at `$1,000/month` for a scoped 8–12 week engagement. Production and Enterprise pricing require a written scope covering infrastructure, support, assurance, residency and deployment obligations.
 
@@ -91,7 +91,7 @@ Plan language is a commercial entitlement, not permission to imply unfinished fu
 - core request-bound approval exists on every plan; managed routing and advanced approval topology remain staged;
 - plan retention describes a hosted access window, but alpha does not delete historical evidence on downgrade;
 - outbound webhooks and payment/execution adapters remain production-gated integrations;
-- SSO and SIEM export are Business entitlements but are not implemented in v0.2;
+- SSO and SIEM export are Business entitlements but are not implemented in v0.3;
 - dedicated infrastructure, private deployment, compliance commitments and SLAs exist only under an Enterprise agreement;
 - CAPYN has no production certification today.
 

@@ -1,6 +1,6 @@
 {
   "name": "@capyn/policy-engine",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Deterministic, fail-closed authority policy evaluation for autonomous agents.",
   "license": "MIT",
   "repository": {

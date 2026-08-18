@@ -1,6 +1,6 @@
 {
   "name": "@capyn/types",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Shared schemas and authority contracts for CAPYN.",
   "license": "MIT",
   "repository": {

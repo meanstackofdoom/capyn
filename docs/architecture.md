@@ -20,7 +20,7 @@ Human / organisation
         ▼
  PaymentExecutor execute + reconcile interface
         │
-        ├── MockPaymentExecutor (v0.2)
+        ├── MockPaymentExecutor (v0.3)
         └── future adapters: Solana / x402 / Stripe / AP2
 ```
 

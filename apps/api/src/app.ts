@@ -11,6 +11,7 @@ import { BootstrapService } from "./domain/bootstrap-service";
 import { ExecutionService, MockPaymentExecutor, type PaymentExecutor } from "./domain/execution-service";
 import { LabService } from "./domain/lab-service";
 import { ManagementService } from "./domain/management-service";
+import { SandboxService } from "./domain/sandbox-service";
 import { RepositoryAuthAdapter } from "./http/auth";
 import { AppError } from "./http/errors";
 import { registerAgentRoutes } from "./routes/agent";
@@ -18,6 +19,7 @@ import { registerBillingRoutes } from "./routes/billing";
 import { registerBootstrapRoutes } from "./routes/bootstrap";
 import { registerLabRoutes } from "./routes/lab";
 import { registerManagementRoutes } from "./routes/management";
+import { registerSandboxRoutes } from "./routes/sandbox";
 
 export interface AppDependencies {
   repository: CapynRepository;
@@ -105,9 +107,11 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
     clock
   );
   const lab = new LabService(clock);
+  const sandbox = new SandboxService(dependencies.apiKeyPepper, clock);
 
-  app.get("/health", async () => ({ status: "ok", service: "capyn-api", version: "0.2.0" }));
+  app.get("/health", async () => ({ status: "ok", service: "capyn-api", version: "0.3.0" }));
   await registerLabRoutes(app, lab);
+  await registerSandboxRoutes(app, sandbox);
   await registerAgentRoutes(app, { auth, authorizations, executions });
   await registerManagementRoutes(app, { auth, approvals, management });
   await registerBillingRoutes(app, { auth, billing });

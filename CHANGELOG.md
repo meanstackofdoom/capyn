@@ -6,6 +6,31 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 No unreleased changes.
 
+## v0.3.0 — 2026-08-18
+
+### Authenticated sandbox commissioning
+
+- Added a six-stage commissioning journey from ephemeral workspace and named agent through sealed mandate, expiring credential, real policy decision and portable proof.
+- Added stateless `POST /v1/sandbox/activate` and `POST /v1/sandbox/authorize` endpoints with separate strict IP rate limits and injected-field rejection.
+- Added versioned AES-256-GCM sandbox credentials, domain-separated from the deployment pepper, with authenticated payloads, generic tamper failures and a hard 30-minute expiry.
+- Reused the deterministic production policy engine for all three outcomes while keeping repository state, billing, approvals, funds and execution adapters outside the public sandbox.
+- Added a one-time masked credential instrument, in-memory-only handling, expiry countdown, credential-free curl output and explicit synthetic/no-persistence disclosures.
+
+### Decision proof and product journey
+
+- Connected commissioned agent names to canonical evidence events and retained strict actor bounds and control-character rejection in the proof parser.
+- Added boundary stress tests for allow, human review and hard denial without changing the sealed credential or mandate.
+- Added SHA-256 receipt display, copy/download controls and a direct handoff to the independent browser-side Proof Viewer.
+- Made commissioning the primary public call to action and connected the homepage, developer guide, Mandate Studio, global navigation, footer and sitemap to the journey.
+- Added a distinct instrument-bay visual system with an energized six-contact rail, live artifact register, responsive layouts and reduced-motion-safe GSAP reveals.
+
+### Verification and documentation
+
+- Added API coverage for stateless issuance, repository isolation, authenticated identity, all policy outcomes, malformed input, tampering and expiry.
+- Added web coverage for commissioning validation, limit ordering, stable slugs, deterministic scenarios and secret-free integration output.
+- Expanded separated and combined deployment smoke gates to commission an agent and verify its first digest-covered decision through built artifacts.
+- Published the credential design, threat boundary, HTTP contract and deliberate stateless limitations in the public documentation register.
+
 ## v0.2.0 — 2026-08-18
 
 ### Portable authority

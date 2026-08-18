@@ -12,7 +12,7 @@ CAPYN uses environment variables at the API and web process boundaries. `.env.ex
 | `TRUST_PROXY` | `false` | Reverse-proxy deployments | Trusts the controlled ingress proxy's forwarded client address for per-client rate limiting. |
 | `CAPYN_STORAGE` | `memory` in `.env.example` | No | Selects `memory` or `postgres`. |
 | `DATABASE_URL` | Local example only | PostgreSQL mode | Prisma connection URL. |
-| `API_KEY_PEPPER` | No safe deployment default | Yes | High-entropy secret used to HMAC agent credentials. |
+| `API_KEY_PEPPER` | No safe deployment default | Yes | High-entropy secret used to HMAC durable agent credentials and derive the domain-separated public-sandbox encryption key. |
 | `WEB_ORIGIN` | `http://localhost:3010` | No | Exact browser origin allowed by API CORS. |
 | `DEMO_HUMAN_AUTH` | `true` locally | No | Enables the development-only `x-capyn-user-id` adapter. Must be `false` outside a demo. |
 | `DEMO_HUMAN_USER_ID` | `usr_demo_owner` locally | Production demo | Pins the demo header adapter to exactly one seeded user. Required when demo auth is enabled with `NODE_ENV=production`. |
@@ -65,6 +65,7 @@ The seed is for local demonstrations only. Do not run it against a production or
 ## Secret handling
 
 - generate `API_KEY_PEPPER` and `BOOTSTRAP_TOKEN` with a cryptographically secure secret manager;
+- rotate `API_KEY_PEPPER` only as a coordinated credential event: it invalidates durable key lookups and every unexpired stateless sandbox credential;
 - scope secrets per environment;
 - never expose the pepper, database URL or bootstrap token through `NEXT_PUBLIC_*` variables;
 - rotate agent credentials through CAPYN rather than editing hashes;

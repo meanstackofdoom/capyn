@@ -62,6 +62,16 @@ describe("Lab proof bundle", () => {
     const unsafe = unsignedBundle();
     unsafe.evidence.events[0]!.sequence = 99;
     expect(parseLabProofBundle(unsafe)).toBeNull();
+
+    const controlCharacter = unsignedBundle();
+    controlCharacter.evidence.events[0]!.actor = "agent\u0000name";
+    expect(parseLabProofBundle(controlCharacter)).toBeNull();
+  });
+
+  it("accepts a bounded commissioned agent name as evidence actor", () => {
+    const commissioned = unsignedBundle();
+    commissioned.evidence.events[0]!.actor = "Nightly evaluation agent";
+    expect(parseLabProofBundle(commissioned)?.evidence.events[0]?.actor).toBe("Nightly evaluation agent");
   });
 
   it("derives outcomes only from digest-covered events", () => {

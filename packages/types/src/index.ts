@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CAPYN_VERSION = "0.2.0";
+export const CAPYN_VERSION = "0.3.0";
 
 export const CORE_CAPABILITIES = [
   "spend.compute",
@@ -67,6 +67,40 @@ export const labApprovalDecisionSchema = z
   .strict();
 
 export type LabApprovalDecision = z.infer<typeof labApprovalDecisionSchema>;
+
+export const sandboxActivateRequestSchema = z
+  .object({
+    organisation: z
+      .object({
+        name: z.string().trim().min(2).max(120)
+      })
+      .strict(),
+    agent: z
+      .object({
+        name: z.string().trim().min(2).max(120),
+        slug: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+      })
+      .strict(),
+    mandate: z
+      .object({
+        name: z.string().trim().min(2).max(120),
+        capabilities: z.array(capabilitySchema).min(1).max(8),
+        allowedVendors: z.array(vendorSchema).min(1).max(8),
+        limits: z
+          .object({
+            perTransaction: moneyInputSchema,
+            daily: moneyInputSchema,
+            monthly: moneyInputSchema,
+            approvalAbove: moneyInputSchema
+          })
+          .strict()
+      })
+      .strict(),
+    firstRequest: labEvaluateRequestSchema
+  })
+  .strict();
+
+export type SandboxActivateRequest = z.infer<typeof sandboxActivateRequestSchema>;
 
 export const DECISIONS = ["ALLOW", "DENY", "REQUIRE_APPROVAL"] as const;
 export type Decision = (typeof DECISIONS)[number];
@@ -293,7 +327,7 @@ export interface LabEvidenceEvent {
     | "APPROVAL_RECORDED"
     | "REQUEST_STOPPED"
     | "EXECUTION_SIMULATED";
-  actor: "procurement-agent" | "CAPYN policy engine" | "human approver" | "synthetic executor";
+  actor: string;
   timestamp: string;
   detail: string;
 }
@@ -352,6 +386,60 @@ export interface LabResolutionResult {
   reasonCodes: ReasonCode[];
   reasons: Array<{ code: ReasonCode; description: string }>;
   trace: RuleTrace[];
+  evidence: LabEvidence;
+}
+
+export interface SandboxMandateView {
+  id: string;
+  name: string;
+  version: 1;
+  capabilities: string[];
+  allowedVendors: Array<{ id: string; name: string }>;
+  limits: {
+    perTransaction: string;
+    daily: string;
+    monthly: string;
+    approvalAbove: string;
+  };
+  observedSpend: {
+    today: "0.00";
+    month: "0.00";
+  };
+  validUntil: string;
+}
+
+export interface SandboxActivationResult {
+  mode: "SYNTHETIC";
+  scope: "STATELESS_SANDBOX";
+  notice: string;
+  workspace: { id: string; name: string };
+  agent: { id: string; name: string; slug: string; status: "ACTIVE" };
+  mandate: SandboxMandateView;
+  credential: {
+    apiKey: string;
+    keyPrefix: string;
+    issuedAt: string;
+    expiresAt: string;
+  };
+  firstRequest: LabEvaluateRequest;
+}
+
+export interface SandboxEvaluationResult {
+  mode: "SYNTHETIC";
+  scope: "STATELESS_SANDBOX";
+  notice: string;
+  authorizationId: string;
+  evaluatedAt: string;
+  workspace: { id: string; name: string };
+  agent: { id: string; name: string; slug: string; status: "ACTIVE" };
+  mandate: SandboxMandateView;
+  credential: { keyPrefix: string; expiresAt: string };
+  request: LabEvaluateRequest;
+  decision: Decision;
+  reasonCodes: ReasonCode[];
+  reasons: Array<{ code: ReasonCode; description: string }>;
+  trace: RuleTrace[];
+  outcome: "SIMULATED_EXECUTION" | "HUMAN_CHECKPOINT" | "STOPPED";
   evidence: LabEvidence;
 }
 

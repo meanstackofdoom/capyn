@@ -79,7 +79,7 @@ try {
   const home = await fetch(`${origin}/`);
   const homeHtml = await home.text();
   assert(
-    homeHtml.includes("Not unlimited access") && homeHtml.includes("Build your mandate") && homeHtml.includes("Test an action"),
+    homeHtml.includes("Not unlimited access") && homeHtml.includes("Commission an agent") && homeHtml.includes("Test an action"),
     "Combined public website is invalid"
   );
   assert(home.headers.get("content-security-policy")?.includes("frame-ancestors 'none'"), "Combined CSP is missing");
@@ -87,6 +87,12 @@ try {
   const labPage = await fetch(`${origin}/lab`);
   const labHtml = await labPage.text();
   assert(labPage.ok && labHtml.includes("Try to cross") && labHtml.includes("Run the decision"), "Combined Authority Lab page is invalid");
+  const activatePage = await fetch(`${origin}/activate`);
+  const activateHtml = await activatePage.text();
+  assert(
+    activatePage.ok && activateHtml.includes("Commission an agent") && activateHtml.includes("LIVE ARTIFACT REGISTER"),
+    "Combined commissioning page is invalid"
+  );
   const partnerPage = await fetch(`${origin}/design-partners`);
   const partnerHtml = await partnerPage.text();
   assert(partnerPage.ok && partnerHtml.includes("Bring one real") && partnerHtml.includes("Draft a private brief"), "Combined design partner page is invalid");
@@ -116,6 +122,48 @@ try {
   const labResolution = await labApproval.json();
   assert(labApproval.ok && labResolution.resolution === "APPROVED", "Combined Authority Lab approval is invalid");
 
+  const sandboxInput = {
+    organisation: { name: "Combined Smoke Works" },
+    agent: { name: "Combined smoke agent", slug: "combined-smoke-agent" },
+    mandate: {
+      name: "Combined compute authority",
+      capabilities: ["spend.compute"],
+      allowedVendors: [{ id: "openai", name: "OpenAI" }],
+      limits: {
+        approvalAbove: { value: "100.00", currency: "USD" },
+        perTransaction: { value: "150.00", currency: "USD" },
+        daily: { value: "200.00", currency: "USD" },
+        monthly: { value: "2000.00", currency: "USD" }
+      }
+    },
+    firstRequest: {
+      capability: "spend.compute",
+      amount: { value: "18.00", currency: "USD" },
+      vendor: { id: "openai", name: "OpenAI" },
+      purpose: "Combined smoke sandbox commissioning"
+    }
+  };
+  const sandboxActivationResponse = await fetch(`${origin}/v1/sandbox/activate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sandboxInput)
+  });
+  const sandboxActivation = await sandboxActivationResponse.json();
+  assert(
+    sandboxActivationResponse.status === 201 && sandboxActivation.credential?.apiKey?.startsWith("capyn_sbx_"),
+    "Combined sandbox activation is invalid"
+  );
+  const sandboxAuthorizationResponse = await fetch(`${origin}/v1/sandbox/authorize`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${sandboxActivation.credential.apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify(sandboxInput.firstRequest)
+  });
+  const sandboxAuthorization = await sandboxAuthorizationResponse.json();
+  assert(
+    sandboxAuthorizationResponse.ok && sandboxAuthorization.decision === "ALLOW" && /^[a-f0-9]{64}$/.test(sandboxAuthorization.evidence?.digest ?? ""),
+    "Combined sandbox authorization is invalid"
+  );
+
   const privateGate = await fetch(`${origin}/private/project-status`);
   const privateGateHtml = await privateGate.text();
   assert(privateGateHtml.includes("Unlock status ledger"), "Combined private status gate is missing");
@@ -137,7 +185,7 @@ try {
 
   const me = await fetch(`${origin}/v1/me`, { headers: { Authorization: `Bearer ${agentApiKey}` } });
   assert(me.ok && (await me.json()).name === "procurement-agent", "Combined agent route is invalid");
-  process.stdout.write(`combined-smoke · ${JSON.stringify({ origin, api: "ok", web: "ok", proxy: "ok", authorityLab: "ok", privateStatus: "ok" })}\n`);
+  process.stdout.write(`combined-smoke · ${JSON.stringify({ origin, api: "ok", web: "ok", proxy: "ok", authorityLab: "ok", sandbox: "ok", privateStatus: "ok" })}\n`);
 } catch (error) {
   process.stderr.write(`${output.join("").slice(-8_000)}\n`);
   throw error;

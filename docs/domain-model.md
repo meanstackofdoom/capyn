@@ -13,7 +13,7 @@ A human principal with one role:
 - `APPROVER`: approve or reject exact requests;
 - `VIEWER`: read-only control-plane access.
 
-The v0.2 `x-capyn-user-id` adapter is explicitly development-only. The `AuthAdapter` boundary is where Clerk, Auth0, Better Auth or an enterprise identity provider can be added.
+The v0.3 `x-capyn-user-id` adapter is explicitly development-only. The `AuthAdapter` boundary is where Clerk, Auth0, Better Auth or an enterprise identity provider can be added.
 
 ## Agent and credential
 
@@ -37,7 +37,7 @@ Mandate activation runs under the agent lock and revokes the previous active ver
 
 ## Spending policy
 
-v0.2 stores:
+v0.3 stores:
 
 - currency (`USD` only);
 - vendor IDs;
@@ -60,7 +60,7 @@ An approval has a one-to-one relation with an authorization. A human decision ca
 
 ## Execution
 
-An execution has a one-to-one relation with an authorization. Its unique constraint is the replay barrier. Immediately before claiming execution, CAPYN rechecks the agent, the exact mandate binding, capability, vendor and current hard limits under the agent lock. v0.2 uses `MockPaymentExecutor`; a future adapter must use the CAPYN execution ID as its provider idempotency key.
+An execution has a one-to-one relation with an authorization. Its unique constraint is the replay barrier. Immediately before claiming execution, CAPYN rechecks the agent, the exact mandate binding, capability, vendor and current hard limits under the agent lock. v0.3 uses `MockPaymentExecutor`; a future adapter must use the CAPYN execution ID as its provider idempotency key.
 
 Each pending execution records an attempt count, last-attempt timestamp and lease expiry. A thrown or explicitly unknown provider result keeps the execution pending and the authorization `EXECUTING`, so its spend remains reserved. Once the lease expires, one exact retry can claim reconciliation under the agent lock and call the same executor's read-only `reconcile()` method. Conditional finalization prevents an older, slow attempt from overwriting a newer reconciliation result. Completed executions replay their stored outcome without touching the provider.
 

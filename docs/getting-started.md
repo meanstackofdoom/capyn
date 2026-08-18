@@ -48,6 +48,7 @@ Local endpoints:
 | Surface | URL |
 |---|---|
 | Public website | `http://localhost:3010` |
+| Sandbox commissioning | `http://localhost:3010/activate` |
 | Documentation | `http://localhost:3010/docs` |
 | Control plane | `http://localhost:3010/dashboard` |
 | Web health | `http://localhost:3010/healthz` |
@@ -55,6 +56,8 @@ Local endpoints:
 | API health | `http://localhost:4000/health` |
 
 The seeded local user is `usr_demo_owner`. The seeded agent key is intentionally documented in [REST API](api.md); it is valid only for disposable local or explicitly published CAPYN demo environments and must never protect durable data or real authority.
+
+The commissioning page requires both web and API services. It creates a stateless 30-minute sandbox credential, evaluates a first authenticated action and emits portable synthetic proof without modifying the seeded repository. See [Sandbox commissioning](sandbox-commissioning.md).
 
 ## Make one authorization request
 

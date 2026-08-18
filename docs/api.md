@@ -24,6 +24,14 @@ These are intentionally public, fixed demonstration credentials. Use them only a
 
 Lab operations are isolated from the repository and billing ledger. They hold only short-lived in-memory approval state, never call a payment provider, never move funds, and return `mode: "SYNTHETIC"` with an explicit notice. The evidence digest demonstrates a canonical receipt shape; it is not a production signature or durable audit record.
 
+## Sandbox commissioning
+
+`POST /v1/sandbox/activate` accepts a workspace name, agent identity, bounded mandate and first exact action. It returns `201` with a one-time plaintext `capyn_sbx_…` credential that expires after 30 minutes. The activation route is limited to ten requests per minute per resolved client IP.
+
+`POST /v1/sandbox/authorize` accepts a normal Lab-shaped action and requires the issued credential as `Authorization: Bearer <CAPYN_SANDBOX_KEY>`. It recovers identity and mandate server-side, runs the production policy engine and returns `200` for `ALLOW` or `DENY`, or `202` for `REQUIRE_APPROVAL`. It is limited to sixty requests per minute.
+
+Both responses state `mode: "SYNTHETIC"` and `scope: "STATELESS_SANDBOX"`. They never create repository or billing records and never call a payment provider. See [Sandbox commissioning](sandbox-commissioning.md) for the complete credential and threat boundary.
+
 ## Agent endpoints
 
 ### `GET /v1/me`
@@ -77,7 +85,7 @@ Returns the normalized request, lifecycle state, decision, reasons and complete 
 
 ### `POST /v1/authorizations/:id/execute`
 
-Executes one unexpired `ALLOWED` or `APPROVED` authorization. v0.2 returns a simulated provider reference. A denied, rejected or expired authorization returns `409` or `410`.
+Executes one unexpired `ALLOWED` or `APPROVED` authorization. The current alpha returns a simulated provider reference. A denied, rejected or expired authorization returns `409` or `410`.
 
 CAPYN creates one execution ID before calling the provider and holds a short execution lease. If the provider response is lost or explicitly uncertain, the authorization remains `EXECUTING` and the API returns `409 EXECUTION_OUTCOME_UNKNOWN`; CAPYN does not translate ambiguity into failure or issue a replacement payment. A retry before the lease expires returns `409 EXECUTION_IN_PROGRESS`. After expiry, the same endpoint calls the owning executor's `reconcile()` method with the original execution ID. A known result is finalized once; an unresolved result remains reserved and returns `EXECUTION_OUTCOME_UNKNOWN` again.
 

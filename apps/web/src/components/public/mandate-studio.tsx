@@ -557,7 +557,7 @@ export function MandateStudio() {
                 {stageIndex < studioStages.length - 1 ? (
                   <button type="button" className="is-primary" onClick={() => selectStage(stageIndex + 1)}>Continue <ArrowRight size={14} /></button>
                 ) : (
-                  <Link href="/design-partners" className="is-primary">Request a hosted workspace <ArrowRight size={14} /></Link>
+                  <Link href="/activate" className="is-primary">Commission in the sandbox <ArrowRight size={14} /></Link>
                 )}
               </footer>
             </div>
@@ -607,7 +607,7 @@ export function MandateStudio() {
       <div className="studio-mobile-dock" aria-label="Mandate Studio stage actions">
         <button type="button" onClick={() => selectStage(stageIndex - 1)} disabled={stageIndex === 0} aria-label="Previous stage"><ArrowLeft size={16} /></button>
         <p><span>{String(stageIndex + 1)} / {studioStages.length}</span><strong>{stageMeta.short}</strong></p>
-        {stageIndex < studioStages.length - 1 ? <button type="button" onClick={() => selectStage(stageIndex + 1)} aria-label="Continue to next stage"><ArrowRight size={16} /></button> : <Link href="/design-partners" aria-label="Request a hosted workspace"><ArrowRight size={16} /></Link>}
+        {stageIndex < studioStages.length - 1 ? <button type="button" onClick={() => selectStage(stageIndex + 1)} aria-label="Continue to next stage"><ArrowRight size={16} /></button> : <Link href="/activate" aria-label="Commission in the sandbox"><ArrowRight size={16} /></Link>}
       </div>
 
       <span className="sr-only" role="status" aria-live="polite">

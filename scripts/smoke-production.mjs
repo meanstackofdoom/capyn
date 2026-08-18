@@ -177,13 +177,60 @@ async function smokeApi() {
   const labResolution = await labApproval.json();
   assert(labResolution.resolution === "APPROVED" && labResolution.outcome === "SIMULATED_EXECUTION", "Authority Lab approval did not resolve safely");
 
+  const sandboxInput = {
+    organisation: { name: "Production Smoke Works" },
+    agent: { name: "Smoke evaluation agent", slug: "smoke-evaluation-agent" },
+    mandate: {
+      name: "Smoke compute authority",
+      capabilities: ["spend.compute"],
+      allowedVendors: [{ id: "openai", name: "OpenAI" }],
+      limits: {
+        approvalAbove: { value: "100.00", currency: "USD" },
+        perTransaction: { value: "150.00", currency: "USD" },
+        daily: { value: "200.00", currency: "USD" },
+        monthly: { value: "2000.00", currency: "USD" }
+      }
+    },
+    firstRequest: {
+      capability: "spend.compute",
+      amount: { value: "18.00", currency: "USD" },
+      vendor: { id: "openai", name: "OpenAI" },
+      purpose: "Production smoke sandbox commissioning"
+    }
+  };
+  const sandboxActivationResponse = await request(`${apiOrigin}/v1/sandbox/activate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sandboxInput)
+  }, 201);
+  const sandboxActivation = await sandboxActivationResponse.json();
+  assert(
+    sandboxActivation.scope === "STATELESS_SANDBOX" && sandboxActivation.credential?.apiKey?.startsWith("capyn_sbx_"),
+    "Sandbox activation did not issue a bounded credential"
+  );
+  const sandboxAuthorizationResponse = await request(`${apiOrigin}/v1/sandbox/authorize`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${sandboxActivation.credential.apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(sandboxInput.firstRequest)
+  });
+  const sandboxAuthorization = await sandboxAuthorizationResponse.json();
+  assert(
+    sandboxAuthorization.decision === "ALLOW" &&
+      sandboxAuthorization.agent?.slug === "smoke-evaluation-agent" &&
+      /^[a-f0-9]{64}$/.test(sandboxAuthorization.evidence?.digest ?? ""),
+    "Sandbox credential did not authenticate a digest-covered first decision"
+  );
+
   const billing = await (await request(`${apiOrigin}/v1/billing`, {
     headers: { "x-capyn-user-id": demoUserId }
   })).json();
   assert(billing.planId === "DEVELOPER", "Demo billing account is not on Developer");
   assert(billing.usage.some((line) => line.metric === "AUTHORIZATION_DECISION" && line.used === 4), "Decision usage was not recorded exactly once");
 
-  return { decisions: [allow.decision, unknown.decision, approval.decision, transfer.decision], execution: execution.status, authorityLab: labResolution.resolution };
+  return { decisions: [allow.decision, unknown.decision, approval.decision, transfer.decision], execution: execution.status, authorityLab: labResolution.resolution, sandbox: sandboxAuthorization.decision };
 }
 
 async function smokeWeb() {
@@ -191,6 +238,7 @@ async function smokeWeb() {
   const publicCatalog = catalog.filter((document) => document.slug !== "project-status");
   const publicRoutes = [
     "/",
+    "/activate",
     "/lab",
     "/proof",
     "/start",
@@ -250,6 +298,13 @@ async function smokeWeb() {
   const labHtml = await lab.text();
   assert(labHtml.includes("Try to cross") && labHtml.includes("Run the decision"), "Authority Lab instrument is missing");
 
+  const activation = await request(`${webOrigin}/activate`);
+  const activationHtml = await activation.text();
+  assert(
+    activationHtml.includes("Commission an agent") && activationHtml.includes("LIVE ARTIFACT REGISTER") && activationHtml.includes("Credential lives in this tab only"),
+    "Sandbox commissioning bay is missing"
+  );
+
   const designPartners = await request(`${webOrigin}/design-partners`);
   const designPartnersHtml = await designPartners.text();
   assert(
@@ -283,6 +338,7 @@ async function smokeWeb() {
   const sitemap = await (await request(`${webOrigin}/sitemap.xml`)).text();
   assert(
     sitemap.includes(`${canonicalOrigin}/pricing`) &&
+      sitemap.includes(`${canonicalOrigin}/activate`) &&
       sitemap.includes(`${canonicalOrigin}/passport`) &&
       sitemap.includes(`${canonicalOrigin}/design-partners/brief`) &&
       sitemap.includes(`${canonicalOrigin}/docs/package-publishing`),

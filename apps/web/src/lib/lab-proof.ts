@@ -24,13 +24,6 @@ const proofEventTypes = new Set<LabEvidenceEvent["type"]>([
   "EXECUTION_SIMULATED"
 ]);
 
-const proofActors = new Set<LabEvidenceEvent["actor"]>([
-  "procurement-agent",
-  "CAPYN policy engine",
-  "human approver",
-  "synthetic executor"
-]);
-
 const moneyPattern = /^(?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,2})?$/;
 const capabilityPattern = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/;
 const vendorIdPattern = /^[a-z0-9][a-z0-9_-]*$/i;
@@ -43,6 +36,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isBoundedString(value: unknown, minimum: number, maximum: number): value is string {
   return typeof value === "string" && value.length >= minimum && value.length <= maximum;
+}
+
+function hasControlCharacters(value: string): boolean {
+  return Array.from(value).some((character) => {
+    const code = character.charCodeAt(0);
+    return code <= 31 || code === 127;
+  });
 }
 
 function parseRequest(value: unknown): LabEvaluateRequest | null {
@@ -69,13 +69,13 @@ function parseEvidence(value: unknown): LabEvidence | null {
   for (const [index, item] of value.events.entries()) {
     if (!isRecord(item) || item.sequence !== index + 1) return null;
     if (!proofEventTypes.has(item.type as LabEvidenceEvent["type"])) return null;
-    if (!proofActors.has(item.actor as LabEvidenceEvent["actor"])) return null;
+    if (!isBoundedString(item.actor, 1, 160) || hasControlCharacters(item.actor)) return null;
     if (!isBoundedString(item.timestamp, 20, 40) || !Number.isFinite(Date.parse(item.timestamp))) return null;
     if (!isBoundedString(item.detail, 1, 240)) return null;
     events.push({
       sequence: item.sequence,
       type: item.type as LabEvidenceEvent["type"],
-      actor: item.actor as LabEvidenceEvent["actor"],
+      actor: item.actor,
       timestamp: item.timestamp,
       detail: item.detail
     });

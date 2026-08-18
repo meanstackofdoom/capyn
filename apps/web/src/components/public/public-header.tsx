@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Brand } from "@/components/brand";
 
 const navigation = [
+  { href: "/activate", label: "Commission" },
   { href: "/start", label: "Mandate Studio" },
   { href: "/lab", label: "Authority Lab" },
   { href: "/developers", label: "Developers" },
@@ -16,7 +17,8 @@ const navigation = [
 export function PublicHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  let primaryAction = { href: "/start", label: "Start building" };
+  let primaryAction = { href: "/activate", label: "Run first decision" };
+  if (pathname === "/activate") primaryAction = { href: "/developers", label: "Read the API guide" };
   if (pathname === "/start") primaryAction = { href: "/lab", label: "Run live policy" };
   if (pathname === "/passport") primaryAction = { href: "/start", label: "Build a passport" };
   if (pathname === "/proof") primaryAction = { href: "/lab", label: "Generate a receipt" };
@@ -34,7 +36,7 @@ export function PublicHeader() {
   }, [open]);
 
   return (
-    <header className={`public-header sticky top-0 z-50 border-b border-line/80 bg-paper/90 backdrop-blur-xl ${pathname === "/" || pathname === "/lab" || pathname === "/start" || pathname === "/proof" || pathname === "/passport" ? "public-header-home" : ""} ${pathname === "/proof" || pathname === "/passport" ? "public-header-proof" : ""}`}>
+    <header className={`public-header sticky top-0 z-50 border-b border-line/80 bg-paper/90 backdrop-blur-xl ${pathname === "/" || pathname === "/activate" || pathname === "/lab" || pathname === "/start" || pathname === "/proof" || pathname === "/passport" ? "public-header-home" : ""} ${pathname === "/proof" || pathname === "/passport" ? "public-header-proof" : ""}`}>
       <div className="site-container flex h-[72px] items-center justify-between gap-5">
         <Brand />
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Public website">

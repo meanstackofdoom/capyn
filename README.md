@@ -5,7 +5,7 @@
 [![CI](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml/badge.svg)](https://github.com/meanstackofdoom/capyn/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4ac39c.svg)](LICENSE)
 
-[Run a real decision in the live CAPYN Authority Lab](https://capyn-production.up.railway.app/lab) or inspect the [v0.2.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.2.0) with its portable Authority Passport, generated video and dashboard evidence.
+[Commission a sandbox agent and run its first authenticated decision](https://capyn-production.up.railway.app/activate), or inspect the [v0.3.0 release](https://github.com/meanstackofdoom/capyn/releases/tag/v0.3.0) with its expiring credential, real policy trace and portable proof.
 
 The hosted alpha is a synthetic, memory-backed demonstration with mock execution. Its state can reset during deployment, it contains no customer data, and it does not move real money.
 
@@ -29,7 +29,7 @@ CAPYN POLICY ENGINE
       └── REQUIRE_APPROVAL
 ```
 
-CAPYN is not a wallet, token, DAO or payment rail. It is the decision point before consequential execution. The v0.2 executor simulates payment; future adapters can settle through Solana/USDC, x402, Stripe, AP2 or another rail without moving policy enforcement into the adapter.
+CAPYN is not a wallet, token, DAO or payment rail. It is the decision point before consequential execution. The v0.3 executor simulates payment; future adapters can settle through Solana/USDC, x402, Stripe, AP2 or another rail without moving policy enforcement into the adapter.
 
 ## See it in 24 seconds
 
@@ -72,6 +72,7 @@ The seeded hard per-transaction ceiling is `$150`, not `$50`. A `$50` hard ceili
 The public surface is a complete, responsive Next.js site:
 
 - `/` — positioning, authority rail and the core demo story
+- `/activate` — complete sandbox commissioning from workspace and agent identity through expiring credential, decision and portable proof
 - `/lab` — a public, ephemeral instrument backed by the real policy evaluator
 - `/proof` — a client-side verifier for shareable synthetic decision receipts
 - `/start` — the browser-local Mandate Studio for drafting an exact authority boundary
@@ -247,7 +248,7 @@ The MIT-licensed policy engine remains free. The hosted Developer plan includes 
 
 CAPYN meters decisions, active agents, approval operations, audit evidence and integration connections. It never charges a percentage of money moved, and approvals carry no per-request fee. Stripe Checkout, customer portal and signed subscription webhooks are implemented when configured. Automated Stripe overage invoicing remains explicitly deferred; current overage values are durable, test-backed projections. See [Billing](docs/billing.md).
 
-Read [docs/security.md](docs/security.md) before considering a non-demo deployment. v0.2 intentionally uses a demo human-auth adapter and a mock executor; both must be replaced for production.
+Read [docs/security.md](docs/security.md) before considering a non-demo deployment. v0.3 intentionally uses a demo human-auth adapter and a mock executor; both must be replaced for production.
 
 ## Documentation
 
@@ -261,6 +262,7 @@ Read [docs/security.md](docs/security.md) before considering a non-demo deployme
 - [Package publishing](docs/package-publishing.md)
 - [Security](docs/security.md)
 - [REST API](docs/api.md)
+- [Sandbox commissioning](docs/sandbox-commissioning.md)
 - [Deployment](docs/deployment.md)
 - [Documentation policy](docs/documentation.md)
 - [Public alpha launch checklist](docs/launch-checklist.md)
@@ -270,4 +272,4 @@ Read [docs/security.md](docs/security.md) before considering a non-demo deployme
 
 ## Status
 
-CAPYN v0.2 is a public, open-source developer alpha, tagged as [`v0.2.0`](https://github.com/meanstackofdoom/capyn/releases/tag/v0.2.0). It adds browser-local Mandate Studio and portable Authority Passports to the bounded authorization engine; it does not move real money. Hosted-demo progress and founder launch actions are maintained in a server-protected record outside the public repository. Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).
+CAPYN v0.3 is a public, open-source developer alpha, tagged as [`v0.3.0`](https://github.com/meanstackofdoom/capyn/releases/tag/v0.3.0). It adds end-to-end sandbox commissioning with expiring authenticated credentials and portable decision proof to the bounded authorization engine; it does not move real money. Hosted-demo progress and founder launch actions are maintained in a server-protected record outside the public repository. Deferred production work is explicit in [docs/security.md](docs/security.md) and [docs/solana-roadmap.md](docs/solana-roadmap.md).
