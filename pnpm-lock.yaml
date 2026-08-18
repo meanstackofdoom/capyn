@@ -53,6 +53,9 @@ importers:
       '@capyn/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@capyn/gate':
+        specifier: workspace:*
+        version: link:../../packages/gate
       '@capyn/policy-engine':
         specifier: workspace:*
         version: link:../../packages/policy-engine
@@ -253,6 +256,28 @@ importers:
       tsx:
         specifier: ^4.20.5
         version: 4.23.12
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/debug@4.1.13)(@types/node@24.13.3)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)
+
+  packages/gate:
+    dependencies:
+      '@capyn/types':
+        specifier: workspace:*
+        version: link:../types
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: ^3.2.4
+        version: 3.2.7(vitest@3.2.7(@types/debug@4.1.13)(@types/node@24.13.3)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12))
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.26)(tsx@4.23.12)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.2
         version: 5.9.3

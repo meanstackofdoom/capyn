@@ -1,8 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { createDemoMemoryRepository, hashApiKey, type InMemoryCapynRepository } from "@capyn/database";
+import { createEphemeralExecutionAuthority } from "@capyn/gate";
 import { buildApp } from "../src/app";
 import type { BillingProvider } from "../src/domain/billing-provider";
-import type { PaymentExecutor } from "../src/domain/execution-service";
+import type { ExecutionAuthority, PaymentExecutor } from "../src/domain/execution-service";
 
 export const TEST_PEPPER = "capyn-test-pepper-with-at-least-thirty-two-characters";
 export const TEST_NOW = new Date("2026-08-16T10:00:00.000Z");
@@ -18,19 +19,29 @@ export async function createTestContext(options: {
   clock?: () => Date;
   demoHumanUserId?: string;
   executor?: PaymentExecutor;
+  executionAuthority?: ExecutionAuthority;
 } = {}): Promise<TestContext> {
   const { repository } = createDemoMemoryRepository(hashApiKey(DEMO_KEY, TEST_PEPPER));
+  const clock = options.clock ?? (() => new Date(TEST_NOW));
+  const executionAuthority = options.executionAuthority ?? (options.executor
+    ? createEphemeralExecutionAuthority({
+        issuer: "urn:capyn:control:test",
+        audience: `urn:capyn:gate:${options.executor.name}`,
+        clock
+      })
+    : undefined);
   const app = await buildApp({
     repository,
     apiKeyPepper: TEST_PEPPER,
     allowDemoHumanHeader: true,
     ...(options.demoHumanUserId ? { demoHumanUserId: options.demoHumanUserId } : {}),
     bootstrapToken: "capyn-test-bootstrap-token-123456789",
-    clock: options.clock ?? (() => new Date(TEST_NOW)),
+    clock,
     logger: process.env.CAPYN_TEST_LOGS === "true",
     disableRateLimit: true,
     ...(options.billingProvider ? { billingProvider: options.billingProvider } : {}),
-    ...(options.executor ? { executor: options.executor } : {})
+    ...(options.executor ? { executor: options.executor } : {}),
+    ...(executionAuthority ? { executionAuthority } : {})
   });
   return { app, repository };
 }

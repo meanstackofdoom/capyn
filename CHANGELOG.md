@@ -4,7 +4,15 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 ## Unreleased
 
-No unreleased changes.
+### Request-bound execution Gate
+
+- Added `@capyn/gate`, a narrow MIT-licensed package for short-lived ES256 execution claims, exact-action verification and injected atomic replay storage.
+- Bound each claim to the organisation, agent, mandate, authorization, execution, leased attempt, operation and canonical request fingerprint.
+- Added separate `EXECUTE` and `RECONCILE` claims so recovery cannot reopen the original provider operation.
+- Placed Gate verification and one-time consumption immediately before every mock provider call; verification failure now fails closed without invoking the provider.
+- Refused non-mock executor construction unless an explicit authority and Gate are supplied.
+- Added adversarial package and API tests for action drift, signature tampering, expiry, audience isolation, concurrent replay, clock-skew retention, reconciliation binding and provider isolation.
+- Documented the deliberately incomplete production boundary: persistent KMS/HSM keys, durable shared replay state, authenticated transport, external Gate deployment and exclusive provider credentials remain mandatory.
 
 ## v0.4.0 — 2026-08-18
 

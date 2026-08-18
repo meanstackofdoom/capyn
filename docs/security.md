@@ -72,6 +72,23 @@ Production defence in depth should add PostgreSQL row-level security or isolated
 - Finalization is attempt-conditional, so a slow superseded attempt cannot overwrite a newer reconciliation result.
 - Immediately before execution, CAPYN rechecks the agent, exact mandate binding, capability, vendor and hard spend rules under the agent lock. Suspension, revocation or mandate replacement invalidates an unused authorization.
 
+### Execution claims and Gate
+
+- Every mock provider execution and reconciliation attempt is preceded by a short-lived ES256 claim with the protected type `capyn-execution+jwt`.
+- The claim binds the exact organisation, agent, mandate, authorization, execution, leased attempt, operation and canonical request hash.
+- The Gate verifies the signature before evaluating caller-supplied context, requires the configured issuer and exact audience, and enforces a bounded lifetime.
+- The stored authorization fingerprint must match the reconstructed execution action before CAPYN issues the provider call.
+- The Gate atomically consumes the deterministic claim ID before invoking the provider. Replay entries outlive token expiry and accepted clock skew.
+- `EXECUTE` and read-only `RECONCILE` claims are distinct; reconciliation cannot reopen the original execution operation.
+- Gate rejection finalizes as failure without invoking the provider. Exceptions after claim consumption remain unknown until reconciliation.
+- A non-mock executor cannot attach to `ExecutionService` without an explicitly supplied authority and Gate.
+- Claim IDs, operation, request hash, key ID and audience are retained in execution audit metadata.
+
+The current in-process Gate uses an ephemeral key and process-local replay store
+only with the mock executor. Production requires persistent KMS/HSM-backed keys,
+durable shared replay storage, workload-authenticated transport and exclusive
+Gate access to the downstream provider credential. See [Execution Gate](execution-gate.md).
+
 ### Concurrent spend accounting
 
 PostgreSQL authorization and approval operations use:
@@ -112,6 +129,7 @@ For regulated deployments, add immutable external export, retention policy, cloc
 - The fixed public agent key lets visitors consume the isolated synthetic demo's allowance. Rate limits bound request volume and the public instance makes no availability promise; durable workspaces receive unique revocable agent credentials.
 - The current Railway volume journal is a single-process hosted-alpha fallback. It has atomic checkpoints but no multi-replica locking, managed backups, point-in-time recovery or database row-level security.
 - `MockPaymentExecutor` moves no funds.
+- The alpha Gate runs in the API process with an ephemeral signing key and in-memory replay state. It proves the cryptographic contract but is not a remote credential boundary, durable replay service or portable signed execution receipt.
 - Request-driven leased reconciliation can recover an `EXECUTING` record after a lost provider response, but no background worker scans stale leases yet. Real adapters still require provider idempotency, a transactional outbox, automated reconciliation and alerting.
 - Rate-limit state is process-local.
 - Awaiting approvals do not reserve spend for 24 hours. Hard limits are rechecked at approval time instead.
@@ -130,6 +148,8 @@ Before real money:
 - treasury-level reservation model;
 - distributed rate limiting and abuse detection;
 - one reviewed real executor plus transactional outbox, automated reconciliation and alerting;
+- a separately deployed or customer-controlled Gate with exclusive provider authority, durable atomic replay storage and authenticated transport;
+- persistent KMS/HSM-backed execution-claim keys with rotation and recovery procedures;
 - secret-manager integration and deployment-pepper rotation;
 - encrypted backups, tested restore and disaster recovery;
 - audit export/retention controls;

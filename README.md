@@ -29,7 +29,7 @@ CAPYN POLICY ENGINE
       └── REQUIRE_APPROVAL
 ```
 
-CAPYN is not a wallet, token, DAO or payment rail. It is the decision point before consequential execution. The v0.4 executor simulates payment; future adapters can settle through Solana/USDC, x402, Stripe, AP2 or another rail without moving policy enforcement into the adapter.
+CAPYN is not a wallet, token, DAO or payment rail. It is the decision point before consequential execution. The executor still simulates payment, but every provider operation now crosses a short-lived ES256 claim bound to the exact stored action and a one-use Gate before the mock adapter can run. Future adapters can settle through Solana/USDC, x402, Stripe, AP2 or another rail without moving policy enforcement into the adapter.
 
 ## See it in 24 seconds
 
@@ -191,6 +191,7 @@ apps/
   web/                 Next.js public website and App Router control plane
 packages/
   billing/             Hosted plan catalogue, entitlements and overage calculator
+  gate/                Signed exact-action execution claims and replay boundary
   policy-engine/       Pure deterministic evaluator
   database/            Prisma/PostgreSQL and repository adapters
   sdk/                 Typed agent client
@@ -204,7 +205,7 @@ outreach/video/        Rendered public-alpha video and cover
 The important dependency direction is:
 
 ```text
-identity → mandate → policy evaluation → authorization → approval → execution → audit
+identity → mandate → policy evaluation → authorization → approval → signed claim → Gate → execution → audit
 ```
 
 The policy engine does not know how PostgreSQL or Solana works. The executor does not decide permission. The web app is not a security boundary.
@@ -238,6 +239,8 @@ pnpm db:seed       # seed Acme AI and procurement-agent
 - Organisation advisory locks protect hosted quotas across simultaneous agents.
 - Approval rechecks every hard rule under the same lock and applies only to one authorization.
 - Execution is claimed once with a unique database record after rechecking the agent and exact mandate binding.
+- Each execute/reconcile attempt receives a short-lived ES256 claim bound to the exact request, Gate audience and leased attempt; the Gate consumes its claim ID once before invoking the provider.
+- Non-mock executors refuse to attach without an explicitly configured authority and Gate.
 - Ambiguous provider outcomes remain `EXECUTING`; a leased exact retry calls `reconcile()` with the original execution ID instead of issuing payment again.
 - Audit events are append-only through the application and protected by a database trigger.
 - Structured logs redact authorization and bootstrap headers.
@@ -245,7 +248,7 @@ pnpm db:seed       # seed Acme AI and procurement-agent
 
 ## Commercial model
 
-The MIT-licensed policy engine remains free. The hosted Developer plan includes 3 active agents and 10,000 authorization decisions per month. Team is `$99/month`; Business is `$499/month`. Both are hosted-alpha authority workspaces with mock execution, while production engagements remain custom until their adapters and service boundary are explicitly contracted. Design-partner engagements begin at `$1,000/month` for 8–12 weeks of founder-led integration work.
+The MIT-licensed policy engine and exact-action Gate/verifier remain free. The hosted Developer plan includes 3 active agents and 10,000 authorization decisions per month. Team is `$99/month`; Business is `$499/month`. Both are hosted-alpha authority workspaces with mock execution, while production engagements remain custom until their adapters and service boundary are explicitly contracted. Design-partner engagements begin at `$1,000/month` for 8–12 weeks of founder-led integration work.
 
 CAPYN meters decisions, active agents, approval operations, audit evidence and integration connections. It never charges a percentage of money moved, and approvals carry no per-request fee. Stripe Checkout, customer portal and signed subscription webhooks are implemented when configured. Automated Stripe overage invoicing remains explicitly deferred; current overage values are durable, test-backed projections. See [Billing](docs/billing.md).
 
@@ -260,6 +263,7 @@ Read [docs/security.md](docs/security.md) before considering live execution. v0.
 - [Billing](docs/billing.md)
 - [Website and brand system](docs/website.md)
 - [Policy engine](docs/policy-engine.md)
+- [Execution Gate](docs/execution-gate.md)
 - [Package publishing](docs/package-publishing.md)
 - [Security](docs/security.md)
 - [REST API](docs/api.md)

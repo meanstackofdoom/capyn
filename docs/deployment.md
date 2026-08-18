@@ -104,3 +104,10 @@ Before real money, every item in the [Security production gate](security.md#prod
 - record deployment identity and version in operational audit/observability systems.
 
 The executor contract now requires `execute()` and read-only `reconcile()` using the same CAPYN execution ID. Leased request-driven recovery prevents an ambiguous response from automatically becoming a duplicate payment, but the mock executor has no external settlement state against which to validate that contract. A real rollout still requires a transactional outbox/worker, automatic stale-lease scanning, provider-specific alerts and reconciliation runbooks.
+
+Every current provider operation also crosses the request-bound claim protocol
+documented in [Execution Gate](execution-gate.md). The in-process ephemeral Gate
+is suitable only for the mock alpha. A real rollout must deploy the Gate at the
+provider credential boundary, configure persistent KMS/HSM-backed signing
+keys, share durable atomic replay state across replicas, authenticate the
+control-to-Gate channel and remove equivalent credentials from the agent.

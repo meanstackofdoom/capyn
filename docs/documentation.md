@@ -30,6 +30,7 @@ The root `pnpm check` command runs documentation validation before code verifica
 | Policy rule, reason code or evaluation order | `policy-engine.md`, `api.md`, tests |
 | Entity, state or database invariant | `domain-model.md`, `architecture.md`, migration |
 | Identity, tenant, approval, execution or audit control | `security.md`, `architecture.md`, threat tests |
+| Execution claim, Gate or provider credential boundary | `execution-gate.md`, `security.md`, `architecture.md`, adapter tests |
 | Environment variable or start command | `configuration.md`, `getting-started.md`, `deployment.md`, `.env.example` |
 | Public endpoint or response shape | `api.md`, SDK types/examples |
 | Deferred risk or completed milestone | Private status record, relevant roadmap/security document |

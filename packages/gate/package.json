@@ -1,0 +1,50 @@
+{
+  "name": "@capyn/gate",
+  "version": "0.4.0",
+  "description": "Signed, request-bound execution claims and fail-closed consequence gating for CAPYN.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meanstackofdoom/capyn.git",
+    "directory": "packages/gate"
+  },
+  "homepage": "https://capyn-production.up.railway.app/developers",
+  "bugs": {
+    "url": "https://github.com/meanstackofdoom/capyn/issues"
+  },
+  "keywords": ["ai-agents", "authorization", "execution", "security", "capyn"],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "prepack": "pnpm build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@capyn/types": "workspace:*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

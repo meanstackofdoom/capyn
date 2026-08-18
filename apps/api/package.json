@@ -15,6 +15,7 @@
   "dependencies": {
     "@capyn/billing": "workspace:*",
     "@capyn/database": "workspace:*",
+    "@capyn/gate": "workspace:*",
     "@capyn/policy-engine": "workspace:*",
     "@capyn/types": "workspace:*",
     "@fastify/cors": "^11.1.0",

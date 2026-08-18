@@ -18,6 +18,12 @@ Human / organisation
         └── append-oriented audit
         │
         ▼
+ signed, request-bound execution claim
+        │
+        ▼
+   @capyn/gate
+        │
+        ▼
  PaymentExecutor execute + reconcile interface
         │
         ├── MockPaymentExecutor (v0.4)
@@ -32,6 +38,7 @@ Human / organisation
 | `@capyn/policy-engine` | Pure `PolicyEvaluationInput → PolicyEvaluation` | Query a database or execute payment |
 | `@capyn/database` | Persistence, transaction/locking primitives, projections | Make an HTTP decision |
 | `@capyn/billing` | Pure plan catalogue, entitlements and overage calculation | Change policy decisions or call a payment provider |
+| `@capyn/gate` | Sign, verify and atomically consume exact-action execution claims | Evaluate policy or expose provider credentials to an agent |
 | `apps/api` | Authentication, orchestration, lifecycle, safe HTTP errors | Trust client agent identity |
 | `@capyn/sdk` | Typed agent-facing client | Contain policy rules |
 | `apps/web` | Public website, canonical docs renderer and human control plane | Enforce authority in the browser |
@@ -58,6 +65,22 @@ Agent                 API                 PostgreSQL             Policy engine
 The transaction lock makes the spend snapshot and the newly reserved `ALLOWED` authorization one serial operation. An awaiting approval is not reserved indefinitely; its exact mandate binding and all hard limits are re-evaluated under the same lock when a human approves it. Execution acquires the same agent lock, reloads the authorization, and re-evaluates the current agent, exact mandate binding, capability, vendor and hard limits before it claims the one execution record. A suspension, revocation or replacement mandate invalidates unused authority instead of letting a stale decision move forward.
 
 The organisation lock serializes hosted quota checks across different agents. Billing is orchestration around the evaluator: exhausting a bounded free allowance can stop a new hosted request, but no billing code can turn a failed policy rule into permission.
+
+## Execution Gate sequence
+
+After the execution-time policy recheck, CAPYN signs one short-lived ES256 claim
+over the organisation, agent, mandate, authorization, execution attempt,
+operation and canonical action hash. The Gate verifies the signature, issuer,
+audience, time window and complete request context, then atomically consumes
+the claim ID before the provider can run. `EXECUTE` and `RECONCILE` are separate
+operations with separate attempt-bound claim IDs.
+
+The current alpha exercises this boundary in process around the mock executor
+with an ephemeral signing key and in-memory replay store. A non-mock executor
+cannot attach without an explicitly supplied authority and Gate. Production
+requires the Gate to run at the credential boundary with durable replay state,
+persistent KMS/HSM-managed keys and exclusive control of the provider role. See
+[Execution Gate](execution-gate.md).
 
 ## Sandbox-to-workspace sequence
 
@@ -126,7 +149,7 @@ Browser ──► Next.js web
                 ▼
 Agent ─────► Fastify API ─────► PostgreSQL
                 │
-                └─────────────► executor adapter
+                └─ signed claim ─► Gate ─► executor adapter
 ```
 
-The API should be the only component with database write access. A real human identity provider replaces the demo header adapter. CAPYN now supports request-driven reconciliation of leased ambiguous executions, but distributed rate limiting, database backups, audit export, a durable executor worker/outbox and provider-specific reconciliation operations remain required before production money movement. See [Deployment](deployment.md) for the platform-neutral service handoff.
+The API should be the only component with control-plane database write access. A real human identity provider replaces the demo header adapter. The production Gate should be the only workload able to use the provider credential or role; otherwise an agent can bypass CAPYN. CAPYN now supports request-driven reconciliation of leased ambiguous executions, but persistent signing keys, durable Gate replay state, distributed rate limiting, database backups, audit export, a durable executor worker/outbox and provider-specific reconciliation operations remain required before production money movement. See [Deployment](deployment.md) for the platform-neutral service handoff.

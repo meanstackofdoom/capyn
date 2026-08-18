@@ -45,7 +45,10 @@ Identity ─ Mandate ─ Policy ─ Current state
 ALLOW / DENY / REQUIRE_APPROVAL
      │
      ▼
-Execution adapter
+Signed exact-action claim
+     │
+     ▼
+Gate ─ Execution adapter
 ```
 
 The result is not a reusable permission. It is an answer about one normalized request at one time under one mandate version.
@@ -60,7 +63,9 @@ The interesting failures are not the happy-path API call:
 - an agent submitting another agent's ID;
 - reuse of an idempotency key with a modified payload;
 - two execution calls for one authorization;
+- a signed claim replayed or presented with a modified action;
+- an agent bypassing the Gate with a retained provider credential;
 - an external provider succeeding before the local process crashes;
 - a vendor label that resolves to a different destination account.
 
-A credible authority product makes these invariants visible in code, tests and documentation. CAPYN v0.4 continues from that foundation with authenticated sandbox commissioning, portable proof and a one-way claim into durable tenant records.
+A credible authority product makes these invariants visible in code, tests and documentation. CAPYN's current public alpha continues from that foundation with authenticated sandbox commissioning, portable proof, a one-way claim into durable tenant records and an in-process cryptographic Gate around mock execution. A production credential boundary remains deliberately unfinished.

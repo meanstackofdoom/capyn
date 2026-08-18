@@ -26,7 +26,7 @@
     "description": "Agent authorization, management, approval, execution and safe error contracts.",
     "category": "Build",
     "status": "Implemented",
-    "reviewedAt": "2026-08-17",
+    "reviewedAt": "2026-08-19",
     "order": 30
   },
   {
@@ -60,13 +60,23 @@
     "order": 40
   },
   {
+    "slug": "execution-gate",
+    "file": "execution-gate.md",
+    "title": "Execution Gate",
+    "description": "Signed exact-action execution claims, replay protection, provider isolation and the production credential boundary.",
+    "category": "Build",
+    "status": "Implemented boundary",
+    "reviewedAt": "2026-08-19",
+    "order": 42
+  },
+  {
     "slug": "package-publishing",
     "file": "package-publishing.md",
     "title": "Package publishing",
     "description": "Public npm package boundaries, archive inspection, release order and trusted publishing handoff.",
     "category": "Build",
     "status": "Release gate",
-    "reviewedAt": "2026-08-18",
+    "reviewedAt": "2026-08-19",
     "order": 45
   },
   {
@@ -76,7 +86,7 @@
     "description": "Organisations, users, agents, mandates, authorizations, approvals, executions and audit events.",
     "category": "Build",
     "status": "Implemented",
-    "reviewedAt": "2026-08-17",
+    "reviewedAt": "2026-08-19",
     "order": 50
   },
   {
@@ -96,7 +106,7 @@
     "description": "System boundaries, authorization sequence, lifecycle, persistence and deployment shape.",
     "category": "Build",
     "status": "Implemented",
-    "reviewedAt": "2026-08-17",
+    "reviewedAt": "2026-08-19",
     "order": 60
   },
   {
@@ -116,7 +126,7 @@
     "description": "Implemented controls, concurrency guarantees, known limitations and the production gate.",
     "category": "Trust",
     "status": "Current",
-    "reviewedAt": "2026-08-17",
+    "reviewedAt": "2026-08-19",
     "order": 70
   },
   {
@@ -126,7 +136,7 @@
     "description": "Platform-neutral web/API deployment, health checks, PostgreSQL migrations and rollout safeguards.",
     "category": "Trust",
     "status": "Reference",
-    "reviewedAt": "2026-08-17",
+    "reviewedAt": "2026-08-19",
     "order": 80
   },
   {
@@ -136,7 +146,7 @@
     "description": "How CAPYN keeps repository documentation and the public docs website synchronized.",
     "category": "Trust",
     "status": "Current",
-    "reviewedAt": "2026-08-17",
+    "reviewedAt": "2026-08-19",
     "order": 90
   },
   {
@@ -156,7 +166,7 @@
     "description": "The technical thesis separating authentication, authorization, intent, policy, execution and audit.",
     "category": "Direction",
     "status": "Thesis",
-    "reviewedAt": "2026-08-17",
+    "reviewedAt": "2026-08-19",
     "order": 110
   },
   {
@@ -166,7 +176,7 @@
     "description": "A future chain-agnostic execution adapter path without moving policy into settlement.",
     "category": "Direction",
     "status": "Roadmap",
-    "reviewedAt": "2026-08-17",
+    "reviewedAt": "2026-08-19",
     "order": 120
   }
 ]

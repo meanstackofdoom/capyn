@@ -1,11 +1,12 @@
 # Package publishing
 
-CAPYN publishes three narrow developer packages from the public monorepo:
+CAPYN prepares four narrow developer packages from the public monorepo:
 
 | Package | Purpose | Depends on |
 |---|---|---|
 | `@capyn/types` | Shared Zod schemas and TypeScript contracts | `zod` |
 | `@capyn/policy-engine` | Deterministic, side-effect-free policy evaluation | `@capyn/types` |
+| `@capyn/gate` | ES256 exact-action execution claims, verification and replay boundary | `@capyn/types`, `zod` |
 | `@capyn/sdk` | Typed client for the CAPYN authorization API | `@capyn/types` |
 
 The API, database adapter, billing package, website and video application remain
@@ -43,6 +44,7 @@ Build and inspect each archive before publishing:
 ```bash
 corepack pnpm --filter @capyn/types pack
 corepack pnpm --filter @capyn/policy-engine pack
+corepack pnpm --filter @capyn/gate pack
 corepack pnpm --filter @capyn/sdk pack
 ```
 
@@ -61,6 +63,7 @@ Publish dependencies before consumers:
 ```bash
 corepack pnpm --filter @capyn/types publish --access public
 corepack pnpm --filter @capyn/policy-engine publish --access public
+corepack pnpm --filter @capyn/gate publish --access public
 corepack pnpm --filter @capyn/sdk publish --access public
 ```
 
@@ -91,4 +94,3 @@ token and automatically attaches provenance for eligible public packages.
 
 Do not add an npm token until the ownership model is explicit. Do not publish
 from an uncommitted workspace, reuse a version, or bypass the test/audit gate.
-

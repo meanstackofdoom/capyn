@@ -62,7 +62,7 @@ An approval has a one-to-one relation with an authorization. A human decision ca
 
 ## Execution
 
-An execution has a one-to-one relation with an authorization. Its unique constraint is the replay barrier. Immediately before claiming execution, CAPYN rechecks the agent, the exact mandate binding, capability, vendor and current hard limits under the agent lock. v0.4 uses `MockPaymentExecutor`; a future adapter must use the CAPYN execution ID as its provider idempotency key.
+An execution has a one-to-one relation with an authorization. Its unique constraint is the database replay barrier. Immediately before claiming execution, CAPYN rechecks the agent, the exact mandate binding, capability, vendor and current hard limits under the agent lock. It then issues an attempt-bound ES256 execution claim; the Gate verifies the exact action and atomically consumes the claim ID before the provider call. The current alpha uses `MockPaymentExecutor` and an in-process ephemeral Gate. A future adapter must use the CAPYN execution ID as its provider idempotency key and place its credential exclusively behind a production Gate.
 
 Each pending execution records an attempt count, last-attempt timestamp and lease expiry. A thrown or explicitly unknown provider result keeps the execution pending and the authorization `EXECUTING`, so its spend remains reserved. Once the lease expires, one exact retry can claim reconciliation under the agent lock and call the same executor's read-only `reconcile()` method. Conditional finalization prevents an older, slow attempt from overwriting a newer reconciliation result. Completed executions replay their stored outcome without touching the provider.
 

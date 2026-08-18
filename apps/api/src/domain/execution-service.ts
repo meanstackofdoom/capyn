@@ -1,6 +1,20 @@
 import type { CapynRepository, StoredAuthorization, StoredExecution } from "@capyn/database";
+import {
+  ExecutionClaimError,
+  createEphemeralExecutionAuthority,
+  executionActionHash,
+  executionClaimId,
+  type ExecutionClaimContext,
+  type ExecutionClaimIssuer,
+  type ExecutionGate
+} from "@capyn/gate";
 import { evaluatePolicy } from "@capyn/policy-engine";
-import type { AgentPrincipal, ExecutionResultView, NormalizedAuthorizationRequest } from "@capyn/types";
+import type {
+  AgentPrincipal,
+  ExecutionResultView,
+  JsonValue,
+  NormalizedAuthorizationRequest
+} from "@capyn/types";
 import { AuthenticationError, ConflictError, GoneError, NotFoundError } from "../http/errors";
 import { createId } from "./ids";
 
@@ -13,6 +27,10 @@ export interface ExecutionRequest {
   amountMinor: string;
   currency: "USD";
   vendor: { id: string; name: string | null };
+  metadata: Record<string, JsonValue>;
+  mandateId: string;
+  requestHash: string;
+  attemptCount: number;
 }
 
 export interface PaymentExecutionResult {
@@ -25,6 +43,11 @@ export interface PaymentExecutor {
   readonly name: string;
   execute(request: ExecutionRequest): Promise<PaymentExecutionResult>;
   reconcile(request: ExecutionRequest): Promise<PaymentExecutionResult>;
+}
+
+export interface ExecutionAuthority {
+  issuer: ExecutionClaimIssuer;
+  gate: ExecutionGate;
 }
 
 export class MockPaymentExecutor implements PaymentExecutor {
@@ -75,6 +98,7 @@ function subtractReservation(total: string, authorization: StoredAuthorization, 
 export const DEFAULT_EXECUTION_LEASE_MS = 30_000;
 
 function executionRequest(execution: StoredExecution, authorization: StoredAuthorization): ExecutionRequest {
+  if (!authorization.mandateId) throw new Error("An executable authorization must remain bound to a mandate");
   return {
     executionId: execution.id,
     authorizationId: authorization.id,
@@ -83,18 +107,59 @@ function executionRequest(execution: StoredExecution, authorization: StoredAutho
     capability: authorization.capability,
     amountMinor: authorization.amountMinor,
     currency: authorization.currency,
-    vendor: { id: authorization.vendorId, name: authorization.vendorName }
+    vendor: { id: authorization.vendorId, name: authorization.vendorName },
+    metadata: authorization.metadata,
+    mandateId: authorization.mandateId,
+    requestHash: authorization.requestHash,
+    attemptCount: execution.attemptCount
   };
 }
 
+function executionClaimContext(
+  request: ExecutionRequest,
+  operation: "EXECUTE" | "RECONCILE"
+): ExecutionClaimContext {
+  return {
+    operation,
+    organisationId: request.organisationId,
+    agentId: request.agentId,
+    mandateId: request.mandateId,
+    authorizationId: request.authorizationId,
+    executionId: request.executionId,
+    attempt: request.attemptCount,
+    action: {
+      capability: request.capability,
+      amountMinor: request.amountMinor,
+      currency: request.currency,
+      vendor: request.vendor,
+      metadata: request.metadata
+    }
+  };
+}
+
+function gateFailureCode(error: unknown): string {
+  return error instanceof ExecutionClaimError ? `GATE_${error.code}` : "GATE_INTERNAL_ERROR";
+}
+
 export class ExecutionService {
+  private readonly authority: ExecutionAuthority;
+
   constructor(
     private readonly repository: CapynRepository,
     private readonly executor: PaymentExecutor = new MockPaymentExecutor(),
     private readonly clock: () => Date = () => new Date(),
+    authority?: ExecutionAuthority,
     private readonly leaseMs: number = DEFAULT_EXECUTION_LEASE_MS
   ) {
     if (!Number.isInteger(leaseMs) || leaseMs <= 0) throw new Error("Execution lease must be a positive integer");
+    if (!authority && !(executor instanceof MockPaymentExecutor)) {
+      throw new Error("A non-mock executor requires an explicitly configured execution authority and Gate");
+    }
+    this.authority = authority ?? createEphemeralExecutionAuthority({
+      issuer: "urn:capyn:control:ephemeral-mock",
+      audience: `urn:capyn:gate:${executor.name}`,
+      clock
+    });
   }
 
   async execute(principal: AgentPrincipal, authorizationId: string): Promise<ExecutionResultView> {
@@ -156,7 +221,14 @@ export class ExecutionService {
             authorizationId: authorization.id,
             provider: recovering.provider,
             attemptCount: recovering.attemptCount,
-            requestedByAgentId: principal.agentId
+            requestedByAgentId: principal.agentId,
+            requestHash: authorization.requestHash,
+            mandateId: authorization.mandateId,
+            authorityAudience: this.authority.issuer.audience,
+            authorityKeyId: this.authority.issuer.keyId,
+            authorityClaimId: executionClaimId(
+              executionClaimContext(executionRequest(recovering, authorization), "RECONCILE")
+            )
           }
         });
         return { kind: "recovering", execution: recovering, authorization };
@@ -243,7 +315,14 @@ export class ExecutionService {
         metadata: {
           authorizationId: authorization.id,
           provider: this.executor.name,
-          attemptCount: execution.attemptCount
+          attemptCount: execution.attemptCount,
+          requestHash: authorization.requestHash,
+          mandateId: authorization.mandateId,
+          authorityAudience: this.authority.issuer.audience,
+          authorityKeyId: this.authority.issuer.keyId,
+          authorityClaimId: executionClaimId(
+            executionClaimContext(executionRequest(execution, authorization), "EXECUTE")
+          )
         }
       });
       return { kind: "claimed", execution, authorization };
@@ -264,13 +343,35 @@ export class ExecutionService {
     }
 
     const request = executionRequest(claim.execution, claim.authorization);
-    let result: PaymentExecutionResult;
+    const operation = claim.kind === "recovering" ? "RECONCILE" : "EXECUTE";
+    const authorityContext = executionClaimContext(request, operation);
+    let authorityClaimId = executionClaimId(authorityContext);
+    let result: PaymentExecutionResult | null = null;
     try {
-      result = claim.kind === "recovering"
-        ? await this.executor.reconcile(request)
-        : await this.executor.execute(request);
-    } catch {
-      result = { status: "UNKNOWN", reference: claim.execution.externalReference, errorCode: "PROVIDER_OUTCOME_UNKNOWN" };
+      if (executionActionHash(authorityContext.action) !== request.requestHash) {
+        throw new ExecutionClaimError(
+          "CLAIM_CONTEXT_MISMATCH",
+          "The stored authorization fingerprint does not match the execution action"
+        );
+      }
+      const issued = this.authority.issuer.issue(authorityContext);
+      authorityClaimId = issued.payload.jti;
+      await this.authority.gate.consume(issued.token, authorityContext);
+    } catch (error) {
+      result = { status: "FAILED", reference: null, errorCode: gateFailureCode(error) };
+    }
+    if (result === null) {
+      try {
+        result = claim.kind === "recovering"
+          ? await this.executor.reconcile(request)
+          : await this.executor.execute(request);
+      } catch {
+        result = {
+          status: "UNKNOWN",
+          reference: claim.execution.externalReference,
+          errorCode: "PROVIDER_OUTCOME_UNKNOWN"
+        };
+      }
     }
 
     const completedAt = this.clock();
@@ -300,7 +401,10 @@ export class ExecutionService {
             authorizationId: claim.authorization.id,
             provider: this.executor.name,
             attemptCount: uncertain.attemptCount,
-            errorCode: uncertain.errorCode
+            errorCode: uncertain.errorCode,
+            authorityClaimId,
+            authorityOperation: operation,
+            requestHash: request.requestHash
           }
         });
         return uncertain;
@@ -347,7 +451,11 @@ export class ExecutionService {
           provider: this.executor.name,
           status: finalResult.status,
           reference: finalResult.reference,
-          attemptCount: execution.attemptCount
+          attemptCount: execution.attemptCount,
+          errorCode: finalResult.errorCode,
+          authorityClaimId,
+          authorityOperation: operation,
+          requestHash: request.requestHash
         }
       });
       return toView(execution);
