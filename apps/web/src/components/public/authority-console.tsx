@@ -105,7 +105,7 @@ function decisionTone(result: LabEvaluationResult | null, error: string | null):
 function decisionCopy(result: LabEvaluationResult | null, phase: Phase, error: string | null) {
   if (error) return { words: ["CHECK", "FAILED"], reason: "POLICY_ENGINE_UNAVAILABLE", next: error };
   if (phase === "evaluating") return { words: ["CROSSING"], reason: "NINE_GATES_IN_FLIGHT", next: "CAPYN is evaluating identity, mandate, limits and the human line." };
-  if (result?.decision === "ALLOW") return { words: ["ALLOW"], reason: result.reasonCodes[0] ?? "ALL_HARD_RULES_PASS", next: "Every hard rule passed. Mock execution reached." };
+  if (result?.decision === "ALLOW") return { words: ["ALLOW"], reason: "ALL_HARD_RULES_PASS", next: "Every hard rule passed. Mock execution reached." };
   if (result?.decision === "DENY") return { words: ["DENY"], reason: result.reasonCodes[0] ?? "REQUEST_STOPPED", next: result.reasons[0]?.description ?? "The action stopped before execution." };
   if (result?.decision === "REQUIRE_APPROVAL") return { words: ["HUMAN", "REQUIRED"], reason: "APPROVAL_THRESHOLD_EXCEEDED", next: "Hard rules passed. One exact request is waiting for a human." };
   return { words: ["UNDECIDED"], reason: "AWAITING_EXACT_ACTION", next: "Change the sentence above, then send that exact action across the line." };
