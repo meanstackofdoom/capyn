@@ -114,10 +114,19 @@ timestamps and a canonical SHA-256 receipt digest. The HTTP client checks every
 field against the dispatched request before the API records the digest and Gate
 timestamps in audit metadata.
 
-The digest detects accidental drift in the returned structure. It is **not a
-signature** and does not independently prove that AWS or another provider
-executed an action. Provider-native evidence, independently signed Gate
-receipts and externally anchored audit export remain production work.
+When the control plane and Gate share a receipt-signing secret, the Gate also
+signs the canonical receipt with HMAC-SHA-256 and the client requires and
+verifies that signature. An unsigned, malformed or tampered receipt fails the
+invocation closed instead of being retained as evidence. The API reads
+`CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64`; the Gate reads
+`GATE_RECEIPT_SIGNING_SECRET_B64`. Both must decode to the same secret of at
+least 16 bytes.
+
+The digest detects accidental drift in the returned structure, and the HMAC
+signature detects deliberate tampering between the two workloads. Neither is a
+signature over provider-native evidence and neither independently proves that
+AWS or another provider executed an action. Asymmetric, independently anchored
+Gate receipts and externally anchored audit export remain production work.
 
 ## AWS dry-run blueprint
 
@@ -154,7 +163,7 @@ advisory no matter how strong the claim signature is.
 Tests cover exact-action binding, token tampering, expiry, audience isolation,
 concurrent replay, PostgreSQL uniqueness handling, separately bound
 reconciliation, conservative replay classification, HTTP control
-authentication, receipt matching, remote replay,
+authentication, receipt matching, receipt signing and verification, remote replay,
 AWS blueprint drift and the complete control-plane-to-remote-Gate path.
 
 Run the focused checks:

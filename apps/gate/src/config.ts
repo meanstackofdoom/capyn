@@ -22,6 +22,7 @@ const environmentSchema = z
     GATE_EXPECTED_ISSUER: z.string().trim().min(1).max(240),
     GATE_AUDIENCE: z.string().trim().min(1).max(240),
     GATE_PUBLIC_KEYS_B64: base64Schema,
+    GATE_RECEIPT_SIGNING_SECRET_B64: base64Schema.optional(),
     GATE_ALLOWED_CLOCK_SKEW_SECONDS: integerString(0, 60).default("5"),
     GATE_MAX_CLAIM_TTL_SECONDS: integerString(1, 300).default("60"),
     AWS_SANDBOX_BLUEPRINTS_B64: base64Schema
@@ -45,6 +46,15 @@ function decodeJson(value: string, label: string): unknown {
   } catch {
     throw new Error(`Invalid CAPYN Gate configuration: ${label} must contain base64-encoded JSON`);
   }
+}
+
+function decodeReceiptSigningSecret(value: string | undefined): Buffer | undefined {
+  if (!value) return undefined;
+  const decoded = Buffer.from(value, "base64");
+  if (decoded.length < 16) {
+    throw new Error("Invalid CAPYN Gate configuration: GATE_RECEIPT_SIGNING_SECRET_B64 must decode to at least 16 bytes");
+  }
+  return decoded;
 }
 
 const publicKeysSchema = z.record(z.string().trim().min(1), z.string().min(64)).refine(
@@ -74,6 +84,7 @@ export function loadGateConfig(environment: NodeJS.ProcessEnv = process.env) {
     ...parsed.data,
     publicKeys: publicKeys.data,
     blueprints: blueprints.data,
+    receiptSigningSecret: decodeReceiptSigningSecret(parsed.data.GATE_RECEIPT_SIGNING_SECRET_B64),
     replayNamespace: createHash("sha256")
       .update(JSON.stringify({
         issuer: parsed.data.GATE_EXPECTED_ISSUER,

@@ -51,6 +51,13 @@ describe("CAPYN deployment configuration", () => {
     expect(configured.CAPYN_EXECUTION_MODE).toBe("remote-gate");
   });
 
+  it("rejects a receipt verification secret outside remote Gate mode", () => {
+    expect(() => loadConfig({
+      ...base,
+      CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64: Buffer.from("at-least-16-bytes!").toString("base64")
+    })).toThrow("Set CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64 only with CAPYN_EXECUTION_MODE=remote-gate");
+  });
+
   it("pins production demo authentication to one explicit human identity", () => {
     expect(() => loadConfig({
       ...base,

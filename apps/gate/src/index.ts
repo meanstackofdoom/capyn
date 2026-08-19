@@ -32,7 +32,8 @@ const verifier = new Es256ExecutionClaimVerifier({
 const gateway = new LocalExecutionGateway({
   gateId: config.GATE_ID,
   gate: new ExecutionGate(verifier, replayStore),
-  executor: new AwsEc2DryRunExecutor(config.blueprints)
+  executor: new AwsEc2DryRunExecutor(config.blueprints),
+  ...(config.receiptSigningSecret ? { receiptSigningSecret: config.receiptSigningSecret } : {})
 });
 const app = await buildGateApp({
   gateway,

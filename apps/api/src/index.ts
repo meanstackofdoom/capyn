@@ -36,6 +36,12 @@ const billingProvider = config.STRIPE_SECRET_KEY
 let executionAuthority: ExecutionAuthority | undefined;
 if (config.CAPYN_EXECUTION_MODE === "remote-gate") {
   const privateKey = Buffer.from(config.CAPYN_EXECUTION_PRIVATE_KEY_B64!, "base64").toString("utf8");
+  const receiptVerifySecret = config.CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64
+    ? Buffer.from(config.CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64, "base64")
+    : undefined;
+  if (receiptVerifySecret && receiptVerifySecret.length < 16) {
+    throw new Error("CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64 must decode to at least 16 bytes");
+  }
   if (!privateKey.includes("BEGIN PRIVATE KEY")) {
     throw new Error("CAPYN_EXECUTION_PRIVATE_KEY_B64 must decode to a PKCS#8 PEM private key");
   }
@@ -52,6 +58,7 @@ if (config.CAPYN_EXECUTION_MODE === "remote-gate") {
       controlToken: config.CAPYN_EXECUTION_GATE_CONTROL_TOKEN!,
       providerName: config.CAPYN_EXECUTION_PROVIDER_NAME!,
       expectedGateId: config.CAPYN_EXECUTION_GATE_ID!,
+      ...(receiptVerifySecret ? { receiptSigningSecret: receiptVerifySecret } : {}),
       timeoutMs: config.CAPYN_EXECUTION_GATE_TIMEOUT_MS
     })
   };

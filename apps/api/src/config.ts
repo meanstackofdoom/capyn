@@ -26,6 +26,7 @@ const configSchema = z
     CAPYN_EXECUTION_GATE_CONTROL_TOKEN: z.string().min(32).optional(),
     CAPYN_EXECUTION_GATE_ID: z.string().trim().min(1).max(240).optional(),
     CAPYN_EXECUTION_PROVIDER_NAME: z.string().trim().min(1).max(240).optional(),
+    CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64: base64Schema.optional(),
     CAPYN_EXECUTION_ISSUER: z.string().trim().min(1).max(240).optional(),
     CAPYN_EXECUTION_AUDIENCE: z.string().trim().min(1).max(240).optional(),
     CAPYN_EXECUTION_KEY_ID: z.string().trim().min(1).max(240).optional(),
@@ -80,6 +81,13 @@ const configSchema = z
         code: "custom",
         path: ["CAPYN_EXECUTION_MODE"],
         message: "Set CAPYN_EXECUTION_MODE=remote-gate when execution Gate variables are configured"
+      });
+    }
+    if (value.CAPYN_EXECUTION_MODE === "local-mock" && value.CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64) {
+      context.addIssue({
+        code: "custom",
+        path: ["CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64"],
+        message: "Set CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64 only with CAPYN_EXECUTION_MODE=remote-gate"
       });
     }
     const stripeValues = [

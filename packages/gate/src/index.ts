@@ -2,9 +2,11 @@ import {
   createHash,
   createPrivateKey,
   createPublicKey,
+  createHmac,
   generateKeyPairSync,
   KeyObject,
   sign as cryptoSign,
+  timingSafeEqual,
   verify as cryptoVerify
 } from "node:crypto";
 import { jsonValueSchema, type JsonValue } from "@capyn/types";
@@ -632,8 +634,21 @@ const gateReceiptBaseSchema = z
   })
   .strict();
 
-export const executionGateReceiptSchema = gateReceiptBaseSchema
+const executionGateReceiptSignatureSchema = z
+  .string()
+  .trim()
+  .min(64)
+  .max(64)
+  .regex(/^[a-f0-9]+$/);
+
+const executionGateReceiptSignableSchema = gateReceiptBaseSchema
   .extend({ receiptHash: sha256Schema })
+  .strict();
+
+export type ExecutionGateReceiptSignable = z.infer<typeof executionGateReceiptSignableSchema>;
+
+export const executionGateReceiptSchema = executionGateReceiptSignableSchema
+  .extend({ receiptSignature: executionGateReceiptSignatureSchema.optional() })
   .strict();
 
 export type ExecutionGateReceipt = z.infer<typeof executionGateReceiptSchema>;
@@ -646,6 +661,43 @@ export const executionGatewayResultSchema = z
   .strict();
 
 export type ExecutionGatewayResult = z.infer<typeof executionGatewayResultSchema>;
+
+const MINIMUM_RECEIPT_SIGNING_SECRET_BYTES = 16;
+
+function executionReceiptSigningKey(secret: string | Buffer): Buffer {
+  const bytes = typeof secret === "string" ? Buffer.from(secret, "utf8") : secret;
+  if (bytes.length < MINIMUM_RECEIPT_SIGNING_SECRET_BYTES) {
+    throw new Error("Execution receipt signing secret must be at least 16 bytes");
+  }
+  return bytes;
+}
+
+function toSignableReceipt(receipt: Omit<ExecutionGateReceipt, "receiptSignature">): ExecutionGateReceiptSignable {
+  return executionGateReceiptSignableSchema.parse(receipt);
+}
+
+export function signExecutionGateReceipt(
+  secret: string | Buffer,
+  receipt: Omit<ExecutionGateReceipt, "receiptSignature">
+): string {
+  const signed = toSignableReceipt(receipt);
+  return createHmac("sha256", executionReceiptSigningKey(secret))
+    .update(canonicalJson(signed), "utf8")
+    .digest("hex");
+}
+
+export function verifyExecutionGateReceipt(
+  secret: string | Buffer,
+  receipt: Omit<ExecutionGateReceipt, "receiptSignature">,
+  signature: string
+): boolean {
+  if (!executionGateReceiptSignatureSchema.safeParse(signature).success) return false;
+  const expected = signExecutionGateReceipt(secret, receipt);
+  const expectedBytes = Buffer.from(expected, "hex");
+  const actualBytes = Buffer.from(signature, "hex");
+  if (expectedBytes.length !== actualBytes.length) return false;
+  return timingSafeEqual(expectedBytes, actualBytes);
+}
 
 export function executionGateReceiptHash(
   receipt: Omit<ExecutionGateReceipt, "receiptHash">
@@ -662,6 +714,7 @@ export interface LocalExecutionGatewayConfig {
   gateId: string;
   gate: ExecutionGate;
   executor: PaymentExecutor;
+  receiptSigningSecret?: string | Buffer;
   clock?: () => Date;
 }
 
@@ -671,12 +724,14 @@ export class LocalExecutionGateway implements ExecutionGateway {
   private readonly gate: ExecutionGate;
   private readonly executor: PaymentExecutor;
   private readonly clock: () => Date;
+  private readonly receiptSigningSecret: string | Buffer | undefined;
 
   constructor(config: LocalExecutionGatewayConfig) {
     this.gateId = identifierSchema.parse(config.gateId);
     this.gate = config.gate;
     this.executor = config.executor;
     this.name = identifierSchema.parse(config.executor.name);
+    this.receiptSigningSecret = config.receiptSigningSecret;
     this.clock = config.clock ?? (() => new Date());
   }
 
@@ -697,7 +752,7 @@ export class LocalExecutionGateway implements ExecutionGateway {
     } catch {
       result = { status: "UNKNOWN", reference: null, errorCode: "PROVIDER_OUTCOME_UNKNOWN" };
     }
-    const receiptBase: Omit<ExecutionGateReceipt, "receiptHash"> = {
+    const receiptBase: Omit<ExecutionGateReceiptSignable, "receiptHash" | "receiptSignature"> = {
       version: 1,
       gateId: this.gateId,
       claimId: payload.jti,
@@ -710,9 +765,19 @@ export class LocalExecutionGateway implements ExecutionGateway {
       consumedAt,
       completedAt: this.clock().toISOString()
     };
+    const signedReceiptBase: ExecutionGateReceiptSignable = {
+      ...receiptBase,
+      receiptHash: executionGateReceiptHash(receiptBase)
+    };
+    const receipt = this.receiptSigningSecret === undefined
+      ? signedReceiptBase
+      : {
+        ...signedReceiptBase,
+        receiptSignature: signExecutionGateReceipt(this.receiptSigningSecret, signedReceiptBase)
+      };
     return {
       result,
-      receipt: { ...receiptBase, receiptHash: executionGateReceiptHash(receiptBase) }
+      receipt
     };
   }
 }
@@ -770,6 +835,7 @@ export interface HttpExecutionGatewayConfig {
   controlToken: string;
   providerName: string;
   expectedGateId: string;
+  receiptSigningSecret?: string | Buffer;
   timeoutMs?: number;
   fetchImplementation?: typeof fetch;
 }
@@ -814,6 +880,7 @@ export class HttpExecutionGateway implements ExecutionGateway {
   private readonly endpoint: URL;
   private readonly controlToken: string;
   private readonly expectedGateId: string;
+  private readonly receiptSigningSecret: string | Buffer | undefined;
   private readonly timeoutMs: number;
   private readonly fetchImplementation: typeof fetch;
 
@@ -827,6 +894,7 @@ export class HttpExecutionGateway implements ExecutionGateway {
     this.controlToken = config.controlToken;
     this.name = identifierSchema.parse(config.providerName);
     this.expectedGateId = identifierSchema.parse(config.expectedGateId);
+    this.receiptSigningSecret = config.receiptSigningSecret;
     this.timeoutMs = integerWithin(config.timeoutMs ?? 10_000, 100, 120_000, "Execution Gate timeout");
     this.fetchImplementation = config.fetchImplementation ?? fetch;
   }
@@ -886,6 +954,15 @@ export class HttpExecutionGateway implements ExecutionGateway {
       }) !== receipt.receiptHash
     ) {
       throw new Error("Execution Gate receipt does not match the invocation");
+    }
+    if (this.receiptSigningSecret !== undefined) {
+      if (receipt.receiptSignature === undefined) {
+        throw new Error("Execution Gate receipt is not signed");
+      }
+      const { receiptSignature, ...unsignedReceipt } = receipt;
+      if (!verifyExecutionGateReceipt(this.receiptSigningSecret, unsignedReceipt, receiptSignature)) {
+        throw new Error("Execution Gate receipt signature is invalid");
+      }
     }
     return result.data;
   }

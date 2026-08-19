@@ -40,6 +40,16 @@ describe("Gate deployment configuration", () => {
     );
   });
 
+  it("decodes an optional receipt signing secret and rejects short secrets", () => {
+    const secret = Buffer.from("at-least-16-bytes!");
+    expect(loadGateConfig({ ...base, GATE_RECEIPT_SIGNING_SECRET_B64: secret.toString("base64") })
+      .receiptSigningSecret?.toString("base64")).toBe(secret.toString("base64"));
+    expect(() => loadGateConfig({
+      ...base,
+      GATE_RECEIPT_SIGNING_SECRET_B64: Buffer.from("short").toString("base64")
+    })).toThrow("must decode to at least 16 bytes");
+  });
+
   it("fails closed for malformed key or blueprint configuration", () => {
     expect(() => loadGateConfig({
       ...base,

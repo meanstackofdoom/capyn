@@ -89,8 +89,10 @@ The hosted alpha still uses an ephemeral in-process Gate and mock executor. The
 repository also includes an authenticated deployable Gate, PostgreSQL replay
 adapter, key rotation map and fixed AWS dry-run blueprint. The dry-run adapter
 does not load AWS credentials or call AWS. Persistent PEM configuration is not
-a KMS/HSM signer, and receipt digests are not signatures. See
-[Execution Gate](execution-gate.md).
+a KMS/HSM signer. When a shared receipt-signing secret is configured, the Gate
+signs every receipt with HMAC-SHA-256 and the API fails closed on an unsigned
+or tampered receipt; this is workload tamper evidence, not externally anchored
+provider evidence. See [Execution Gate](execution-gate.md).
 
 ### Concurrent spend accounting
 
@@ -135,7 +137,7 @@ For regulated deployments, add immutable external export, retention policy, cloc
 - The public alpha selects the in-process mock Gate. The remote Gate and durable replay implementation are test-backed but are not deployed as the public alpha's credential boundary.
 - The only shipped remote provider is a no-network AWS blueprint dry run. There is no reviewed live provider adapter, exclusive AWS role, CloudTrail evidence or chargeable operation.
 - The control plane currently loads base64 PKCS#8 private PEM from its secret scope. KMS/HSM signing, rotation automation and recovery drills are not implemented.
-- Gate receipts carry a checked canonical digest but are not independently signed or externally anchored.
+- Gate receipts carry a checked canonical digest and, when configured, a shared-secret HMAC signature that the API verifies, but they are not independently signed with asymmetric provider evidence or externally anchored.
 - Request-driven leased reconciliation can recover an `EXECUTING` record after a lost provider response, but no background worker scans stale leases yet. Real adapters still require provider idempotency, a transactional outbox, automated reconciliation and alerting.
 - Rate-limit state is process-local.
 - Awaiting approvals do not reserve spend for 24 hours. Hard limits are rechecked at approval time instead.
