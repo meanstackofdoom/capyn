@@ -138,7 +138,7 @@ For regulated deployments, add immutable external export, retention policy, cloc
 - The only shipped remote provider is a no-network AWS blueprint dry run. There is no reviewed live provider adapter, exclusive AWS role, CloudTrail evidence or chargeable operation.
 - The control plane currently loads base64 PKCS#8 private PEM from its secret scope. KMS/HSM signing, rotation automation and recovery drills are not implemented.
 - Gate receipts carry a checked canonical digest and, when configured, a shared-secret HMAC signature that the API verifies, but they are not independently signed with asymmetric provider evidence or externally anchored.
-- Request-driven leased reconciliation can recover an `EXECUTING` record after a lost provider response, but no background worker scans stale leases yet. Real adapters still require provider idempotency, a transactional outbox, automated reconciliation and alerting.
+- Request-driven leased reconciliation can recover an `EXECUTING` record after a lost provider response, and an optional background sweep (`CAPYN_EXECUTION_SWEEP_ENABLED`) claims the same lease-conditioned reconciliation automatically. Concurrent sweeper instances stay safe because claiming is atomically conditional; there is no distributed single-sweeper lock. Real adapters still require provider idempotency, a transactional outbox, provider-side automation and alerting.
 - Rate-limit state is process-local.
 - Awaiting approvals do not reserve spend for 24 hours. Hard limits are rechecked at approval time instead.
 - Spend periods use authorization creation time. A production ledger should distinguish reservation, capture and refund timestamps.
@@ -155,7 +155,7 @@ Before real money:
 - real human SSO/MFA and session controls;
 - treasury-level reservation model;
 - distributed rate limiting and abuse detection;
-- one reviewed real executor plus transactional outbox, automated reconciliation and alerting;
+- one reviewed real executor plus transactional outbox, provider-side automation and alerting;
 - a separately deployed or customer-controlled Gate with exclusive provider authority, the implemented durable atomic replay store, authenticated private transport and tested database recovery;
 - persistent KMS/HSM-backed execution-claim keys with rotation and recovery procedures;
 - secret-manager integration and deployment-pepper rotation;

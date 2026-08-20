@@ -69,6 +69,14 @@ is therefore ambiguous. CAPYN keeps that execution
 claim for the next attempt. It never converts transport ambiguity into a fresh
 `EXECUTE`.
 
+That recovery attempt can come from an agent retry or from the optional
+background stale-execution sweep. The sweep runs inside the API process on a
+configured interval, scans only pending executions whose lease has expired, and
+claims each one under the same agent-locked conditional lease claim, so a
+request-driven recovery and a sweep can never both call the provider for the
+same attempt. Unresolved provider outcomes receive a fresh lease and remain
+reserved for the next pass.
+
 ## Durable replay boundary
 
 `ExecutionGate` uses an injected `ExecutionClaimReplayStore`. Its `consume`
@@ -164,6 +172,7 @@ Tests cover exact-action binding, token tampering, expiry, audience isolation,
 concurrent replay, PostgreSQL uniqueness handling, separately bound
 reconciliation, conservative replay classification, HTTP control
 authentication, receipt matching, receipt signing and verification, remote replay,
+stale-execution sweep reconciliation and lease competition,
 AWS blueprint drift and the complete control-plane-to-remote-Gate path.
 
 Run the focused checks:

@@ -31,6 +31,8 @@ CAPYN uses environment variables at the API and web process boundaries. `.env.ex
 | `CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64` | unset | Remote Gate | Optional base64 secret that verifies the Gate receipt signature returned from Gate. |
 | `CAPYN_EXECUTION_CLAIM_TTL_SECONDS` | `30` | No | Claim lifetime, bounded to 1–300 seconds. The Gate may enforce a smaller maximum. |
 | `CAPYN_EXECUTION_GATE_TIMEOUT_MS` | `10000` | No | HTTP deadline. A timeout is recorded as an unknown outcome, never a safe failure. |
+| `CAPYN_EXECUTION_SWEEP_ENABLED` | `false` | No | Enables the background stale-execution sweep. It issues `RECONCILE` claims only for pending executions whose lease expired; it never re-issues `EXECUTE`. |
+| `CAPYN_EXECUTION_SWEEP_INTERVAL_MS` | `60000` | No | Sweep cadence, bounded to 5,000–3,600,000 milliseconds. Each pass processes at most 50 stale executions. |
 | `STRIPE_SECRET_KEY` | unset | Hosted billing | Server-side Stripe key. Never expose it to the web bundle. |
 | `STRIPE_WEBHOOK_SECRET` | unset | Hosted billing | Verifies the exact raw body delivered by Stripe. |
 | `STRIPE_PRICE_TEAM_MONTHLY` | unset | Hosted billing | Stripe recurring base-price ID for Team. |

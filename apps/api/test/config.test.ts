@@ -58,6 +58,24 @@ describe("CAPYN deployment configuration", () => {
     })).toThrow("Set CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64 only with CAPYN_EXECUTION_MODE=remote-gate");
   });
 
+  it("parses the optional stale-execution sweep configuration with bounded intervals", () => {
+    expect(loadConfig(base).CAPYN_EXECUTION_SWEEP_ENABLED).toBe(false);
+    expect(loadConfig(base).CAPYN_EXECUTION_SWEEP_INTERVAL_MS).toBe(60_000);
+    const configured = loadConfig({
+      ...base,
+      CAPYN_EXECUTION_SWEEP_ENABLED: "true",
+      CAPYN_EXECUTION_SWEEP_INTERVAL_MS: "10000"
+    });
+    expect(configured.CAPYN_EXECUTION_SWEEP_ENABLED).toBe(true);
+    expect(configured.CAPYN_EXECUTION_SWEEP_INTERVAL_MS).toBe(10_000);
+    expect(() => loadConfig({ ...base, CAPYN_EXECUTION_SWEEP_INTERVAL_MS: "1000" })).toThrow(
+      "Invalid CAPYN configuration"
+    );
+    expect(() => loadConfig({ ...base, CAPYN_EXECUTION_SWEEP_INTERVAL_MS: "3600001" })).toThrow(
+      "Invalid CAPYN configuration"
+    );
+  });
+
   it("pins production demo authentication to one explicit human identity", () => {
     expect(() => loadConfig({
       ...base,

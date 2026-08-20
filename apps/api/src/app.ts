@@ -16,6 +16,7 @@ import { LabService } from "./domain/lab-service";
 import { ManagementService } from "./domain/management-service";
 import { ProductionOnboardingService } from "./domain/production-onboarding-service";
 import { SandboxService } from "./domain/sandbox-service";
+import { StaleExecutionSweeper } from "./domain/stale-execution-sweeper";
 import { RepositoryAuthAdapter } from "./http/auth";
 import { AppError } from "./http/errors";
 import { registerAgentRoutes } from "./routes/agent";
@@ -40,6 +41,7 @@ export interface AppDependencies {
   disableRateLimit?: boolean;
   trustProxy?: boolean;
   onboardingPersistence?: "POSTGRESQL" | "VOLUME_JOURNAL" | "PROCESS_MEMORY";
+  executionSweep?: { intervalMs: number };
 }
 
 export async function buildApp(dependencies: AppDependencies): Promise<FastifyInstance> {
@@ -122,6 +124,22 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
     clock,
     dependencies.onboardingPersistence ?? "PROCESS_MEMORY"
   );
+  if (dependencies.executionSweep) {
+    const sweeper = new StaleExecutionSweeper({
+      executions,
+      intervalMs: dependencies.executionSweep.intervalMs,
+      logger: {
+        info: (message) => app.log.info(message),
+        error: (message) => app.log.error(message)
+      }
+    });
+    app.addHook("onReady", () => {
+      sweeper.start();
+    });
+    app.addHook("onClose", () => {
+      sweeper.stop();
+    });
+  }
 
   app.get("/health", async () => ({ status: "ok", service: "capyn-api", version: "0.4.0" }));
   await registerLabRoutes(app, lab);

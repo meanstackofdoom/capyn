@@ -33,6 +33,8 @@ const configSchema = z
     CAPYN_EXECUTION_PRIVATE_KEY_B64: base64Schema.optional(),
     CAPYN_EXECUTION_CLAIM_TTL_SECONDS: z.coerce.number().int().min(1).max(300).default(30),
     CAPYN_EXECUTION_GATE_TIMEOUT_MS: z.coerce.number().int().min(100).max(120_000).default(10_000),
+    CAPYN_EXECUTION_SWEEP_ENABLED: booleanString,
+    CAPYN_EXECUTION_SWEEP_INTERVAL_MS: z.coerce.number().int().min(5_000).max(3_600_000).default(60_000),
     STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
     STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
     STRIPE_PRICE_TEAM_MONTHLY: z.string().startsWith("price_").optional(),

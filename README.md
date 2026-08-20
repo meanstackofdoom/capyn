@@ -243,6 +243,7 @@ pnpm db:seed       # seed Acme AI and procurement-agent
 - Execution is claimed once with a unique database record after rechecking the agent and exact mandate binding.
 - Each execute/reconcile attempt receives a short-lived ES256 claim bound to the exact request, Gate audience and leased attempt; the Gate consumes its claim ID once before invoking the provider.
 - When configured, the Gate signs execution receipts with a shared HMAC-SHA-256 secret and the API rejects unsigned or tampered receipts.
+- An optional background sweep reconciles executions whose lease expired, so stale `EXECUTING` records cannot hold reserved spend forever; it issues only `RECONCILE` claims.
 - Remote execution is one gateway call: the API cannot verify remotely and then invoke the provider locally. The deployable Gate authenticates the control channel, uses a namespaced PostgreSQL uniqueness barrier and returns a request-matched receipt.
 - Replay or network ambiguity remains `EXECUTING`; only explicit pre-consumption Gate rejection is finalized as failure.
 - Ambiguous provider outcomes remain `EXECUTING`; a leased exact retry calls `reconcile()` with the original execution ID instead of issuing payment again.

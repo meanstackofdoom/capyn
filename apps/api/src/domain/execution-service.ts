@@ -76,6 +76,19 @@ function subtractReservation(total: string, authorization: StoredAuthorization, 
 
 export const DEFAULT_EXECUTION_LEASE_MS = 30_000;
 
+export interface StaleExecutionSweepResult {
+  candidates: number;
+  reconciled: number;
+  failed: number;
+  deferred: number;
+  skipped: number;
+}
+
+interface RecoveryAuditActor {
+  actorType: "AGENT" | "SYSTEM";
+  actorId: string | null;
+}
+
 function executionRequest(execution: StoredExecution, authorization: StoredAuthorization): ExecutionRequest {
   if (!authorization.mandateId) throw new Error("An executable authorization must remain bound to a mandate");
   return {
@@ -316,8 +329,115 @@ export class ExecutionService {
       return toView(claim.execution);
     }
 
-    const request = executionRequest(claim.execution, claim.authorization);
-    const operation = claim.kind === "recovering" ? "RECONCILE" : "EXECUTE";
+    const outcome = await this.dispatchAndFinalize(
+      claim.execution,
+      claim.authorization,
+      claim.kind === "recovering" ? "RECONCILE" : "EXECUTE",
+      { actorType: "AGENT", actorId: principal.agentId }
+    );
+    if (outcome === null) {
+      throw new ConflictError(
+        "EXECUTION_OUTCOME_UNKNOWN",
+        "The provider outcome is not yet known; retry after the execution lease expires to reconcile this exact execution"
+      );
+    }
+    return outcome;
+  }
+
+  async sweepStaleExecutions(limit: number): Promise<StaleExecutionSweepResult> {
+    if (!Number.isInteger(limit) || limit <= 0) {
+      throw new Error("Stale execution sweep limit must be a positive integer");
+    }
+    const now = this.clock();
+    const candidates = await this.repository.findStaleExecutions(now, limit);
+    const result: StaleExecutionSweepResult = {
+      candidates: candidates.length,
+      reconciled: 0,
+      failed: 0,
+      deferred: 0,
+      skipped: 0
+    };
+    for (const candidate of candidates) {
+      try {
+        const claim = await this.repository.transaction(async (tx) => {
+          const candidateAuthorization = await tx.findAuthorization(candidate.authorizationId);
+          if (!candidateAuthorization || candidateAuthorization.organisationId !== candidate.organisationId) {
+            return null;
+          }
+          await tx.lockAgent(candidateAuthorization.agentId);
+          const authorization = await tx.findAuthorization(candidate.authorizationId);
+          if (!authorization || authorization.organisationId !== candidate.organisationId) return null;
+          if (authorization.state !== "EXECUTING") return null;
+          const current = await tx.findExecutionByAuthorization(candidate.authorizationId);
+          if (
+            !current ||
+            current.id !== candidate.id ||
+            current.status !== "PENDING" ||
+            current.provider !== this.authority.gateway.name
+          ) {
+            return null;
+          }
+          if (current.leaseExpiresAt && current.leaseExpiresAt > now) return null;
+          const recovering = await tx.claimExecutionRecovery(
+            current.id,
+            now,
+            new Date(now.getTime() + this.leaseMs)
+          );
+          if (!recovering) return null;
+          await tx.appendAudit({
+            id: createId("evt"),
+            organisationId: authorization.organisationId,
+            actorType: "SYSTEM",
+            actorId: null,
+            eventType: "EXECUTION_RECONCILIATION_STARTED",
+            entityType: "Execution",
+            entityId: recovering.id,
+            timestamp: now,
+            metadata: {
+              authorizationId: authorization.id,
+              provider: recovering.provider,
+              attemptCount: recovering.attemptCount,
+              requestedByAgentId: null,
+              requestHash: authorization.requestHash,
+              mandateId: authorization.mandateId,
+              authorityAudience: this.authority.issuer.audience,
+              authorityKeyId: this.authority.issuer.keyId,
+              authorityClaimId: executionClaimId(
+                executionClaimContextFromRequest(executionRequest(recovering, authorization), "RECONCILE")
+              ),
+              sweepSource: "stale-execution-sweep"
+            }
+          });
+          return { execution: recovering, authorization };
+        });
+        if (!claim) {
+          result.skipped += 1;
+          continue;
+        }
+        const outcome = await this.dispatchAndFinalize(claim.execution, claim.authorization, "RECONCILE", {
+          actorType: "SYSTEM",
+          actorId: null
+        });
+        if (outcome === null) {
+          result.deferred += 1;
+          continue;
+        }
+        if (outcome.status === "EXECUTED") result.reconciled += 1;
+        else result.failed += 1;
+      } catch {
+        result.skipped += 1;
+      }
+    }
+    return result;
+  }
+
+  private async dispatchAndFinalize(
+    execution: StoredExecution,
+    authorization: StoredAuthorization,
+    operation: "EXECUTE" | "RECONCILE",
+    auditActor: RecoveryAuditActor
+  ): Promise<ExecutionResultView | null> {
+    const request = executionRequest(execution, authorization);
     let authorityClaimId = "unissued";
     let gateReceipt: ExecutionGateReceipt | null = null;
     let result: PaymentExecutionResult | null = null;
@@ -340,7 +460,7 @@ export class ExecutionService {
           ? { status: "FAILED", reference: null, errorCode: gateFailureCode(error) }
           : {
               status: "UNKNOWN",
-              reference: claim.execution.externalReference,
+              reference: execution.externalReference,
               errorCode: error instanceof ExecutionClaimError
                 ? gateFailureCode(error)
                 : "GATEWAY_OUTCOME_UNKNOWN"
@@ -354,20 +474,20 @@ export class ExecutionService {
     const completedAt = this.clock();
     if (result.status === "UNKNOWN") {
       const current = await this.repository.transaction(async (tx) => {
-        await tx.lockAgent(claim.authorization.agentId);
-        const uncertain = await tx.markExecutionUncertain(claim.execution.id, claim.execution.attemptCount, {
-          externalReference: result.reference ?? claim.execution.externalReference,
+        await tx.lockAgent(authorization.agentId);
+        const uncertain = await tx.markExecutionUncertain(execution.id, execution.attemptCount, {
+          externalReference: result.reference ?? execution.externalReference,
           errorCode: result.errorCode ?? "PROVIDER_OUTCOME_UNKNOWN",
           leaseExpiresAt: new Date(completedAt.getTime() + this.leaseMs)
         });
         if (!uncertain) {
-          const latest = await tx.findExecutionByAuthorization(claim.authorization.id);
+          const latest = await tx.findExecutionByAuthorization(authorization.id);
           if (!latest) throw new Error("Execution disappeared while recording an uncertain outcome");
           return latest;
         }
         await tx.appendAudit({
           id: createId("evt"),
-          organisationId: principal.organisationId,
+          organisationId: authorization.organisationId,
           actorType: "SYSTEM",
           actorId: null,
           eventType: "EXECUTION_OUTCOME_UNKNOWN",
@@ -375,7 +495,7 @@ export class ExecutionService {
           entityId: uncertain.id,
           timestamp: completedAt,
           metadata: {
-            authorizationId: claim.authorization.id,
+            authorizationId: authorization.id,
             provider: this.authority.gateway.name,
             attemptCount: uncertain.attemptCount,
             errorCode: uncertain.errorCode,
@@ -392,48 +512,45 @@ export class ExecutionService {
         return uncertain;
       });
       if (current.status !== "PENDING") return toView(current);
-      throw new ConflictError(
-        "EXECUTION_OUTCOME_UNKNOWN",
-        "The provider outcome is not yet known; retry after the execution lease expires to reconcile this exact execution"
-      );
+      return null;
     }
 
     const finalResult = result as PaymentExecutionResult & { status: "EXECUTED" | "FAILED" };
     return this.repository.transaction(async (tx) => {
-      await tx.lockAgent(claim.authorization.agentId);
-      const execution = await tx.completeExecution(claim.execution.id, claim.execution.attemptCount, {
+      await tx.lockAgent(authorization.agentId);
+      const completed = await tx.completeExecution(execution.id, execution.attemptCount, {
         status: finalResult.status,
         externalReference: finalResult.reference,
         errorCode: finalResult.errorCode,
         completedAt
       });
-      if (!execution) {
-        const current = await tx.findExecutionByAuthorization(claim.authorization.id);
+      if (!completed) {
+        const current = await tx.findExecutionByAuthorization(authorization.id);
         if (!current) throw new Error("Execution disappeared while recording its final outcome");
         if (current.status === "PENDING") {
           throw new ConflictError("EXECUTION_IN_PROGRESS", "A newer execution reconciliation attempt is in progress");
         }
         return toView(current);
       }
-      await tx.updateAuthorization(claim.authorization.id, {
+      await tx.updateAuthorization(authorization.id, {
         state: finalResult.status === "EXECUTED" ? "EXECUTED" : "FAILED",
-        expiresAt: claim.authorization.expiresAt
+        expiresAt: authorization.expiresAt
       });
       await tx.appendAudit({
         id: createId("evt"),
-        organisationId: principal.organisationId,
-        actorType: "AGENT",
-        actorId: principal.agentId,
-        eventType: claim.kind === "recovering" ? "EXECUTION_RECONCILED" : "EXECUTION_RECORDED",
+        organisationId: authorization.organisationId,
+        actorType: auditActor.actorType,
+        actorId: auditActor.actorId,
+        eventType: operation === "RECONCILE" ? "EXECUTION_RECONCILED" : "EXECUTION_RECORDED",
         entityType: "Execution",
-        entityId: execution.id,
+        entityId: completed.id,
         timestamp: completedAt,
         metadata: {
-          authorizationId: claim.authorization.id,
+          authorizationId: authorization.id,
           provider: this.authority.gateway.name,
           status: finalResult.status,
           reference: finalResult.reference,
-          attemptCount: execution.attemptCount,
+          attemptCount: completed.attemptCount,
           errorCode: finalResult.errorCode,
           authorityClaimId,
           authorityOperation: operation,
@@ -446,7 +563,7 @@ export class ExecutionService {
           } : {})
         }
       });
-      return toView(execution);
+      return toView(completed);
     });
   }
 }

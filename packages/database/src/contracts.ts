@@ -362,6 +362,7 @@ export interface CapynRepository {
   touchUserCredential(id: string, at: Date): Promise<void>;
   findUser(id: string): Promise<UserAuthRecord | null>;
   transaction<T>(work: (tx: CapynTransaction) => Promise<T>): Promise<T>;
+  findStaleExecutions(now: Date, limit: number): Promise<StoredExecution[]>;
   getDashboardSnapshot(organisationId: string, now: Date): Promise<DashboardSnapshot | null>;
   getApprovalView(organisationId: string, approvalId: string): Promise<ApprovalView | null>;
   getAuditEvents(organisationId: string, limit: number): Promise<AuditEventView[]>;

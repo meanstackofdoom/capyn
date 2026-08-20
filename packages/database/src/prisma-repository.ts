@@ -772,6 +772,15 @@ export class PrismaCapynRepository implements CapynRepository {
     throw new Error("Transaction retry exhausted");
   }
 
+  async findStaleExecutions(now: Date, limit: number): Promise<StoredExecution[]> {
+    const rows = await this.client.execution.findMany({
+      where: { status: "PENDING", leaseExpiresAt: { lte: now } },
+      orderBy: { lastAttemptAt: "asc" },
+      take: limit
+    });
+    return rows.map(mapExecution);
+  }
+
   async getDashboardSnapshot(organisationId: string, now: Date): Promise<DashboardSnapshot | null> {
     const organisation = await this.client.organisation.findUnique({ where: { id: organisationId } });
     if (!organisation) return null;

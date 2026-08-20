@@ -73,6 +73,9 @@ const app = await buildApp({
   ...(executionAuthority ? { executionAuthority } : {}),
   webOrigin: config.WEB_ORIGIN,
   trustProxy: config.TRUST_PROXY,
+  ...(config.CAPYN_EXECUTION_SWEEP_ENABLED
+    ? { executionSweep: { intervalMs: config.CAPYN_EXECUTION_SWEEP_INTERVAL_MS } }
+    : {}),
   onboardingPersistence: config.CAPYN_STORAGE === "postgres"
     ? "POSTGRESQL"
     : config.CAPYN_STORAGE === "volume"

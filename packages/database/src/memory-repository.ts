@@ -348,6 +348,18 @@ export class InMemoryCapynRepository implements CapynRepository, CapynTransactio
     return structuredClone(this.state.executions.find((item) => item.authorizationId === authorizationId) ?? null);
   }
 
+  async findStaleExecutions(now: Date, limit: number): Promise<StoredExecution[]> {
+    const stale = this.state.executions
+      .filter(
+        (execution) =>
+          execution.status === "PENDING" &&
+          execution.leaseExpiresAt !== null &&
+          execution.leaseExpiresAt <= now
+      )
+      .sort((left, right) => left.lastAttemptAt.getTime() - right.lastAttemptAt.getTime());
+    return structuredClone(stale.slice(0, limit));
+  }
+
   async createExecution(input: CreateExecutionRecord): Promise<StoredExecution> {
     if (this.state.executions.some((item) => item.authorizationId === input.authorizationId)) {
       throw new Error("Execution already exists");
