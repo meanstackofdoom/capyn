@@ -4,6 +4,7 @@ import { Es256ExecutionClaimIssuer, HttpExecutionGateway } from "@capyn/gate";
 import { buildApp } from "./app";
 import { loadConfig } from "./config";
 import { StripeBillingProvider } from "./domain/billing-provider";
+import { requireSignedReceiptGateHealth } from "./remote-gate-health";
 import type { ExecutionAuthority } from "./domain/execution-service";
 
 try {
@@ -41,6 +42,9 @@ if (config.CAPYN_EXECUTION_MODE === "remote-gate") {
     : undefined;
   if (receiptVerifySecret && receiptVerifySecret.length < 16) {
     throw new Error("CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64 must decode to at least 16 bytes");
+  }
+  if (receiptVerifySecret) {
+    await requireSignedReceiptGateHealth(config.CAPYN_EXECUTION_GATE_URL!);
   }
   if (!privateKey.includes("BEGIN PRIVATE KEY")) {
     throw new Error("CAPYN_EXECUTION_PRIVATE_KEY_B64 must decode to a PKCS#8 PEM private key");

@@ -44,6 +44,7 @@ describe("control plane to remote Gate", () => {
         clock: () => TEST_NOW
       }),
       controlToken: CONTROL_TOKEN,
+      receiptSigningEnabled: false,
       logger: false,
       disableRateLimit: true
     });

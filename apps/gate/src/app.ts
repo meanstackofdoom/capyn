@@ -11,6 +11,7 @@ import {
 export interface GateAppDependencies {
   gateway: ExecutionGateway;
   controlToken: string;
+  receiptSigningEnabled: boolean;
   ready?: () => Promise<void>;
   logger?: boolean;
   disableRateLimit?: boolean;
@@ -47,7 +48,12 @@ export async function buildGateApp(dependencies: GateAppDependencies): Promise<F
     });
   }
 
-  app.get("/healthz", async () => ({ status: "ok", service: "capyn-gate", version: "0.4.0" }));
+  app.get("/healthz", async () => ({
+    status: "ok",
+    service: "capyn-gate",
+    version: "0.4.0",
+    receiptSigningEnabled: dependencies.receiptSigningEnabled
+  }));
   app.get("/ready", async (_request, reply) => {
     try {
       await dependencies.ready?.();

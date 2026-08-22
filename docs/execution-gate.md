@@ -130,6 +130,11 @@ invocation closed instead of being retained as evidence. The API reads
 `GATE_RECEIPT_SIGNING_SECRET_B64`. Both must decode to the same secret of at
 least 16 bytes.
 
+When the verify secret is configured, API startup performs a signed-receipt
+readiness check against Gate `/healthz`. That check requires the Gate to expose
+`receiptSigningEnabled: true`, which is derived directly from the configured
+`GATE_RECEIPT_SIGNING_SECRET_B64`.
+
 The digest detects accidental drift in the returned structure, and the HMAC
 signature detects deliberate tampering between the two workloads. Neither is a
 signature over provider-native evidence and neither independently proves that

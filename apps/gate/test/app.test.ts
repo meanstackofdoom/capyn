@@ -67,6 +67,7 @@ async function setup() {
       clock: () => NOW
     }),
     controlToken: CONTROL_TOKEN,
+    receiptSigningEnabled: false,
     logger: false,
     disableRateLimit: true
   });
@@ -113,7 +114,10 @@ describe("deployable Gate HTTP boundary", () => {
 
   it("exposes separate liveness and dependency-readiness endpoints", async () => {
     const { app } = await setup();
-    expect((await app.inject({ method: "GET", url: "/healthz" })).statusCode).toBe(200);
+    expect((await app.inject({ method: "GET", url: "/healthz" })).json()).toMatchObject({
+      status: "ok",
+      receiptSigningEnabled: false
+    });
     expect((await app.inject({ method: "GET", url: "/ready" })).json()).toMatchObject({
       status: "ready",
       provider: "aws-ec2-dry-run"

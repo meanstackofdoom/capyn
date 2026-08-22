@@ -38,6 +38,7 @@ const gateway = new LocalExecutionGateway({
 const app = await buildGateApp({
   gateway,
   controlToken: config.GATE_CONTROL_TOKEN,
+  receiptSigningEnabled: !!config.receiptSigningSecret,
   ready: async () => {
     if (prisma) await prisma.executionClaimConsumption.findFirst({ select: { claimId: true } });
   }
