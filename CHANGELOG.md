@@ -19,6 +19,14 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 - Added adversarial package, database, Gate-service and API tests for action drift, signature tampering, expiry, audience isolation, concurrent replay, durable uniqueness, control authentication, receipt matching, receipt signing, reconciliation binding and the complete API-to-remote-Gate path.
 - Documented the deliberately incomplete live boundary: KMS/HSM signing, an exclusive provider role, a reviewed real adapter, provider-native evidence, independently anchored receipts, outbox automation and alerting remain mandatory.
 
+### Web experience and brand
+
+- Replaced the marketing and console branding marks with a shared vector logo system (`CapynMark`) across header, footer, app icon and OpenGraph output.
+- Refined public navigation spacing and focus/hover polish in the header, with improved mobile menu interaction.
+- Added a shared `logo-mark.svg` asset and wired it into app metadata and manifest metadata so browser tabs, favicons and installation manifests use the updated mark.
+- Tightened the public funnel with keyboard-aware mobile navigation, larger touch targets, corrected anchor positioning, consistent internal/external link cues and a reduced footer information load.
+- Recorded the current UX review and follow-up priorities in the website and brand contract.
+
 ## v0.4.0 — 2026-08-18
 
 ### Durable workspace handoff

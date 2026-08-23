@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   category: "Security software",
   referrer: "origin-when-cross-origin",
   robots: { index: true, follow: true },
+  icons: {
+    icon: "/logo-mark.svg",
+    apple: "/logo-mark.svg",
+    shortcut: "/logo-mark.svg"
+  },
   openGraph: {
     type: "website",
     title: "CAPYN — Authority infrastructure for autonomous agents",
@@ -37,8 +42,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   colorScheme: "dark light",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f7f9" },
-    { media: "(prefers-color-scheme: dark)", color: "#07131c" }
+    { media: "(prefers-color-scheme: light)", color: "#edeee9" },
+    { media: "(prefers-color-scheme: dark)", color: "#101719" }
   ]
 };
 

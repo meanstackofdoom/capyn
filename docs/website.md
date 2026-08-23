@@ -19,7 +19,7 @@ The website must explain CAPYN as the decision point before execution. It must n
 The interface uses a restrained security-infrastructure system:
 
 - ink, paper and panel surfaces rather than speculative-crypto gradients;
-- permission green, review amber, denial red and authority blue with written labels;
+- permission green, review amber, denial red and authority copper with written labels;
 - mono labels and tabular numbers for machine evidence;
 - rails, brackets and fine grid lines to represent bounded authority;
 - Geologica display type, Manrope interface type and IBM Plex Mono evidence type;
@@ -74,6 +74,27 @@ Public routes provide:
 - Fonts are packaged locally; the marketing site has no analytics or third-party runtime dependency.
 - GSAP core is the only motion dependency and is loaded only by high-value interactive product surfaces.
 - Production responses set a restrictive first-party Content Security Policy, deny framing and MIME sniffing, constrain browser permissions and add HSTS automatically for an HTTPS canonical origin.
+
+## UX review and priorities
+
+The August 2026 review treats the commissioning journey as the primary public funnel: understand the boundary, run a real synthetic decision, carry away evidence and optionally create a durable workspace. Navigation and calls to action should use those user-recognisable outcomes consistently rather than internal implementation names.
+
+Completed in the current pass:
+
+- unified the browser, social, header, footer and control-plane mark around the shared CAPYN authority glyph;
+- simplified the footer into build, evaluate and company paths, while reserving the external-link symbol for genuinely external destinations;
+- made the mobile navigation close on Escape, outside interaction, route changes and desktop breakpoint changes, with focus moved into the opened menu and restored on Escape;
+- increased shared action and mobile utility touch targets, preserved visible focus and stopped the sticky header covering the homepage authority console;
+- aligned browser theme colours with the actual paper and code surfaces.
+
+Next review priorities, in order:
+
+1. visually inspect home, commissioning, lab, studio, pricing and documentation at 390 px, 768 px and 1440 px in a real browser, including light/dark preference and 200% zoom;
+2. add programmatic error descriptions and first-invalid-field focus to the commissioning and Mandate Studio forms;
+3. test complete keyboard-only commissioning, approval, proof download and durable-workspace handoff journeys;
+4. measure funnel events without recording policy payloads, credentials or sensitive boundary-brief content;
+5. run contrast checks over every page-specific palette and verify sticky/fixed controls do not obscure focused content;
+6. user-test the category language with 3–5 agent developers, especially “commission”, “mandate”, “authority passport” and “bring a real boundary”.
 
 ## Copying and defensibility
 

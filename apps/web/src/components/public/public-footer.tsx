@@ -1,44 +1,57 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Brand } from "@/components/brand";
 
 const columns = [
-  { title: "Explore", links: [["Commission an agent", "/activate"], ["Mandate Studio", "/start"], ["Authority Passport", "/passport"], ["Authority Lab", "/lab"], ["Proof viewer", "/proof"], ["Product", "/product"], ["Security", "/security"], ["Pricing", "/pricing"], ["Developers", "/developers"], ["Documentation", "/docs"]] },
-  { title: "CAPYN", links: [["Boundary File 001", "/case-studies/procurement-agent"], ["Design partners", "/design-partners"], ["Private boundary brief", "/design-partners/brief"], ["About", "/about"], ["Control plane", "/dashboard"], ["Audit log", "/dashboard/audit"]] },
-  { title: "Read", links: [["Getting started", "/docs/getting-started"], ["Architecture", "/docs/architecture"], ["Security model", "/docs/security"], ["API reference", "/docs/api"], ["GitHub repository", "https://github.com/meanstackofdoom/capyn"]] }
+  { title: "Build", links: [["Commission an agent", "/activate"], ["Mandate Studio", "/start"], ["Authority Lab", "/lab"], ["Developers", "/developers"], ["Documentation", "/docs"]] },
+  { title: "Evaluate", links: [["Product", "/product"], ["Security", "/security"], ["Pricing", "/pricing"], ["Boundary File 001", "/case-studies/procurement-agent"], ["GitHub repository", "https://github.com/meanstackofdoom/capyn"]] },
+  { title: "CAPYN", links: [["Design partners", "/design-partners"], ["Private boundary brief", "/design-partners/brief"], ["About", "/about"], ["Control plane", "/dashboard"]] }
 ] as const;
+
+const actionHrefs = new Set(["/activate", "/start", "/lab", "/design-partners"]);
 
 export function PublicFooter() {
   return (
-    <footer className="border-t border-line bg-panel">
-      <div className="site-container grid gap-12 py-14 lg:grid-cols-[1.2fr_1fr] lg:py-20">
+    <footer className="public-footer">
+      <div className="site-container public-footer__grid py-14 lg:grid-cols-[1.2fr_1fr] lg:py-20">
         <div>
-          <Brand />
+          <Brand className="gap-3" />
           <p className="mt-6 max-w-sm text-sm leading-7 text-muted">
             Authority infrastructure for autonomous agents. Delegate capabilities with enforceable limits, approvals and evidence.
           </p>
-          <div className="mt-8 inline-flex items-center gap-2 border border-line bg-paper px-3 py-2 font-mono text-[9px] uppercase tracking-[.14em] text-muted">
+          <div className="mt-8 inline-flex items-center gap-2 border border-line bg-paper/80 px-3 py-2 font-mono text-[9px] uppercase tracking-[.14em] text-muted">
             <span className="status-dot text-permission" /> Hosted alpha · v0.4
           </div>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {columns.map((column) => (
-            <div key={column.title}>
+            <nav key={column.title} aria-label={`${column.title} links`}>
               <p className="font-mono text-[9px] uppercase tracking-[.16em] text-muted">{column.title}</p>
-              <div className="mt-5 grid gap-3">
+              <div className="public-footer__links mt-5">
                 {column.links.map(([label, href]) => (
                   href.startsWith("http") ? (
-                    <a key={href} href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold hover:text-authority">
-                      {label}<ArrowUpRight size={12} />
+                    <a
+                      key={href}
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="public-footer__link"
+                    >
+                      {label}<ArrowUpRight size={12} aria-hidden="true" />
+                      <span className="sr-only"> (opens in a new tab)</span>
                     </a>
                   ) : (
-                    <Link key={href} href={href} className="inline-flex items-center gap-1.5 text-sm font-semibold hover:text-authority">
-                      {label}{(["Commission an agent", "Mandate Studio", "Authority Passport", "Authority Lab", "Proof viewer"] as string[]).includes(label) && <ArrowUpRight size={12} />}
+                    <Link
+                      key={href}
+                      href={href}
+                      className="public-footer__link"
+                    >
+                      {label}{actionHrefs.has(href) && <ArrowRight size={12} aria-hidden="true" />}
                     </Link>
                   )
                 ))}
               </div>
-            </div>
+            </nav>
           ))}
         </div>
       </div>

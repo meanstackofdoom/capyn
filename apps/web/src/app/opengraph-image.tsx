@@ -9,7 +9,14 @@ export default function OpenGraphImage() {
     <div style={{ background: "#f3f7f9", color: "#0a1824", display: "flex", flexDirection: "column", fontFamily: "sans-serif", height: "100%", padding: "58px 68px", position: "relative", width: "100%" }}>
       <div style={{ backgroundImage: "repeating-linear-gradient(90deg,transparent 0,transparent 95px,#d7e0e5 96px)", inset: 0, opacity: 0.65, position: "absolute" }} />
       <div style={{ alignItems: "center", display: "flex", gap: 16, position: "relative" }}>
-        <div style={{ alignItems: "center", border: "2px solid #0a1824", display: "flex", fontSize: 18, fontWeight: 800, height: 46, justifyContent: "center", position: "relative", width: 46 }}>C/<div style={{ background: "#2f62dd", bottom: -2, height: 10, position: "absolute", right: -2, width: 10 }} /></div>
+        <div style={{ alignItems: "center", display: "flex", justifyContent: "center", width: 46, height: 46 }}>
+          <svg viewBox="0 0 44 44" width={46} height={46} fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="38" height="38" rx="11" fill="rgba(10,24,36,0.055)" stroke="#0a1824" strokeWidth="1.7" />
+            <rect x="12" y="12" width="20" height="20" rx="5" fill="rgba(10,24,36,0.06)" stroke="#0a1824" strokeWidth="1.4" />
+            <path d="M12 32h11.4a7 7 0 1 0 0-14H12" stroke="#0a1824" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M20 21l7 4.5-7 4.5M15 34h-5" stroke="#2f62dd" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
         <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: "0.15em" }}>CAPYN</div>
       </div>
       <div style={{ display: "flex", flex: 1, flexDirection: "column", justifyContent: "center", position: "relative" }}>

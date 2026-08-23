@@ -11,6 +11,20 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     categories: ["business", "finance", "security", "developer tools"],
     background_color: "#edeee9",
-    theme_color: "#101719"
+    theme_color: "#101719",
+    icons: [
+      {
+        src: "/logo-mark.svg",
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "any"
+      },
+      {
+        src: "/logo-mark.svg",
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "maskable"
+      }
+    ]
   };
 }

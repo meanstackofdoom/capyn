@@ -63,6 +63,64 @@ body {
   margin-inline: auto;
 }
 
+.capyn-brand__wordmark {
+  font-family: "Geologica Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 760;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.capyn-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.capyn-mark,
+.capyn-brand__icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.capyn-mark svg {
+  width: 100%;
+  height: 100%;
+  color: var(--ink);
+  transition: transform 160ms ease;
+}
+
+.capyn-mark svg .capyn-mark__frame {
+  fill: color-mix(in srgb, currentColor 6%, transparent);
+  stroke: color-mix(in srgb, currentColor 42%, transparent);
+  stroke-width: 1.5;
+}
+
+.capyn-mark svg .capyn-mark__inner {
+  fill: color-mix(in srgb, currentColor 8%, transparent);
+  stroke: color-mix(in srgb, currentColor 65%, transparent);
+  stroke-width: 1.4;
+}
+
+.capyn-mark svg .capyn-mark__glyph,
+.capyn-mark svg .capyn-mark__signal {
+  stroke: currentColor;
+}
+
+.capyn-mark svg .capyn-mark__glyph {
+  stroke-width: 2.6;
+}
+
+.capyn-mark svg .capyn-mark__signal {
+  stroke-width: 2.35;
+}
+
+.group:hover .capyn-mark svg,
+.group:focus-visible .capyn-mark svg,
+.group:focus .capyn-mark svg {
+  transform: translate(-0.7px, -0.6px);
+}
+
 .site-section {
   padding-block: clamp(4.5rem, 8vw, 7.5rem);
 }
@@ -75,10 +133,11 @@ body {
 .public-primary-button,
 .public-secondary-button {
   display: inline-flex;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   align-items: center;
   gap: 0.5rem;
   border: 1px solid var(--ink);
+  border-radius: 999px;
   padding-inline: 1rem;
   font-size: 0.8125rem;
   font-weight: 800;
@@ -103,6 +162,12 @@ body {
 
 .public-secondary-button:hover {
   border-color: var(--muted);
+}
+
+.public-primary-button:focus-visible,
+.public-secondary-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+  outline-offset: 2px;
 }
 
 .authority-field {
@@ -411,6 +476,111 @@ a {
   color: var(--ink);
 }
 
+.public-header__link {
+  min-height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border-radius: 999px;
+  padding-inline: 0.95rem;
+  font-size: 0.775rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease;
+}
+
+.public-header__link--active {
+  background: color-mix(in srgb, var(--paper) 80%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink);
+}
+
+.public-header__link:not(.public-header__link--active) {
+  color: var(--muted);
+}
+
+.public-header__link:not(.public-header__link--active):hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+}
+
+.public-header__menu-button,
+.public-header__mobile-link {
+  border-radius: 0.65rem;
+}
+
+.public-header__mobile-menu {
+  animation: public-menu-in 160ms ease-out both;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+@keyframes public-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.public-header__mobile-link {
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+  padding-inline: 0.9rem;
+  color: var(--muted);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.public-header__mobile-link:last-child {
+  border-bottom: 0;
+}
+
+.public-header__mobile-link[aria-current="page"] {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--panel) 65%, transparent);
+}
+
+.public-header__mobile-link:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper) 65%, transparent);
+}
+
+.public-footer {
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 84%, transparent);
+}
+
+.public-footer__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  min-height: 2rem;
+  padding-right: 0.2rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: color 160ms ease;
+}
+
+.public-footer__link:hover {
+  color: var(--authority);
+}
+
+.public-footer__link svg {
+  transform: translateY(0.6px);
+}
+
+.public-footer__link svg:first-of-type {
+  margin-left: 0.1rem;
+}
+
 .public-header-home {
   --ink: #e9ece7;
   --paper: #101719;
@@ -430,6 +600,10 @@ a {
   --muted: #9aa39d;
   --permission: #819c8e;
   --authority: #b9784e;
+}
+
+#authority-check {
+  scroll-margin-top: 5.5rem;
 }
 
 .home-hero__atmosphere {
@@ -1484,6 +1658,10 @@ a {
   .public-primary-button,
   .public-secondary-button {
     transition: none;
+  }
+
+  .public-header__mobile-menu {
+    animation: none;
   }
 
   .authority-boundary__live-dot {
@@ -5928,6 +6106,9 @@ a {
   }
 
   .authority-lab__bar-actions button {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    justify-content: center;
     font-size: 0;
   }
 
