@@ -7,9 +7,11 @@ import {
   createStudioTypeScript,
   createStudioVendor,
   getMandateStudioStatus,
+  getFirstStudioStageError,
   isStudioStageValid,
   parseStoredMandateDraft,
   serializeStoredMandateDraft,
+  resolveStudioStageIndex,
   validateMandateStudioDraft
 } from "./mandate-studio";
 
@@ -28,6 +30,17 @@ describe("Mandate Studio draft", () => {
     expect(isStudioStageValid(draft, "action")).toBe(false);
     expect(isStudioStageValid(draft, "boundary")).toBe(true);
     expect(getMandateStudioStatus(draft).status).toBe("UNBOUND");
+    expect(getFirstStudioStageError(draft, "action")).toBe("agentName");
+    expect(resolveStudioStageIndex(draft, 3)).toBe(0);
+  });
+
+  it("allows stage navigation only after every preceding boundary is valid", () => {
+    const draft = createMandateStudioDraft();
+    expect(resolveStudioStageIndex(draft, 3)).toBe(3);
+
+    draft.vendors = [];
+    expect(getFirstStudioStageError(draft, "boundary")).toBe("vendors");
+    expect(resolveStudioStageIndex(draft, 3)).toBe(1);
   });
 
   it("enforces approval, action, daily and monthly limit ordering", () => {

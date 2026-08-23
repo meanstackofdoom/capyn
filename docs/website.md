@@ -86,15 +86,17 @@ Completed in the current pass:
 - made the mobile navigation close on Escape, outside interaction, route changes and desktop breakpoint changes, with focus moved into the opened menu and restored on Escape;
 - increased shared action and mobile utility touch targets, preserved visible focus and stopped the sticky header covering the homepage authority console;
 - aligned browser theme colours with the actual paper and code surfaces.
+- linked validation messages to their controls and moved focus to the first invalid commissioning, studio or durable-handoff field;
+- corrected blocked Mandate Studio tab navigation so keyboard focus cannot drift away from the active stage;
+- raised the core light and dark semantic colours to WCAG AA contrast for normal text against their primary surfaces.
 
 Next review priorities, in order:
 
 1. visually inspect home, commissioning, lab, studio, pricing and documentation at 390 px, 768 px and 1440 px in a real browser, including light/dark preference and 200% zoom;
-2. add programmatic error descriptions and first-invalid-field focus to the commissioning and Mandate Studio forms;
-3. test complete keyboard-only commissioning, approval, proof download and durable-workspace handoff journeys;
-4. measure funnel events without recording policy payloads, credentials or sensitive boundary-brief content;
-5. run contrast checks over every page-specific palette and verify sticky/fixed controls do not obscure focused content;
-6. user-test the category language with 3–5 agent developers, especially “commission”, “mandate”, “authority passport” and “bring a real boundary”.
+2. test complete keyboard-only commissioning, approval, proof download and durable-workspace handoff journeys in an interactive browser session;
+3. measure funnel events without recording policy payloads, credentials or sensitive boundary-brief content;
+4. extend the contrast audit from the core semantic tokens to every page-specific palette and verify sticky/fixed controls do not obscure focused content;
+5. user-test the category language with 3–5 agent developers, especially “commission”, “mandate”, “authority passport” and “bring a real boundary”.
 
 ## Copying and defensibility
 

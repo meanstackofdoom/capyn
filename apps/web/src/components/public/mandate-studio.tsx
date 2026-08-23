@@ -44,15 +44,18 @@ import {
   createStudioTypeScript,
   createStudioVendor,
   getMandateStudioStatus,
+  getFirstStudioStageError,
   isStudioStageValid,
   parseStoredMandateDraft,
   serializeStoredMandateDraft,
+  resolveStudioStageIndex,
   studioCapabilities,
   studioPresets,
   studioStages,
   validateMandateStudioDraft,
   type MandateStudioDraft,
   type StudioCapability,
+  type StudioField as StudioFieldName,
   type StudioLimits,
   type StudioPresetId,
   type StudioStage,
@@ -67,6 +70,10 @@ import {
 
 type CopyTarget = "json" | "typescript" | "passport" | null;
 type CodeView = "json" | "typescript";
+
+function studioFieldMessageId(field: StudioFieldName): string {
+  return `studio-${field}-message`;
+}
 
 const stageDescriptions: Record<StudioStage, string> = {
   action: "Name one exact consequential action and the agent asking to take it.",
@@ -205,13 +212,7 @@ export function MandateStudio() {
   }
 
   function focusFirstError(targetStage: StudioStage): void {
-    const orderedFields: Record<StudioStage, string[]> = {
-      action: ["agentName", "mandateName", "purpose"],
-      boundary: ["capabilities", "vendors"],
-      limits: ["approvalAbove", "perTransaction", "daily", "monthly", "validityDays"],
-      integrate: []
-    };
-    const firstField = orderedFields[targetStage].find((field) => errors[field as keyof typeof errors]);
+    const firstField = getFirstStudioStageError(draft, targetStage);
     if (!firstField) return;
     window.requestAnimationFrame(() => {
       const element = rootRef.current?.querySelector<HTMLElement>(`[data-studio-field="${firstField}"]`);
@@ -219,18 +220,15 @@ export function MandateStudio() {
     });
   }
 
-  function selectStage(nextIndex: number): void {
+  function selectStage(nextIndex: number): number {
     const boundedIndex = Math.max(0, Math.min(studioStages.length - 1, nextIndex));
-    for (let index = 0; index < boundedIndex; index += 1) {
-      const prerequisite = studioStages[index]?.id;
-      if (!prerequisite) continue;
-      if (!isStudioStageValid(draft, prerequisite)) {
-        setStage(prerequisite);
-        focusFirstError(prerequisite);
-        return;
-      }
+    const resolvedIndex = resolveStudioStageIndex(draft, boundedIndex);
+    const resolvedStage = studioStages[resolvedIndex]?.id ?? "action";
+    setStage(resolvedStage);
+    if (resolvedIndex < boundedIndex) {
+      focusFirstError(resolvedStage);
     }
-    setStage(studioStages[boundedIndex]?.id ?? "action");
+    return resolvedIndex;
   }
 
   function handleStageKey(event: KeyboardEvent<HTMLButtonElement>, index: number): void {
@@ -241,9 +239,11 @@ export function MandateStudio() {
     if (event.key === "End") target = studioStages.length - 1;
     if (target === null) return;
     event.preventDefault();
-    selectStage(target);
-    const targetStage = studioStages[target]?.id ?? "action";
-    window.requestAnimationFrame(() => rootRef.current?.querySelector<HTMLButtonElement>(`#studio-stage-${targetStage}`)?.focus());
+    const selectedIndex = selectStage(target);
+    if (selectedIndex === target) {
+      const targetStage = studioStages[target]?.id ?? "action";
+      window.requestAnimationFrame(() => rootRef.current?.querySelector<HTMLButtonElement>(`#studio-stage-${targetStage}`)?.focus());
+    }
   }
 
   function addVendor(event: FormEvent<HTMLFormElement>): void {
@@ -425,15 +425,15 @@ export function MandateStudio() {
                     </fieldset>
 
                     <div className="studio-field-grid">
-                      <StudioField label="Requesting agent" error={errors.agentName} hint="Lowercase slug; identity comes from the API key in production.">
-                        <div className="studio-input-shell"><Fingerprint size={15} /><input data-studio-field="agentName" value={draft.agentName} onChange={(event) => updateDraft((current) => ({ ...current, agentName: event.target.value }))} aria-invalid={Boolean(errors.agentName)} /></div>
+                      <StudioField field="agentName" label="Requesting agent" error={errors.agentName} hint="Lowercase slug; identity comes from the API key in production.">
+                        <div className="studio-input-shell"><Fingerprint size={15} /><input data-studio-field="agentName" value={draft.agentName} onChange={(event) => updateDraft((current) => ({ ...current, agentName: event.target.value }))} aria-invalid={Boolean(errors.agentName)} aria-describedby={studioFieldMessageId("agentName")} /></div>
                       </StudioField>
-                      <StudioField label="Mandate name" error={errors.mandateName}>
-                        <div className="studio-input-shell"><ShieldCheck size={15} /><input data-studio-field="mandateName" value={draft.mandateName} onChange={(event) => updateDraft((current) => ({ ...current, mandateName: event.target.value }))} aria-invalid={Boolean(errors.mandateName)} /></div>
+                      <StudioField field="mandateName" label="Mandate name" error={errors.mandateName}>
+                        <div className="studio-input-shell"><ShieldCheck size={15} /><input data-studio-field="mandateName" value={draft.mandateName} onChange={(event) => updateDraft((current) => ({ ...current, mandateName: event.target.value }))} aria-invalid={Boolean(errors.mandateName)} aria-describedby={errors.mandateName ? studioFieldMessageId("mandateName") : undefined} /></div>
                       </StudioField>
                     </div>
-                    <StudioField label="Exact consequential action" error={errors.purpose} hint={`${draft.purpose.length}/160 · Describe the action, not a broad AI project.`}>
-                      <textarea data-studio-field="purpose" value={draft.purpose} maxLength={160} onChange={(event) => updateDraft((current) => ({ ...current, purpose: event.target.value }))} aria-invalid={Boolean(errors.purpose)} />
+                    <StudioField field="purpose" label="Exact consequential action" error={errors.purpose} hint={`${draft.purpose.length}/160 · Describe the action, not a broad AI project.`}>
+                      <textarea data-studio-field="purpose" value={draft.purpose} maxLength={160} onChange={(event) => updateDraft((current) => ({ ...current, purpose: event.target.value }))} aria-invalid={Boolean(errors.purpose)} aria-describedby={studioFieldMessageId("purpose")} />
                     </StudioField>
                   </div>
                 )}
@@ -442,7 +442,7 @@ export function MandateStudio() {
                   <div className="studio-stage studio-stage--boundary">
                     <fieldset className="studio-capabilities">
                       <legend>Granted capabilities <span>Everything else fails closed.</span></legend>
-                      <div data-studio-field="capabilities" tabIndex={-1}>
+                      <div data-studio-field="capabilities" tabIndex={-1} aria-invalid={Boolean(errors.capabilities)} aria-describedby={errors.capabilities ? studioFieldMessageId("capabilities") : undefined}>
                         {studioCapabilities.map((capability) => {
                           const checked = draft.capabilities.includes(capability.id);
                           return (
@@ -450,6 +450,8 @@ export function MandateStudio() {
                               <input
                                 type="checkbox"
                                 checked={checked}
+                                aria-invalid={Boolean(errors.capabilities)}
+                                aria-describedby={errors.capabilities ? studioFieldMessageId("capabilities") : undefined}
                                 onChange={(event) => updateDraft((current) => ({
                                   ...current,
                                   capabilities: event.target.checked
@@ -464,21 +466,21 @@ export function MandateStudio() {
                           );
                         })}
                       </div>
-                      {errors.capabilities && <p className="studio-field-error"><CircleAlert size={12} />{errors.capabilities}</p>}
+                      {errors.capabilities && <p id={studioFieldMessageId("capabilities")} className="studio-field-error"><CircleAlert size={12} />{errors.capabilities}</p>}
                     </fieldset>
 
                     <fieldset className="studio-vendors">
                       <legend>Approved vendors <span>Unknown counterparties are denied before spend checks.</span></legend>
-                      <div className="studio-vendor-list" data-studio-field="vendors" tabIndex={-1}>
+                      <div className="studio-vendor-list">
                         {draft.vendors.map((vendor) => (
                           <span key={vendor.id}><Check size={12} /><strong>{vendor.name}</strong><code>{vendor.id}</code><button type="button" onClick={() => updateDraft((current) => ({ ...current, vendors: current.vendors.filter((item) => item.id !== vendor.id) }))} aria-label={`Remove ${vendor.name}`}><X size={12} /></button></span>
                         ))}
                       </div>
                       <form onSubmit={addVendor} className="studio-vendor-add">
-                        <div className="studio-input-shell"><Plus size={14} /><input value={vendorInput} onChange={(event) => { setVendorInput(event.target.value); setVendorIssue(null); }} placeholder="Add an approved vendor" aria-label="Approved vendor name" /></div>
+                        <div className="studio-input-shell"><Plus size={14} /><input data-studio-field="vendors" value={vendorInput} onChange={(event) => { setVendorInput(event.target.value); setVendorIssue(null); }} placeholder="Add an approved vendor" aria-label="Approved vendor name" aria-invalid={Boolean(vendorIssue || errors.vendors)} aria-describedby={vendorIssue || errors.vendors ? studioFieldMessageId("vendors") : undefined} /></div>
                         <button type="submit">Add vendor</button>
                       </form>
-                      {(vendorIssue || errors.vendors) && <p className="studio-field-error"><CircleAlert size={12} />{vendorIssue ?? errors.vendors}</p>}
+                      {(vendorIssue || errors.vendors) && <p id={studioFieldMessageId("vendors")} className="studio-field-error"><CircleAlert size={12} />{vendorIssue ?? errors.vendors}</p>}
                     </fieldset>
                   </div>
                 )}
@@ -496,11 +498,12 @@ export function MandateStudio() {
                     </div>
                     <fieldset className="studio-validity">
                       <legend>Validity window <span>Expired authority is denied without human override.</span></legend>
-                      <div data-studio-field="validityDays" tabIndex={-1}>
+                      <div data-studio-field="validityDays" tabIndex={-1} aria-invalid={Boolean(errors.validityDays)} aria-describedby={errors.validityDays ? studioFieldMessageId("validityDays") : undefined}>
                         {([30, 90, 365] as StudioValidityDays[]).map((days) => (
                           <button type="button" key={days} aria-pressed={draft.validityDays === days} onClick={() => updateDraft((current) => ({ ...current, validityDays: days }))}><strong>{days}</strong><span>days</span></button>
                         ))}
                       </div>
+                      {errors.validityDays && <p id={studioFieldMessageId("validityDays")} className="studio-field-error"><CircleAlert size={12} />{errors.validityDays}</p>}
                     </fieldset>
                     <div className="studio-limit-note"><LockKeyhole size={16} /><p><strong>Approval is not an escape hatch.</strong><span>A person can release one request above {money(draft.limits.approvalAbove)}. They cannot override the {money(draft.limits.perTransaction)} hard ceiling, an ungranted capability or an unknown vendor.</span></p></div>
                   </div>
@@ -518,9 +521,9 @@ export function MandateStudio() {
 
                     <div className="studio-code">
                       <div className="studio-code__bar">
-                        <div role="tablist" aria-label="Generated mandate artifacts">
-                          <button type="button" role="tab" aria-selected={codeView === "json"} onClick={() => setCodeView("json")}><Braces size={12} /> Mandate JSON</button>
-                          <button type="button" role="tab" aria-selected={codeView === "typescript"} onClick={() => setCodeView("typescript")}><KeyRound size={12} /> TypeScript</button>
+                        <div role="group" aria-label="Generated mandate artifacts">
+                          <button type="button" aria-pressed={codeView === "json"} onClick={() => setCodeView("json")}><Braces size={12} /> Mandate JSON</button>
+                          <button type="button" aria-pressed={codeView === "typescript"} onClick={() => setCodeView("typescript")}><KeyRound size={12} /> TypeScript</button>
                         </div>
                         <button type="button" onClick={() => void copyCode(codeView, codeView === "json" ? configJson : typescript)}><Clipboard size={12} /> {copyTarget === codeView ? "Copied" : "Copy"}</button>
                       </div>
@@ -617,12 +620,12 @@ export function MandateStudio() {
   );
 }
 
-function StudioField({ label, hint, error, children }: { label: string; hint?: string | undefined; error?: string | undefined; children: React.ReactNode }) {
+function StudioField({ field, label, hint, error, children }: { field: Extract<StudioFieldName, "agentName" | "mandateName" | "purpose">; label: string; hint?: string | undefined; error?: string | undefined; children: React.ReactNode }) {
   return (
     <label className="studio-field">
       <span>{label}</span>
       {children}
-      {error ? <small className="studio-field-error"><CircleAlert size={12} />{error}</small> : hint ? <small>{hint}</small> : null}
+      {error ? <small id={studioFieldMessageId(field)} className="studio-field-error"><CircleAlert size={12} />{error}</small> : hint ? <small id={studioFieldMessageId(field)}>{hint}</small> : null}
     </label>
   );
 }
@@ -631,8 +634,8 @@ function StudioMoneyField({ field, label, value, error, onChange }: { field: key
   return (
     <label className="studio-money-field">
       <span>{label}</span>
-      <div><i>$</i><input data-studio-field={field} inputMode="decimal" value={value} onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} /><code>USD</code></div>
-      {error && <small className="studio-field-error"><CircleAlert size={12} />{error}</small>}
+      <div><i>$</i><input data-studio-field={field} inputMode="decimal" value={value} onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} aria-describedby={error ? studioFieldMessageId(field) : undefined} /><code>USD</code></div>
+      {error && <small id={studioFieldMessageId(field)} className="studio-field-error"><CircleAlert size={12} />{error}</small>}
     </label>
   );
 }

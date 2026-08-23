@@ -50,6 +50,10 @@ const launchStages = [
 type LaunchStage = (typeof launchStages)[number]["id"];
 type CopyTarget = "owner" | "agent" | null;
 
+function launchFieldMessageId(field: ProductionLaunchField): string {
+  return `launch-${field}-message`;
+}
+
 const plans = (["DEVELOPER", "TEAM", "BUSINESS"] as const).map((id) => ({
   ...PLAN_CATALOG[id],
   price: id === "DEVELOPER" ? "$0" : `$${(PLAN_CATALOG[id].basePriceCents / 100).toFixed(0)}`,
@@ -160,14 +164,22 @@ export function ProductionLaunch({
   function advanceCustodian(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     setShowErrors(true);
-    if (errors.ownerName || errors.ownerEmail || errors.workspaceSlug) return;
+    const firstError = (["ownerName", "ownerEmail", "workspaceSlug"] as const).find((field) => errors[field]);
+    if (firstError) {
+      focusLaunchError(firstError);
+      return;
+    }
     setShowErrors(false);
     setStage("plan");
   }
 
   async function commitLaunch(): Promise<void> {
     setShowErrors(true);
-    if (Object.keys(errors).length > 0) return;
+    const firstError = (Object.keys(errors) as ProductionLaunchField[])[0];
+    if (firstError) {
+      focusLaunchError(firstError);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -181,6 +193,12 @@ export function ProductionLaunch({
     } finally {
       setBusy(false);
     }
+  }
+
+  function focusLaunchError(field: ProductionLaunchField): void {
+    window.requestAnimationFrame(() => {
+      rootRef.current?.querySelector<HTMLElement>(`[data-launch-field="${field}"]`)?.focus();
+    });
   }
 
   async function copyKey(target: Exclude<CopyTarget, null>, value: string): Promise<void> {
@@ -274,15 +292,15 @@ export function ProductionLaunch({
                   <form onSubmit={advanceCustodian} data-launch-reveal>
                     <LaunchHeading number="01" eyebrow="Accountable custodian" title="Who can change this boundary?" copy="The owner key controls agents, mandates, approvals and billing. Email identifies the account record; this alpha uses the one-time owner key—not email—as authentication." />
                     <div className="launch-form-grid">
-                      <LaunchField label="Owner name" error={inputError(errors, "ownerName", showErrors)}>
-                        <input value={draft.ownerName} onChange={(event) => update("ownerName", event.target.value)} placeholder="Taylor Morgan" />
+                      <LaunchField field="ownerName" label="Owner name" error={inputError(errors, "ownerName", showErrors)}>
+                        <input data-launch-field="ownerName" value={draft.ownerName} onChange={(event) => update("ownerName", event.target.value)} placeholder="Taylor Morgan" aria-invalid={showErrors && Boolean(errors.ownerName)} aria-describedby={showErrors && errors.ownerName ? launchFieldMessageId("ownerName") : undefined} />
                       </LaunchField>
-                      <LaunchField label="Owner email" hint="Billing + account record" error={inputError(errors, "ownerEmail", showErrors)}>
-                        <input type="email" value={draft.ownerEmail} onChange={(event) => update("ownerEmail", event.target.value)} placeholder="taylor@northstar.example" />
+                      <LaunchField field="ownerEmail" label="Owner email" hint="Billing + account record" error={inputError(errors, "ownerEmail", showErrors)}>
+                        <input data-launch-field="ownerEmail" type="email" value={draft.ownerEmail} onChange={(event) => update("ownerEmail", event.target.value)} placeholder="taylor@northstar.example" aria-invalid={showErrors && Boolean(errors.ownerEmail)} aria-describedby={showErrors && errors.ownerEmail ? launchFieldMessageId("ownerEmail") : undefined} />
                       </LaunchField>
                     </div>
-                    <LaunchField label="Workspace slug" hint="Permanent tenant address" error={inputError(errors, "workspaceSlug", showErrors)}>
-                      <div className="launch-slug-field"><span>capyn /</span><input value={draft.workspaceSlug} onChange={(event) => { setSlugEdited(true); update("workspaceSlug", slugifyProductionWorkspace(event.target.value)); }} onBlur={() => { if (!slugEdited) update("workspaceSlug", slugifyProductionWorkspace(activation.workspace.name)); }} /></div>
+                    <LaunchField field="workspaceSlug" label="Workspace slug" hint="Permanent tenant address" error={inputError(errors, "workspaceSlug", showErrors)}>
+                      <div className="launch-slug-field"><span>capyn /</span><input data-launch-field="workspaceSlug" value={draft.workspaceSlug} onChange={(event) => { setSlugEdited(true); update("workspaceSlug", slugifyProductionWorkspace(event.target.value)); }} onBlur={() => { if (!slugEdited) update("workspaceSlug", slugifyProductionWorkspace(activation.workspace.name)); }} aria-invalid={showErrors && Boolean(errors.workspaceSlug)} aria-describedby={showErrors && errors.workspaceSlug ? launchFieldMessageId("workspaceSlug") : undefined} /></div>
                     </LaunchField>
                     <div className="launch-fact-strip">
                       <div><Fingerprint size={14} /><p><strong>Key-authenticated owner</strong><span>No password is created or transmitted.</span></p></div>
@@ -325,10 +343,10 @@ export function ProductionLaunch({
                       </dl>
                     </div>
                     <div className="launch-acknowledgements">
-                      <label><input type="checkbox" checked={draft.keyCustody} onChange={(event) => update("keyCustody", event.target.checked)} /><span><strong>I will secure both one-time keys.</strong><small>CAPYN stores only HMAC digests and cannot display these plaintext values later.</small></span></label>
-                      {inputError(errors, "keyCustody", showErrors) && <em>{errors.keyCustody}</em>}
-                      <label><input type="checkbox" checked={draft.syntheticExecution} onChange={(event) => update("syntheticExecution", event.target.checked)} /><span><strong>I understand execution remains synthetic.</strong><small>This creates durable authority infrastructure, not a live money-moving adapter or an implied SLA.</small></span></label>
-                      {inputError(errors, "syntheticExecution", showErrors) && <em>{errors.syntheticExecution}</em>}
+                      <label><input data-launch-field="keyCustody" type="checkbox" checked={draft.keyCustody} onChange={(event) => update("keyCustody", event.target.checked)} aria-invalid={showErrors && Boolean(errors.keyCustody)} aria-describedby={showErrors && errors.keyCustody ? launchFieldMessageId("keyCustody") : undefined} /><span><strong>I will secure both one-time keys.</strong><small>CAPYN stores only HMAC digests and cannot display these plaintext values later.</small></span></label>
+                      {inputError(errors, "keyCustody", showErrors) && <em id={launchFieldMessageId("keyCustody")}>{errors.keyCustody}</em>}
+                      <label><input data-launch-field="syntheticExecution" type="checkbox" checked={draft.syntheticExecution} onChange={(event) => update("syntheticExecution", event.target.checked)} aria-invalid={showErrors && Boolean(errors.syntheticExecution)} aria-describedby={showErrors && errors.syntheticExecution ? launchFieldMessageId("syntheticExecution") : undefined} /><span><strong>I understand execution remains synthetic.</strong><small>This creates durable authority infrastructure, not a live money-moving adapter or an implied SLA.</small></span></label>
+                      {inputError(errors, "syntheticExecution", showErrors) && <em id={launchFieldMessageId("syntheticExecution")}>{errors.syntheticExecution}</em>}
                     </div>
                     {error && <LaunchError message={error} />}
                     <LaunchActions secondary="Service rail" primary={busy ? "Writing durable ledger…" : "Commit workspace"} onSecondary={() => setStage("plan")} onPrimary={() => void commitLaunch()} busy={busy} />
@@ -386,8 +404,8 @@ function LaunchHeading({ number, eyebrow, title, copy }: { number: string; eyebr
   return <header className="launch-heading"><div><span>{number}</span><p>{eyebrow}</p></div><h2 className="display-title">{title}</h2><p>{copy}</p></header>;
 }
 
-function LaunchField({ label, hint, error, children }: { label: string; hint?: string | undefined; error?: string | undefined; children: ReactNode }) {
-  return <label className="launch-field"><span>{label}{hint && <small>{hint}</small>}</span>{children}{error && <em><TriangleAlert size={11} />{error}</em>}</label>;
+function LaunchField({ field, label, hint, error, children }: { field: Extract<ProductionLaunchField, "ownerName" | "ownerEmail" | "workspaceSlug">; label: string; hint?: string | undefined; error?: string | undefined; children: ReactNode }) {
+  return <label className="launch-field"><span>{label}{hint && <small>{hint}</small>}</span>{children}{error && <em id={launchFieldMessageId(field)}><TriangleAlert size={11} />{error}</em>}</label>;
 }
 
 function LaunchActions({ secondary, primary, onSecondary, onPrimary, submit = false, busy = false }: { secondary?: string; primary: string; onSecondary?: () => void; onPrimary?: (() => void) | undefined; submit?: boolean; busy?: boolean }) {

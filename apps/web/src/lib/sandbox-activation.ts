@@ -114,8 +114,12 @@ const stageFields: Record<SandboxEditableStage, SandboxDraftField[]> = {
 };
 
 export function isSandboxStageValid(draft: SandboxActivationDraft, stage: SandboxEditableStage): boolean {
+  return getFirstSandboxStageError(draft, stage) === null;
+}
+
+export function getFirstSandboxStageError(draft: SandboxActivationDraft, stage: SandboxEditableStage): SandboxDraftField | null {
   const errors = validateSandboxDraft(draft);
-  return stageFields[stage].every((field) => !errors[field]);
+  return stageFields[stage].find((field) => errors[field]) ?? null;
 }
 
 export function createSandboxActivationRequest(draft: SandboxActivationDraft): SandboxActivateRequest {

@@ -37,6 +37,7 @@ import {
   createSandboxDraft,
   createSandboxRequest,
   createSandboxScenarios,
+  getFirstSandboxStageError,
   isSandboxStageValid,
   sandboxCapabilities,
   slugifySandboxName,
@@ -61,6 +62,10 @@ const stages = [
 const editableOrder: SandboxEditableStage[] = ["workspace", "agent", "mandate"];
 type BusyAction = "activate" | "authorize" | null;
 type CopyTarget = "credential" | "curl" | "proof" | "digest" | null;
+
+function commissionFieldMessageId(field: SandboxDraftField): string {
+  return `commission-${field}-message`;
+}
 
 async function postApi<T>(path: string, body: unknown, credential?: string): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -230,6 +235,7 @@ export function SandboxCommissioning() {
     if (index < 0) return;
     if (direction === 1 && !isSandboxStageValid(draft, editableOrder[index]!)) {
       setShowErrors(true);
+      focusFirstCommissionError(editableOrder[index]!);
       return;
     }
     const next = editableOrder[index + direction];
@@ -239,10 +245,19 @@ export function SandboxCommissioning() {
     goToStage(next);
   }
 
+  function focusFirstCommissionError(targetStage: SandboxEditableStage): void {
+    const firstField = getFirstSandboxStageError(draft, targetStage);
+    if (!firstField) return;
+    window.requestAnimationFrame(() => {
+      rootRef.current?.querySelector<HTMLElement>(`[data-commission-field="${firstField}"]`)?.focus();
+    });
+  }
+
   async function commission(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (!isSandboxStageValid(draft, "mandate")) {
       setShowErrors(true);
+      focusFirstCommissionError("mandate");
       return;
     }
     setBusy("activate");
@@ -386,8 +401,8 @@ export function SandboxCommissioning() {
                   <div className="commission-stage" data-commission-reveal>
                     <StageHeading number="01" eyebrow="Operating context" title="Where does this agent report?" copy="This names the ephemeral workspace carried inside the sandbox credential. Nothing is written to a customer database." />
                     <form onSubmit={(event) => { event.preventDefault(); moveEditable(1); }}>
-                      <CommissionField label="Organisation name" error={showErrors ? errors.organisationName : undefined}>
-                        <input value={draft.organisationName} onChange={(event) => update("organisationName", event.target.value)} maxLength={120} aria-invalid={showErrors && Boolean(errors.organisationName)} />
+                      <CommissionField field="organisationName" label="Organisation name" error={showErrors ? errors.organisationName : undefined}>
+                        <input data-commission-field="organisationName" value={draft.organisationName} onChange={(event) => update("organisationName", event.target.value)} maxLength={120} aria-invalid={showErrors && Boolean(errors.organisationName)} aria-describedby={showErrors && errors.organisationName ? commissionFieldMessageId("organisationName") : undefined} />
                       </CommissionField>
                       <div className="commission-stage__preview">
                         <span>EPHEMERAL WORKSPACE</span><strong>{draft.organisationName || "Unnamed workspace"}</strong><code>id assigned when mandate is sealed</code>
@@ -402,11 +417,11 @@ export function SandboxCommissioning() {
                     <StageHeading number="02" eyebrow="Machine identity" title="Who is asking to act?" copy="CAPYN derives this identity from the bearer credential. The authorization body cannot substitute another agent ID." />
                     <form onSubmit={(event) => { event.preventDefault(); moveEditable(1); }}>
                       <div className="commission-field-grid">
-                        <CommissionField label="Agent display name" error={showErrors ? errors.agentName : undefined}>
-                          <input value={draft.agentName} onChange={(event) => updateAgentName(event.target.value)} maxLength={120} aria-invalid={showErrors && Boolean(errors.agentName)} />
+                        <CommissionField field="agentName" label="Agent display name" error={showErrors ? errors.agentName : undefined}>
+                          <input data-commission-field="agentName" value={draft.agentName} onChange={(event) => updateAgentName(event.target.value)} maxLength={120} aria-invalid={showErrors && Boolean(errors.agentName)} aria-describedby={showErrors && errors.agentName ? commissionFieldMessageId("agentName") : undefined} />
                         </CommissionField>
-                        <CommissionField label="Stable slug" hint="Lowercase, URL-safe identity" error={showErrors ? errors.agentSlug : undefined}>
-                          <input value={draft.agentSlug} onChange={(event) => { slugEdited.current = true; update("agentSlug", event.target.value.toLowerCase()); }} maxLength={100} spellCheck={false} aria-invalid={showErrors && Boolean(errors.agentSlug)} />
+                        <CommissionField field="agentSlug" label="Stable slug" hint="Lowercase, URL-safe identity" error={showErrors ? errors.agentSlug : undefined}>
+                          <input data-commission-field="agentSlug" value={draft.agentSlug} onChange={(event) => { slugEdited.current = true; update("agentSlug", event.target.value.toLowerCase()); }} maxLength={100} spellCheck={false} aria-invalid={showErrors && Boolean(errors.agentSlug)} aria-describedby={showErrors && errors.agentSlug ? commissionFieldMessageId("agentSlug") : undefined} />
                         </CommissionField>
                       </div>
                       <div className="commission-identity-card">
@@ -423,11 +438,11 @@ export function SandboxCommissioning() {
                   <div className="commission-stage commission-stage--mandate" data-commission-reveal>
                     <StageHeading number="03" eyebrow="Authority envelope" title="Draw the line before the action." copy="Grant one capability, one vendor and explicit limits. The first action will be evaluated against this exact sealed boundary." />
                     <form onSubmit={(event) => void commission(event)}>
-                      <CommissionField label="Mandate name" error={showErrors ? errors.mandateName : undefined}>
-                        <input value={draft.mandateName} onChange={(event) => update("mandateName", event.target.value)} maxLength={120} aria-invalid={showErrors && Boolean(errors.mandateName)} />
+                      <CommissionField field="mandateName" label="Mandate name" error={showErrors ? errors.mandateName : undefined}>
+                        <input data-commission-field="mandateName" value={draft.mandateName} onChange={(event) => update("mandateName", event.target.value)} maxLength={120} aria-invalid={showErrors && Boolean(errors.mandateName)} aria-describedby={showErrors && errors.mandateName ? commissionFieldMessageId("mandateName") : undefined} />
                       </CommissionField>
 
-                      <fieldset className="commission-capabilities">
+                      <fieldset className="commission-capabilities" data-commission-field="capability" tabIndex={-1} aria-invalid={showErrors && Boolean(errors.capability)} aria-describedby={showErrors && errors.capability ? commissionFieldMessageId("capability") : undefined}>
                         <legend>Granted capability <span>Every other capability fails closed.</span></legend>
                         <div>
                           {sandboxCapabilities.map((capability) => (
@@ -438,16 +453,17 @@ export function SandboxCommissioning() {
                             </label>
                           ))}
                         </div>
+                        {showErrors && errors.capability && <p id={commissionFieldMessageId("capability")} className="commission-field-error"><TriangleAlert size={11} />{errors.capability}</p>}
                       </fieldset>
 
                       <div className="commission-block">
                         <div className="commission-block__label"><span>APPROVED COUNTERPARTY</span><p>Unknown vendors are denied before spend checks.</p></div>
                         <div className="commission-field-grid">
-                          <CommissionField label="Vendor name" error={showErrors ? errors.vendorName : undefined}>
-                            <input value={draft.vendorName} onChange={(event) => { update("vendorName", event.target.value); if (event.target.value) update("vendorId", slugifySandboxName(event.target.value)); }} maxLength={160} />
+                          <CommissionField field="vendorName" label="Vendor name" error={showErrors ? errors.vendorName : undefined}>
+                            <input data-commission-field="vendorName" value={draft.vendorName} onChange={(event) => { update("vendorName", event.target.value); if (event.target.value) update("vendorId", slugifySandboxName(event.target.value)); }} maxLength={160} aria-invalid={showErrors && Boolean(errors.vendorName)} aria-describedby={showErrors && errors.vendorName ? commissionFieldMessageId("vendorName") : undefined} />
                           </CommissionField>
-                          <CommissionField label="Vendor ID" error={showErrors ? errors.vendorId : undefined}>
-                            <input value={draft.vendorId} onChange={(event) => update("vendorId", event.target.value.toLowerCase())} maxLength={100} spellCheck={false} />
+                          <CommissionField field="vendorId" label="Vendor ID" error={showErrors ? errors.vendorId : undefined}>
+                            <input data-commission-field="vendorId" value={draft.vendorId} onChange={(event) => update("vendorId", event.target.value.toLowerCase())} maxLength={100} spellCheck={false} aria-invalid={showErrors && Boolean(errors.vendorId)} aria-describedby={showErrors && errors.vendorId ? commissionFieldMessageId("vendorId") : undefined} />
                           </CommissionField>
                         </div>
                       </div>
@@ -455,19 +471,19 @@ export function SandboxCommissioning() {
                       <div className="commission-block">
                         <div className="commission-block__label"><span>LIMIT STACK / USD</span><p>Human line &lt; hard ceiling ≤ day ≤ month.</p></div>
                         <div className="commission-money-grid">
-                          <CommissionMoneyField label="Human above" value={draft.approvalAbove} error={showErrors ? errors.approvalAbove : undefined} onChange={(value) => update("approvalAbove", value)} />
-                          <CommissionMoneyField label="Hard per action" value={draft.perTransaction} error={showErrors ? errors.perTransaction : undefined} onChange={(value) => update("perTransaction", value)} />
-                          <CommissionMoneyField label="UTC day" value={draft.daily} error={showErrors ? errors.daily : undefined} onChange={(value) => update("daily", value)} />
-                          <CommissionMoneyField label="Calendar month" value={draft.monthly} error={showErrors ? errors.monthly : undefined} onChange={(value) => update("monthly", value)} />
+                          <CommissionMoneyField field="approvalAbove" label="Human above" value={draft.approvalAbove} error={showErrors ? errors.approvalAbove : undefined} onChange={(value) => update("approvalAbove", value)} />
+                          <CommissionMoneyField field="perTransaction" label="Hard per action" value={draft.perTransaction} error={showErrors ? errors.perTransaction : undefined} onChange={(value) => update("perTransaction", value)} />
+                          <CommissionMoneyField field="daily" label="UTC day" value={draft.daily} error={showErrors ? errors.daily : undefined} onChange={(value) => update("daily", value)} />
+                          <CommissionMoneyField field="monthly" label="Calendar month" value={draft.monthly} error={showErrors ? errors.monthly : undefined} onChange={(value) => update("monthly", value)} />
                         </div>
                       </div>
 
                       <div className="commission-block commission-block--intent">
                         <div className="commission-block__label"><span>FIRST EXACT ACTION</span><p>This request ships with the commissioning packet.</p></div>
                         <div className="commission-field-grid commission-field-grid--intent">
-                          <CommissionMoneyField label="Amount" value={draft.firstAmount} error={showErrors ? errors.firstAmount : undefined} onChange={(value) => update("firstAmount", value)} />
-                          <CommissionField label="Purpose" error={showErrors ? errors.purpose : undefined}>
-                            <textarea value={draft.purpose} onChange={(event) => update("purpose", event.target.value)} rows={3} maxLength={160} />
+                          <CommissionMoneyField field="firstAmount" label="Amount" value={draft.firstAmount} error={showErrors ? errors.firstAmount : undefined} onChange={(value) => update("firstAmount", value)} />
+                          <CommissionField field="purpose" label="Purpose" error={showErrors ? errors.purpose : undefined}>
+                            <textarea data-commission-field="purpose" value={draft.purpose} onChange={(event) => update("purpose", event.target.value)} rows={3} maxLength={160} aria-invalid={showErrors && Boolean(errors.purpose)} aria-describedby={showErrors && errors.purpose ? commissionFieldMessageId("purpose") : undefined} />
                           </CommissionField>
                         </div>
                       </div>
@@ -611,22 +627,22 @@ function StageHeading({ number, eyebrow, title, copy }: { number: string; eyebro
   );
 }
 
-function CommissionField({ label, hint, error, children }: { label: string; hint?: string | undefined; error?: string | undefined; children: React.ReactNode }) {
+function CommissionField({ field, label, hint, error, children }: { field: SandboxDraftField; label: string; hint?: string | undefined; error?: string | undefined; children: React.ReactNode }) {
   return (
     <label className="commission-field">
       <span>{label}{hint && <small>{hint}</small>}</span>
       {children}
-      {error && <em><TriangleAlert size={11} />{error}</em>}
+      {error && <em id={commissionFieldMessageId(field)}><TriangleAlert size={11} />{error}</em>}
     </label>
   );
 }
 
-function CommissionMoneyField({ label, value, error, onChange }: { label: string; value: string; error?: string | undefined; onChange: (value: string) => void }) {
+function CommissionMoneyField({ field, label, value, error, onChange }: { field: Extract<SandboxDraftField, "approvalAbove" | "perTransaction" | "daily" | "monthly" | "firstAmount">; label: string; value: string; error?: string | undefined; onChange: (value: string) => void }) {
   return (
     <label className="commission-money-field">
       <span>{label}</span>
-      <div><i>$</i><input value={value} inputMode="decimal" onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} /><code>USD</code></div>
-      {error && <em><TriangleAlert size={11} />{error}</em>}
+      <div><i>$</i><input data-commission-field={field} value={value} inputMode="decimal" onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} aria-describedby={error ? commissionFieldMessageId(field) : undefined} /><code>USD</code></div>
+      {error && <em id={commissionFieldMessageId(field)}><TriangleAlert size={11} />{error}</em>}
     </label>
   );
 }

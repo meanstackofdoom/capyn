@@ -269,9 +269,22 @@ const stageFields: Record<StudioStage, StudioField[]> = {
 };
 
 export function isStudioStageValid(draft: MandateStudioDraft, stage: StudioStage): boolean {
+  return getFirstStudioStageError(draft, stage) === null;
+}
+
+export function getFirstStudioStageError(draft: MandateStudioDraft, stage: StudioStage): StudioField | null {
   const errors = validateMandateStudioDraft(draft);
-  if (stage === "integrate") return Object.keys(errors).length === 0;
-  return stageFields[stage].every((field) => !errors[field]);
+  if (stage === "integrate") return (Object.keys(errors)[0] as StudioField | undefined) ?? null;
+  return stageFields[stage].find((field) => errors[field]) ?? null;
+}
+
+export function resolveStudioStageIndex(draft: MandateStudioDraft, nextIndex: number): number {
+  const boundedIndex = Math.max(0, Math.min(studioStages.length - 1, nextIndex));
+  for (let index = 0; index < boundedIndex; index += 1) {
+    const prerequisite = studioStages[index]?.id;
+    if (prerequisite && !isStudioStageValid(draft, prerequisite)) return index;
+  }
+  return boundedIndex;
 }
 
 export function getMandateStudioStatus(draft: MandateStudioDraft): { status: StudioStatus; completed: number; total: number } {

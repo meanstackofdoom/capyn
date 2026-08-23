@@ -4,6 +4,7 @@ import {
   createSandboxCurl,
   createSandboxDraft,
   createSandboxScenarios,
+  getFirstSandboxStageError,
   isSandboxStageValid,
   slugifySandboxName,
   validateSandboxDraft
@@ -36,6 +37,16 @@ describe("sandbox activation draft", () => {
 
     draft.approvalAbove = draft.perTransaction;
     expect(validateSandboxDraft(draft).approvalAbove).toContain("review remains reachable");
+  });
+
+  it("identifies the first invalid field in keyboard focus order", () => {
+    const draft = createSandboxDraft();
+    draft.agentName = "";
+    draft.agentSlug = "Bad Slug";
+    expect(getFirstSandboxStageError(draft, "agent")).toBe("agentName");
+
+    draft.agentName = "valid agent";
+    expect(getFirstSandboxStageError(draft, "agent")).toBe("agentSlug");
   });
 
   it("generates three deterministic boundary tests", () => {

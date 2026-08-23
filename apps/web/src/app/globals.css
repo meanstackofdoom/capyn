@@ -7,11 +7,11 @@
   --paper: #edeee9;
   --panel: #f8f8f4;
   --line: #d1d4cd;
-  --muted: #66706a;
-  --permission: #627f71;
-  --review: #9c733d;
-  --denial: #9f5149;
-  --authority: #9b5e3c;
+  --muted: #606963;
+  --permission: #536e61;
+  --review: #8c632f;
+  --denial: #934840;
+  --authority: #925638;
   --code: #101719;
   --wash: #e2e4de;
   color-scheme: light;
@@ -26,7 +26,7 @@
     --muted: #9aa39d;
     --permission: #819c8e;
     --review: #be955b;
-    --denial: #af6258;
+    --denial: #b96b61;
     --authority: #c28761;
     --code: #0b1113;
     --wash: #202b2d;
@@ -41,6 +41,7 @@
 html {
   background: var(--paper);
   scroll-behavior: smooth;
+  scroll-padding-block-start: 5.5rem;
 }
 
 body {
@@ -1429,7 +1430,7 @@ a {
 .authority-boundary__receipt-actions a,
 .authority-boundary__receipt-actions > span {
   display: flex;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
@@ -2095,7 +2096,8 @@ a {
 }
 
 .commission-field > em,
-.commission-money-field > em {
+.commission-money-field > em,
+.commission-field-error {
   display: flex;
   align-items: center;
   gap: 0.35rem;
@@ -2104,6 +2106,10 @@ a {
   font-size: 0.52rem;
   font-style: normal;
   line-height: 1.45;
+}
+
+.commission-field-error {
+  margin: 0.65rem 0 0;
 }
 
 .commission-field-grid {
@@ -7179,7 +7185,7 @@ a {
   --studio-blue: #b9784e;
   --studio-green: #819c8e;
   --studio-amber: #be955b;
-  --studio-red: #af6258;
+  --studio-red: #b96b61;
   min-height: 100vh;
   background: var(--studio-abyss);
   color: var(--studio-ice);
@@ -8038,7 +8044,7 @@ a {
   font-size: 0.5rem;
 }
 
-.studio-code__bar [role="tab"][aria-selected="true"] {
+.studio-code__bar [aria-pressed="true"] {
   color: var(--studio-ice);
   box-shadow: inset 0 -2px var(--studio-blue);
 }
@@ -8554,7 +8560,7 @@ a {
 
 .studio-reset-row button {
   display: inline-flex;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   flex: 0 0 auto;
   align-items: center;
   gap: 0.45rem;
@@ -9395,7 +9401,7 @@ a {
 .evidence-recorder__actions button,
 .evidence-recorder__actions a {
   display: inline-flex;
-  min-height: 2.2rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
@@ -10874,7 +10880,7 @@ a {
 
 .launch-key-row button {
   display: inline-flex;
-  min-height: 2.2rem;
+  min-height: 2.75rem;
   align-items: center;
   gap: .35rem;
   border: 1px solid var(--launch-rule);

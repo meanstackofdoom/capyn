@@ -26,6 +26,8 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 - Added a shared `logo-mark.svg` asset and wired it into app metadata and manifest metadata so browser tabs, favicons and installation manifests use the updated mark.
 - Tightened the public funnel with keyboard-aware mobile navigation, larger touch targets, corrected anchor positioning, consistent internal/external link cues and a reduced footer information load.
 - Recorded the current UX review and follow-up priorities in the website and brand contract.
+- Connected commissioning, Mandate Studio and durable-handoff validation messages to their controls, focused the first invalid field and fixed blocked-stage keyboard focus drift.
+- Increased core semantic colour contrast and added sticky-header-aware scroll padding for keyboard and anchor navigation.
 
 ## v0.4.0 — 2026-08-18
 
