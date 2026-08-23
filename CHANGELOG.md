@@ -21,6 +21,7 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 ### Web experience and brand
 
+- Rebuilt the design-partner landing page around one concrete consequential action, with a legible AWS boundary dossier, engagement facts, enforceable-boundary sequence, scoped deliverables, fit screen and dual private-brief/public-Lab conversion path.
 - Replaced the marketing and console branding marks with a shared vector logo system (`CapynMark`) across header, footer, app icon and OpenGraph output.
 - Refined public navigation spacing and focus/hover polish in the header, with improved mobile menu interaction.
 - Added a shared `logo-mark.svg` asset and wired it into app metadata and manifest metadata so browser tabs, favicons and installation manifests use the updated mark.

@@ -35,6 +35,8 @@ After proof, the durable launch rail creates a deliberate visual air gap between
 
 The private boundary brief is browser-local too. It collects one exact action, hard stop, human checkpoint and smallest useful outcome without posting or persisting the fields. Visitors can copy or download Markdown; an owner-approved `CAPYN_CONTACT_EMAIL` adds a prefilled mail handoff without turning CAPYN into a form processor.
 
+The design-partner landing page is a commissioning dossier, not a generic consulting page. It must lead with one action worth controlling, show a concrete identity-bound request and deterministic outcome, state the 8–12 week and from-$1,000 commercial shape without hiding it, and screen for an accountable owner plus a real consequence. The copper/stock/sage visual system should keep the boundary brief as the signature object while body copy, evidence deliverables and calls to action remain comfortably readable. Its primary path is the browser-local private brief; the public Lab remains an immediate proof route for visitors who are not ready to apply.
+
 ## Motion contract
 
 The authority console uses GSAP core for scoped, reversible interface motion:
