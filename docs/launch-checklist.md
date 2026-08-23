@@ -33,10 +33,11 @@ Run the complete repository gate:
 corepack pnpm check
 corepack pnpm audit --prod --audit-level high
 corepack pnpm smoke:production
+corepack pnpm smoke:remote-gate
 git diff --check
 ```
 
-`smoke:production` starts the built API and web services temporarily on ports `4110` and `3110`, verifies the policy path, onboarding, owner authentication and public surfaces, then releases both ports. `smoke:combined` verifies the constrained one-service Railway adapter on three additional non-default ports. Neither requires Docker.
+`smoke:production` starts the built API and web services temporarily on ports `4110` and `3110`, verifies the policy path, onboarding, owner authentication and public surfaces, then releases both ports. `smoke:remote-gate` starts temporary Gate and API services in remote mode and verifies Gate-first startup, health parity and a signed-receipt execution on dry-run AWS boundaries. `smoke:combined` verifies the constrained one-service Railway adapter on three additional non-default ports. Neither requires Docker.
 
 ## Hosted evidence
 

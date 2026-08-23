@@ -223,6 +223,9 @@ pnpm typecheck     # all workspaces and examples
 pnpm lint          # strict workspace lint
 pnpm build         # production builds
 pnpm check         # complete verification sequence
+pnpm smoke:remote-gate # remote-mode startup parity and execution boundary smoke
+pnpm smoke:production # API+web production artifact smoke
+pnpm smoke:combined   # constrained Railway combined-process smoke
 pnpm video:render  # render the 24-second public-alpha video
 pnpm video:still   # render its social/README cover
 pnpm media:screenshot # capture a live selected authorization trace

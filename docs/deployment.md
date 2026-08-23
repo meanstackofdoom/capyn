@@ -136,7 +136,7 @@ For a public demo:
 7. verify `/healthz`, `/health`, `/`, `/docs`, `/dashboard` and one authorization request;
 8. confirm the interface states clearly that execution is simulated;
 9. when billing is enabled, complete a test-mode Checkout, replay its webhook and confirm one subscription audit event;
-10. for a remote Gate rehearsal, verify `/ready`, one successful dry-run receipt, replay rejection and an ambiguous-transport reconciliation test.
+10. for a remote Gate rehearsal, verify `/ready`, one successful dry-run receipt, replay rejection and an ambiguous-transport reconciliation test; run `corepack pnpm smoke:remote-gate` for automated Gate-first startup and execution verification.
 11. for remote-gate production rehearsals, do a Gate-first boot path: start Gate, confirm `/healthz` and `/ready` plus signed-receipt readiness, then start API with the matching receipt verify secret.
 
 Before real money, every item in the [Security production gate](security.md#production-gate) is mandatory. Hosting the current MVP does not satisfy that gate.
