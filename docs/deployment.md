@@ -137,6 +137,7 @@ For a public demo:
 8. confirm the interface states clearly that execution is simulated;
 9. when billing is enabled, complete a test-mode Checkout, replay its webhook and confirm one subscription audit event;
 10. for a remote Gate rehearsal, verify `/ready`, one successful dry-run receipt, replay rejection and an ambiguous-transport reconciliation test.
+11. for remote-gate production rehearsals, do a Gate-first boot path: start Gate, confirm `/healthz` and `/ready` plus signed-receipt readiness, then start API with the matching receipt verify secret.
 
 Before real money, every item in the [Security production gate](security.md#production-gate) is mandatory. Hosting the current MVP does not satisfy that gate.
 
@@ -146,6 +147,7 @@ Before real money, every item in the [Security production gate](security.md#prod
 - keep schema changes backward compatible while old and new processes overlap;
 - deploy API before web when the web needs a new API contract;
 - deploy Gate public verification keys before switching the API to a new signing key, preserve overlap through the maximum claim window, then retire the old key;
+- gate-start before API when `CAPYN_EXECUTION_MODE=remote-gate`; keep Gate liveness stable on `/healthz` and `/ready` before promoting an API build that performs startup signed-receipt checks;
 - retain the previous build for immediate rollback;
 - do not roll back a migration destructively without a reviewed data-recovery plan;
 - record deployment identity and version in operational audit/observability systems.

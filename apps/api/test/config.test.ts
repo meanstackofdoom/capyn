@@ -51,6 +51,21 @@ describe("CAPYN deployment configuration", () => {
     expect(configured.CAPYN_EXECUTION_MODE).toBe("remote-gate");
   });
 
+  it("requires remote Gate URL when verification secret mode is enabled", () => {
+    expect(() => loadConfig({
+      ...base,
+      CAPYN_EXECUTION_MODE: "remote-gate",
+      CAPYN_EXECUTION_GATE_RECEIPT_VERIFY_SECRET_B64: Buffer.from("at-least-16-bytes!").toString("base64"),
+      CAPYN_EXECUTION_GATE_CONTROL_TOKEN: "capyn-gate-control-token-at-least-32-characters",
+      CAPYN_EXECUTION_GATE_ID: "gate-test",
+      CAPYN_EXECUTION_PROVIDER_NAME: "aws-ec2-dry-run",
+      CAPYN_EXECUTION_ISSUER: "urn:capyn:control:test",
+      CAPYN_EXECUTION_AUDIENCE: "urn:capyn:gate:test",
+      CAPYN_EXECUTION_KEY_ID: "test-key-1",
+      CAPYN_EXECUTION_PRIVATE_KEY_B64: Buffer.from("not-a-real-private-key-but-config-schema-only").toString("base64")
+    })).toThrow("Remote Gate mode requires the complete execution Gate configuration");
+  });
+
   it("rejects a receipt verification secret outside remote Gate mode", () => {
     expect(() => loadConfig({
       ...base,
