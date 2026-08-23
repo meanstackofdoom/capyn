@@ -21,6 +21,7 @@ All notable CAPYN changes are recorded here. The project follows semantic versio
 
 ### Web experience and brand
 
+- Added a plain-English homepage authority rail that locates CAPYN between an authenticated agent request and the existing execution tool, names all three deterministic outcomes and distinguishes the product from IAM, payment rails, agent frameworks and model guardrails.
 - Rebuilt the design-partner landing page around one concrete consequential action, with a legible AWS boundary dossier, engagement facts, enforceable-boundary sequence, scoped deliverables, fit screen and dual private-brief/public-Lab conversion path.
 - Replaced the marketing and console branding marks with a shared vector logo system (`CapynMark`) across header, footer, app icon and OpenGraph output.
 - Refined public navigation spacing and focus/hover polish in the header, with improved mobile menu interaction.

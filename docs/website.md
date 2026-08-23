@@ -81,6 +81,8 @@ Public routes provide:
 
 The August 2026 review treats the commissioning journey as the primary public funnel: understand the boundary, run a real synthetic decision, carry away evidence and optionally create a durable workspace. Navigation and calls to action should use those user-recognisable outcomes consistently rather than internal implementation names.
 
+The first-visit comprehension test is deliberately strict: after the hero and first orientation section, a visitor should be able to say that CAPYN is the authorization checkpoint between an agent and a consequential tool; that it resolves agent identity, evaluates one exact request against a current mandate and returns `ALLOW`, `DENY` or `REQUIRE_APPROVAL` with evidence; and that the existing cloud API, payment rail or SaaS system still performs execution. The runtime-boundary rail now makes that relationship explicit and rules out four common misreadings: CAPYN is not an IAM replacement, payment rail, agent framework or model guardrail.
+
 Completed in the current pass:
 
 - unified the browser, social, header, footer and control-plane mark around the shared CAPYN authority glyph;
@@ -91,10 +93,12 @@ Completed in the current pass:
 - linked validation messages to their controls and moved focus to the first invalid commissioning, studio or durable-handoff field;
 - corrected blocked Mandate Studio tab navigation so keyboard focus cannot drift away from the active stage;
 - raised the core light and dark semantic colours to WCAG AA contrast for normal text against their primary surfaces.
+- visually inspected the homepage and design-partner journey in Chrome at a 390 px mobile viewport and a wide desktop viewport, corrected the first-visit mental model and verified that both surfaces avoid horizontal overflow;
+- exercised the deployed homepage’s human-line example through `REQUIRE_APPROVAL`, nine policy gates and receipt issuance.
 
 Next review priorities, in order:
 
-1. visually inspect home, commissioning, lab, studio, pricing and documentation at 390 px, 768 px and 1440 px in a real browser, including light/dark preference and 200% zoom;
+1. extend the visual inspection to commissioning, lab, studio, pricing and documentation at 390 px, 768 px and 1440 px, including light/dark preference and 200% zoom;
 2. test complete keyboard-only commissioning, approval, proof download and durable-workspace handoff journeys in an interactive browser session;
 3. measure funnel events without recording policy payloads, credentials or sensitive boundary-brief content;
 4. extend the contrast audit from the core semantic tokens to every page-specific palette and verify sticky/fixed controls do not obscure focused content;
