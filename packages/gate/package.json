@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@capyn/types": "workspace:*",
-    "zod": "^3.25.76"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.4",
