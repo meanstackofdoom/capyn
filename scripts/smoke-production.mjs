@@ -350,7 +350,7 @@ async function smokeWeb() {
   const designPartners = await request(`${webOrigin}/design-partners`);
   const designPartnersHtml = await designPartners.text();
   assert(
-    designPartnersHtml.includes("Bring one real") && designPartnersHtml.includes("Draft a private brief") && designPartnersHtml.includes("GitHub route remains public"),
+    designPartnersHtml.includes("Bring one action") && designPartnersHtml.includes("Draft a private brief") && designPartnersHtml.includes("GitHub route remains public"),
     "Design partner conversion path is missing"
   );
 
